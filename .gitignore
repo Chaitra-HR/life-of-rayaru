@@ -9,6 +9,5 @@ Desktop.ini
 # dependencies (the site vendors what it needs under antaranga/vendor)
 node_modules/
 
-# local build / review output
-journey-review/
+# local build output
 *.log

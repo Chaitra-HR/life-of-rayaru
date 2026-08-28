@@ -13,6 +13,9 @@ Everything is generated in the browser. There are no 3D asset downloads: the
 terrain, architecture, water, vegetation and in-scene typography are all built
 procedurally at load time.
 
+**Continuing this work on another machine: start with
+[HANDOVER.md](HANDOVER.md).**
+
 ## Running it
 
 Any static file server will do — there is no build step.
@@ -43,7 +46,9 @@ antaranga/
 
 Each chapter module exports a `create…Stage(ctx)` returning
 `{ group, setVisible, cam(u), update(…) }`. `main.js` decides which stages are
-live, asks the active one for this frame's camera, and renders once.
+live, asks the active one for this frame's camera, and renders once. The full
+stage contract, the chapter/`t` map and the design guardrails are in
+[HANDOVER.md](HANDOVER.md).
 
 ### Chapter 07 · The Journey
 
@@ -52,7 +57,9 @@ map. It is split under `js/world/journey/`, and `field.js` is the single source
 of geographic truth — coastlines, the Western Ghats, the rivers, the worn route
 and the ground height. Terrain, water, the route trace, the five temple
 landmarks, the planting, the atmosphere, the labels and the camera all sample it,
-so nothing can float above the ground or contradict the geography.
+so nothing can float above the ground or contradict the geography. Notes, dials
+and regression traps: [docs/journey-chapter.md](docs/journey-chapter.md).
+Reference frames: [journey-review/](journey-review/).
 
 ## Accessibility and fallbacks
 
@@ -66,4 +73,5 @@ so nothing can float above the ground or contradict the geography.
 
 `window.ANTARANGA` exposes `step(t)`, `tick()` and `snap(t)` — `snap` renders any
 scroll position synchronously and returns a JPEG data URL, which is how the
-scenes are art-directed frame by frame.
+scenes are art-directed frame by frame. `tools/shot-server.js` catches those
+frames to disk; the workflow is written up in [HANDOVER.md](HANDOVER.md).
