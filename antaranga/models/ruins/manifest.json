@@ -1,0 +1,222 @@
+{
+ "credit": "Temple Ruins Asset Pack by Bl4ckGh0st (sketchfab.com/Bl4ckGh0st), CC-BY-4.0",
+ "materials": {
+  "M_Stone1": {
+   "map": "M_Stone1_base.jpg",
+   "normalMap": "M_Stone1_normal.jpg",
+   "roughnessMap": "M_Stone1_mr.jpg"
+  },
+  "M_Stone2": {
+   "map": "M_Stone2_base.jpg",
+   "normalMap": "M_Stone2_normal.jpg",
+   "roughnessMap": "M_Stone2_mr.jpg"
+  },
+  "M_Grass": {
+   "map": "M_Grass_base.png",
+   "normalMap": "M_Grass_normal.jpg",
+   "roughnessMap": "M_Grass_mr.jpg"
+  }
+ },
+ "meshes": {
+  "Tall_RockA": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 642,
+    "i": 642
+   },
+   "offset": 0,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Stone_Brick": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 216,
+    "i": 324
+   },
+   "offset": 23112,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Stone_DebrisB": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 204,
+    "i": 204
+   },
+   "offset": 31320,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Stone_DebrisA": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 204,
+    "i": 204
+   },
+   "offset": 38664,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Tall_RockC": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 642,
+    "i": 642
+   },
+   "offset": 46008,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockE": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 69120,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockA": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 78840,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockB": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 88560,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockC": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 98280,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Tall_RockB": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 642,
+    "i": 642
+   },
+   "offset": 108000,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockD": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 131112,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "Small_RockF": {
+   "material": "M_Stone2",
+   "counts": {
+    "v": 270,
+    "i": 270
+   },
+   "offset": 140832,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassA": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 42,
+    "i": 180
+   },
+   "offset": 150552,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassE": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 24,
+    "i": 90
+   },
+   "offset": 152616,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassD": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 42,
+    "i": 180
+   },
+   "offset": 153744,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassG": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 24,
+    "i": 90
+   },
+   "offset": 155808,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassF": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 24,
+    "i": 90
+   },
+   "offset": 156936,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassH": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 24,
+    "i": 90
+   },
+   "offset": 158064,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassC": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 42,
+    "i": 180
+   },
+   "offset": 159192,
+   "hasNormal": true,
+   "hasUV": true
+  },
+  "GrassB": {
+   "material": "M_Grass",
+   "counts": {
+    "v": 42,
+    "i": 180
+   },
+   "offset": 161256,
+   "hasNormal": true,
+   "hasUV": true
+  }
+ }
+}

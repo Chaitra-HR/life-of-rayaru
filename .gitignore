@@ -1,0 +1,14 @@
+# OS / editor cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+
+# dependencies (the site vendors what it needs under antaranga/vendor)
+node_modules/
+
+# local build / review output
+journey-review/
+*.log

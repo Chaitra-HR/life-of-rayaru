@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Rayara Antaranga — The Life and Works of Sri Raghavendra Tirtha</title>
+<meta name="description" content="A scroll-driven cinematic biography of Sri Raghavendra Tirtha — from Bhuvanagiri to Kumbhakonam, his works and Tattvavāda, to the Brindavana at Mantralaya. 355th Aradhana · Mantralaya · 2026.">
+<meta name="theme-color" content="#060809">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rayara Antaranga — The Life and Works of Sri Raghavendra Tirtha">
+<meta property="og:description" content="An editorial biography that unfolds around you: Bhuvanagiri, Kumbhakonam, the works, Tattvavāda, the journey, Manchale, and the Brindavana at Mantralaya.">
+<meta property="og:image" content="assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050505'/%3E%3Cpath d='M10 26h12M11 23h10M12 20h8M12 12h8v8h-8zM10 9h12M13 6h6' stroke='%23c8a66a' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+<link rel="preload" as="font" type="font/woff2" href="fonts/onest-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/onest-latin-ext.woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.local.css">
+<link rel="stylesheet" href="css/style.css">
+<script>
+window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.message||'?')+' @ '+(e.filename||'')+':'+(e.lineno||0)));window.addEventListener('unhandledrejection',e=>window.__errs.push('rejection: '+(e.reason&&e.reason.message||e.reason)));</script>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<link rel="modulepreload" href="vendor/three.module.js">
+<link rel="modulepreload" href="js/util.js">
+<link rel="modulepreload" href="js/scroll.js">
+<link rel="modulepreload" href="js/audio.js">
+<link rel="modulepreload" href="js/world/brindavana.js">
+<link rel="modulepreload" href="js/world/river.js">
+<link rel="modulepreload" href="js/world/interior.js">
+<link rel="modulepreload" href="js/world/parimala.js">
+<link rel="modulepreload" href="js/world/bheda.js">
+<link rel="modulepreload" href="js/world/journey.js">
+<link rel="modulepreload" href="js/world/manchale.js">
+<link rel="modulepreload" href="js/world/pravesha.js">
+<link rel="modulepreload" href="js/world/antaranga.js">
+<link rel="modulepreload" href="js/world/presence.js">
+<link rel="modulepreload" href="js/world/opening.js">
+<link rel="modulepreload" href="js/post.js">
+<link rel="modulepreload" href="js/main.js">
+</head>
+<body>
+  <!-- scroll length driver -->
+  <div id="scroll-space" aria-hidden="true"></div>
+
+  <!-- WebGL -->
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <!-- soft transition veil -->
+  <div id="veil" aria-hidden="true"></div>
+  <div id="grain" aria-hidden="true"></div>
+  <div id="vignette" aria-hidden="true"></div>
+
+  <!-- editorial layer (accessible narrative text) -->
+  <main id="captions" aria-label="Rayara Antaranga — the narrative"></main>
+
+  <!-- Pañcabheda — tap any two, learn one distinction -->
+  <section id="panchabheda" aria-label="Pañcabheda — the five distinctions" hidden>
+    <p class="pb-hint">TAP ANY TWO</p>
+    <div class="pb-field">
+      <button type="button" class="pb-e pb-isvara" data-kind="isvara">Vishnu</button>
+      <button type="button" class="pb-e pb-jiva" data-kind="jiva">jīva</button>
+      <button type="button" class="pb-e pb-jiva" data-kind="jiva">jīva</button>
+      <button type="button" class="pb-e pb-jada" data-kind="jada">jaḍa</button>
+      <button type="button" class="pb-e pb-jada" data-kind="jada">jaḍa</button>
+    </div>
+    <p class="pb-result" role="status" aria-live="polite"></p>
+    <div class="pb-foot">
+      <span class="pb-count">0 of 5 distinctions found</span>
+      <button type="button" class="pb-reset">Reset</button>
+    </div>
+    <ul class="visually-hidden">
+      <li>Īśvara–Jīva — God and the individual soul are distinct.</li>
+      <li>Īśvara–Jaḍa — God and matter are distinct.</li>
+      <li>Jīva–Jīva — No two souls are identical.</li>
+      <li>Jīva–Jaḍa — The conscious self is distinct from matter.</li>
+      <li>Jaḍa–Jaḍa — One material thing is distinct from another.</li>
+    </ul>
+  </section>
+
+  <!-- 05 · The Works — one continuous horizontal editorial canvas.
+       Vertical scroll translates the canvas sideways through the five
+       granthas; on touch it is a native scroll-snap reading track.
+       Content (data) and DOM live in js/works.js; layout in css. -->
+  <section id="works" aria-label="05 — The Works" hidden></section>
+
+  <!-- persistent UI -->
+  <div id="ui" aria-hidden="false">
+    <div id="wordmark">
+      <!-- the mark: a drafted Brindavana — kalasha, leaf-merlon crown, niche,
+           flaring adhisthana steps, kolam dots — one line-weight, one hue -->
+      <svg class="mark" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+        <g stroke="currentColor" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 1.4v1.8"/>
+          <circle cx="18" cy="4.7" r="1.35"/>
+          <path d="M14.6 8h6.8"/>
+          <path d="M15.6 8v-1.1M20.4 8v-1.1"/>
+          <path d="M14.6 8 12.8 12M21.4 8 23.2 12"/>
+          <path d="M11.4 12h13.2"/>
+          <path d="M13.2 12v10.6M22.8 12v10.6"/>
+          <path d="M13.2 15.2h9.6"/>
+          <path d="M16.6 22.6v-3.2a1.4 1.4 0 0 1 2.8 0v3.2"/>
+          <path d="M11.8 22.6h12.4"/>
+          <path d="M10 25.8h16"/>
+          <path d="M8 29h20"/>
+        </g>
+        <g fill="currentColor" stroke="none">
+          <circle cx="4.6" cy="29" r=".9"/>
+          <circle cx="31.4" cy="29" r=".9"/>
+        </g>
+      </svg>
+      <span class="wm-text"><b>RAYARA ANTARANGA</b><small>SRI RAGHAVENDRA TIRTHA</small></span>
+    </div>
+    <button id="audio-toggle" type="button" aria-pressed="false" aria-label="Enable ambient sound">
+      <svg id="wave" viewBox="0 0 64 20" width="64" height="20" aria-hidden="true" focusable="false">
+        <path id="wave-path" d="M0 10 L64 10" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </button>
+    <nav id="topnav" aria-label="Sections">
+      <button type="button" data-ch="1">LIFE</button>
+      <button type="button" data-ch="5">WORKS</button>
+      <button type="button" data-ch="6">TATTVAVĀDA</button>
+      <button type="button" data-ch="9">BRINDAVANA</button>
+    </nav>
+    <!-- chapter control: one compact chip at every size, opening the sheet.
+         (An always-visible right-hand rail was tried and removed — it read as
+         interface furniture down the side of every scene.) -->
+    <button id="chip" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Open chapter menu">
+      <span id="chip-num">00 / 09</span>
+      <span id="chip-name">MANTRALAYA</span>
+    </button>
+    <a id="aaradhane-link" href="https://www.raghavendramutt.org/" target="_blank" rel="noopener">Aradhana · Mantralaya · 2026</a>
+  </div>
+
+  <!-- mobile chapter sheet -->
+  <div id="sheet" role="dialog" aria-modal="true" aria-label="Chapters" hidden>
+    <div class="sheet-in">
+      <div class="sheet-head">
+        <span>CHAPTERS</span>
+        <button type="button" class="sheet-close" aria-label="Close chapter menu">×</button>
+      </div>
+      <div class="sheet-list"></div>
+    </div>
+  </div>
+
+  <!-- opening hero — layered over the first scene, fades with the first scroll -->
+  <section id="hero" aria-label="Introduction">
+    <div class="hero-eyebrow">MANTRALAYA &middot; ON THE TUNGABHADRA</div>
+    <h1 class="hero-heading">THE LIFE AND WORKS OF<br>SRI RAGHAVENDRA TIRTHA</h1>
+    <p class="hero-body">Explore the life and writings of Sri Raghavendra Tirtha, and the precision he brought to the understanding of Tattvavāda.</p>
+    <button id="cta" type="button" data-ch="1"><i aria-hidden="true"></i>BEGIN AT BHUVANAGIRI</button>
+  </section>
+
+  <!-- the word: flat editorial type across the lower area -->
+  <div id="word" aria-hidden="true">MANTRALAYA</div>
+
+  <!-- the last page of the editorial: a colophon, not another scene -->
+  <footer id="footer">
+    <div class="f-in">
+      <div class="f-top">
+        <div class="f-brand">
+          <div class="f-mark">Rayara Antaranga</div>
+          <div class="f-sub">The Life and Works of<br>Sri Raghavendra Tirtha</div>
+          <div class="f-note">
+            <p>Prepared for the 355th Sri Raghavendra Tirtha Aradhana · Mantralaya · 2026.</p>
+            <p>Where an account belongs to Sri Matha tradition, it is described as such in the narrative.</p>
+          </div>
+        </div>
+        <nav class="f-chapters" aria-label="Chapter index">
+          <button type="button" data-ch="0"><b>00</b>Mantralaya</button>
+          <button type="button" data-ch="1"><b>01</b>Venkatanatha</button>
+          <button type="button" data-ch="2"><b>02</b>Gṛhastha</button>
+          <button type="button" data-ch="3"><b>03</b>Kumbhakonam</button>
+          <button type="button" data-ch="4"><b>04</b>Raghavendra</button>
+          <button type="button" data-ch="5"><b>05</b>The Works</button>
+          <button type="button" data-ch="6"><b>06</b>Tattvavāda</button>
+          <button type="button" data-ch="7"><b>07</b>The Journey</button>
+          <button type="button" data-ch="8"><b>08</b>Manchale</button>
+          <button type="button" data-ch="9"><b>09</b>The Brindavana</button>
+          <button type="button" data-ch="10"><b>00</b>Return</button>
+        </nav>
+      </div>
+      <div class="f-meta">
+        <p class="f-credit">Temple gateway: “Temple arch” by Er.&nbsp;B.&nbsp;Nijithkumar (CC-BY-4.0) · Stone details: Temple Ruins asset pack by Bl4ckGh0st (CC-BY-4.0). All other environments, typography and sound are original and procedural.</p>
+        <div class="f-namah">Śrī Rāghavendrāya Namaḥ</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BrindavanaPreloader: an architectural drafting of the Brindavana -->
+  <div id="preloader" aria-label="Loading Rayara Antaranga">
+    <div class="pre-in">
+    <div class="pre-mark">
+      <svg viewBox="0 0 360 600" aria-hidden="true" focusable="false">
+
+        <!-- ============ construction geometry ============ -->
+        <g id="pre-guides">
+          <g data-a="0" data-b="14">
+            <path class="bx-grid" d="M20 20V580M60 20V580M100 20V580M140 20V580M220 20V580M260 20V580M300 20V580M340 20V580"/>
+            <path class="bx-grid" d="M20 60H340M20 100H340M20 140H340M20 180H340M20 220H340M20 260H340M20 300H340M20 340H340M20 380H340M20 420H340M20 460H340M20 500H340M20 540H340"/>
+          </g>
+          <g data-a="1" data-b="13">
+            <path class="bx-axis" d="M180 8V592"/>
+            <path class="bx-frame" d="M17 24H343V572H17Z"/>
+          </g>
+          <g data-a="13" data-b="22">
+            <path class="bx-guide" d="M8 92H352M8 140H352M8 162H352M8 288H352M8 318H352M8 398H352M8 424H352M8 496H352M8 522H352"/>
+            <path class="bx-dot" d="M17 572L343 24M343 572L17 24"/>
+          </g>
+          <g data-a="18" data-b="26">
+            <path class="bx-arc" d="M61 52H299M74.22 52V44M100.67 52V44M127.11 52V44M153.56 52V44M180.00 52V44M206.44 52V44M232.89 52V44M259.33 52V44M285.78 52V44"/>
+            <path class="bx-arc" d="M96 346a22 22 0 1 0 44 0a22 22 0 1 0 -44 0M158 340a22 22 0 1 0 44 0a22 22 0 1 0 -44 0M220 346a22 22 0 1 0 44 0a22 22 0 1 0 -44 0"/>
+            <path class="bx-tick" d="M17 92H31M17 140H31M17 162H31M17 288H31M17 318H31M17 398H31M17 424H31M17 496H31M17 522H31M329 92H343M329 140H343M329 162H343M329 288H343M329 318H343M329 398H343M329 424H343M329 496H343M329 522H343"/>
+            <path class="bx-tick" d="M173 92H187M173 288H187M173 398H187M173 496H187M60 8V22M300 8V22M60 578V592M300 578V592"/>
+            <path class="bx-node" d="M178.2 92a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 162a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 288a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 318a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 398a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 496a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M178.2 522a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0"/>
+            <path class="bx-node" d="M58.2 162a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M298.2 162a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M58.2 288a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M298.2 288a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M52.2 424a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0M304.2 424a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0"/>
+          </g>
+        </g>
+
+        <!-- ============ the structure, drawn base upward ============ -->
+        <g id="pre-build">
+
+          <!-- foundation -->
+          <g data-a="26" data-b="36">
+            <path class="s" d="M17 572H343"/>
+            <path class="s" d="M17 546V572M343 546V572M17 546H343"/>
+            <path class="s" d="M28 522V546M332 522V546M28 522H164M196 522H332"/>
+            <path class="d" d="M22 559H338M34 534H164M196 534H326"/>
+          </g>
+
+          <!-- lotus band -->
+          <g data-a="34" data-b="44">
+            <path class="s" d="M30 496H164M196 496H330M30 496V522M330 496V522"/>
+            <path d="M30 522Q46.75 497 63.5 522Q80.25 497 97 522Q113.75 497 130.5 522Q147.25 497 164 522M196 522Q212.75 497 229.5 522Q246.25 497 263 522Q279.75 497 296.5 522Q313.25 497 330 522"/>
+            <path class="d" d="M38.4 522Q46.75 508 55.1 522M71.9 522Q80.25 508 88.6 522M105.4 522Q113.75 508 122.1 522M138.9 522Q147.25 508 155.6 522M204.4 522Q212.75 508 221.1 522M237.9 522Q246.25 508 254.6 522M271.4 522Q279.75 508 288.1 522M304.9 522Q313.25 508 321.6 522"/>
+          </g>
+
+          <!-- stepped mouldings -->
+          <g data-a="42" data-b="53">
+            <path class="s" d="M38 482H164M196 482H322M38 482V496M322 482V496M38 496H164M196 496H322"/>
+            <path d="M46 452Q31 468 38 482M314 452Q329 468 322 482M46 452H164M196 452H314"/>
+            <path d="M54 424Q41 438 46 452M306 424Q319 438 314 452"/>
+            <path class="d" d="M42 468H164M196 468H318M50 438H164M196 438H310M44 490H164M196 490H316"/>
+          </g>
+
+          <!-- lower ledge -->
+          <g data-a="50" data-b="59">
+            <path class="s" d="M54 398H306M54 398V424M306 398V424M54 424H164M196 424H306"/>
+            <path class="d" d="M62 408H164M196 408H298"/>
+            <path class="d" d="M64 414V424M80 414V424M96 414V424M112 414V424M128 414V424M144 414V424M160 414V424M200 414V424M216 414V424M232 414V424M248 414V424M264 414V424M280 414V424M296 414V424"/>
+          </g>
+
+          <!-- central stone strip -->
+          <g data-a="56" data-b="65">
+            <path class="s" d="M164 398H196M164 398V546M196 398V546M164 546H196"/>
+            <path class="d" d="M180 402L192 414L180 426L168 414ZM180 426L192 438L180 450L168 438ZM180 450L192 462L180 474L168 462ZM180 474L192 486L180 498L168 486ZM180 498L192 510L180 522L168 510ZM180 522L192 534L180 546L168 534Z"/>
+          </g>
+
+          <!-- pillars and arches -->
+          <g data-a="62" data-b="72">
+            <path class="s" d="M62 318V398M298 318V398M62 398H298"/>
+            <path d="M96 396V348Q96 330 118 324Q140 330 140 348V396"/>
+            <path d="M158 396V342Q158 322 180 316Q202 322 202 342V396"/>
+            <path d="M220 396V348Q220 330 242 324Q264 330 264 348V396"/>
+            <path class="d" d="M102 396V350Q102 335 118 330Q134 335 134 350V396"/>
+            <path class="d" d="M164 396V344Q164 327 180 322Q196 327 196 344V396"/>
+            <path class="d" d="M226 396V350Q226 335 242 330Q258 335 258 350V396"/>
+            <path d="M140 396V340M158 396V340M140 340H158M202 396V340M220 396V340M202 340H220"/>
+            <path class="d" d="M140 334H158M202 334H220"/>
+            <path class="d" d="M74 396V330M86 396V330M74 330H86M274 396V330M286 396V330M274 330H286"/>
+          </g>
+
+          <!-- floral band -->
+          <g data-a="69" data-b="77">
+            <path class="s" d="M56 288H304M56 318H304M56 288V318M304 288V318"/>
+            <path d="M65.7 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0M107 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0M148.3 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0M189.7 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0M231 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0M272.3 303a11 11 0 1 0 22 0a11 11 0 1 0 -22 0"/>
+            <path class="d" d="M70.7 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M112 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M153.3 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M194.7 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M236 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M277.3 303a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"/>
+            <path class="d" d="M74.2 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0M115.5 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0M156.8 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0M198.2 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0M239.5 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0M280.8 303a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0"/>
+            <path class="d" d="M97.3 288V318M138.7 288V318M180 288V318M221.3 288V318M262.7 288V318"/>
+          </g>
+
+          <!-- upper enclosure -->
+          <g data-a="74" data-b="83">
+            <path class="s" d="M60 162V288M300 162V288M60 162H300"/>
+            <path class="s" d="M108 162V288M252 162V288"/>
+            <path d="M122 176H238V274H122Z"/>
+            <path class="d" d="M130 184H230V266H130Z"/>
+            <path class="d" d="M60 172H108M252 172H300M60 278H108M252 278H300"/>
+          </g>
+
+          <!-- carved borders -->
+          <g data-a="80" data-b="87">
+            <path class="s" d="M60 140H300M60 162H300M60 140V162M300 140V162"/>
+            <path class="d" d="M70 143L77 151L70 159L63 151ZM90 143L97 151L90 159L83 151ZM110 143L117 151L110 159L103 151ZM130 143L137 151L130 159L123 151ZM150 143L157 151L150 159L143 151ZM170 143L177 151L170 159L163 151ZM190 143L197 151L190 159L183 151ZM210 143L217 151L210 159L203 151ZM230 143L237 151L230 159L223 151ZM250 143L257 151L250 159L243 151ZM270 143L277 151L270 159L263 151ZM290 143L297 151L290 159L283 151Z"/>
+          </g>
+
+          <!-- cornice -->
+          <g data-a="84" data-b="91">
+            <path class="s" d="M64 126H296M64 126V140M296 126V140"/>
+            <path class="s" d="M56 112H304M56 112V126M304 112V126"/>
+            <path class="s" d="M48 98H312M48 98V112M312 98V112"/>
+            <path class="d" d="M52 105H308M60 119H300M68 133H292"/>
+          </g>
+
+          <!-- crown -->
+          <g data-a="88" data-b="95">
+            <path class="s" d="M61 92H299M61 92V98M299 92V98M61 98H299"/>
+            <path class="s" d="M61.00 92Q65.20 60 74.22 44Q83.24 60 87.44 92Q91.64 60 100.67 44Q109.69 60 113.89 92Q118.09 60 127.11 44Q136.13 60 140.33 92Q144.53 60 153.56 44Q162.58 60 166.78 92Q170.98 60 180.00 44Q189.02 60 193.22 92Q197.42 60 206.44 44Q215.47 60 219.67 92Q223.87 60 232.89 44Q241.91 60 246.11 92Q250.31 60 259.33 44Q268.36 60 272.56 92Q276.76 60 285.78 44Q294.80 60 299.00 92"/>
+          </g>
+
+          <!-- ornamental details -->
+          <g data-a="92" data-b="100">
+            <path class="d" d="M60 178L108 202M60 202L108 226M60 226L108 250M60 250L108 274M108 178L60 202M108 202L60 226M108 226L60 250M108 250L60 274"/>
+            <path class="d" d="M252 178L300 202M252 202L300 226M252 226L300 250M252 250L300 274M300 178L252 202M300 202L252 226M300 226L252 250M300 250L252 274"/>
+            <path d="M153.6 206Q155 204 156.4 206C161 215 161.5 233 156.2 246.5Q155 248.2 153.8 246.5C148.5 233 149 215 153.6 206Z" transform="rotate(-14 155 226)"/>
+            <path d="M203.6 206Q205 204 206.4 206C211 215 211.5 233 206.2 246.5Q205 248.2 203.8 246.5C198.5 233 199 215 203.6 206Z" transform="rotate(14 205 226)"/>
+            <path class="d" d="M179.4 210.1Q180 209 180.6 210.1C189 218.5 191 226.5 191 233.5C191 240.5 185.5 243.5 182 240C181 239 180.4 237.9 180 236.9C179.6 237.9 179 239 178 240C174.5 243.5 169 240.5 169 233.5C169 226.5 171 218.5 179.4 210.1Z"/>
+          </g>
+
+        </g>
+      </svg>
+    </div>
+    </div>
+  </div>
+  <!-- The drafting starts the moment its own module lands. Left inside
+       main.js it waited on the whole world graph — three.js and nine stage
+       modules — which held the sheet hidden for about a second and a half. -->
+  <script type="module">
+    import { BrindavanaPreloader } from './js/preloader.js';
+    /* ?domonly — review aid: interface layer only, no world, no preloader */
+    const DOM_ONLY = location.search.includes('domonly');
+    if (DOM_ONLY) { document.body.classList.add('domonly'); document.getElementById('preloader').remove(); }
+    /* ?domonly&plate=N — review aid: hold the Works canvas still at work N */
+    const PLATE = /plate=(\d)/.exec(location.search);
+    if (DOM_ONLY && PLATE) {
+      // a clean view: in domonly the footer flows to the top and covers it
+      for (const id of ['footer', 'hero', 'word']) document.getElementById(id).style.display = 'none';
+      import('./js/works.js').then(({ createWorks }) => {
+        // reduced: false — the plate must show the real choreography's pose
+        createWorks({ reduced: false }).showStatic(+PLATE[1]);
+      });
+    }
+    const P = DOM_ONLY ? null : new BrindavanaPreloader();
+    window.__preloader = P;
+    /* fonts fetch over the network while the drawing is made — pure I/O, no
+       thread time — so the world never sits waiting on them afterwards */
+    try {
+      ['300 100px "Onest"', '500 100px "Onest"',
+       '300 100px "Noto Sans Kannada"', '400 100px "Noto Serif Devanagari"']
+        .forEach(f => document.fonts.load(f));
+    } catch (e) {}
+    /* The world is FETCHED while the drawing is made (the modulepreload links
+       above) but EVALUATED only after it. Module evaluation and stage
+       construction block the main thread, and a blocked thread cannot paint —
+       run during the drawing, those blocks froze the pen mid-stroke. On the
+       finished, still drawing the same blocks are invisible. */
+    const mods = ['./vendor/three.module.js', './js/util.js', './js/scroll.js',
+      './js/audio.js', './js/world/brindavana.js', './js/world/river.js',
+      './js/world/interior.js', './js/world/parimala.js', './js/world/bheda.js',
+      './js/world/journey.js', './js/world/manchale.js', './js/world/pravesha.js',
+      './js/world/antaranga.js', './js/world/presence.js'];
+    const breathe = () => new Promise(r => {
+      let done = false; const go = () => { if (!done) { done = true; r(); } };
+      requestAnimationFrame(() => setTimeout(go, 0));
+      setTimeout(go, 40);          // where rAF is asleep
+    });
+    let started = DOM_ONLY;
+    const world = async () => {
+      if (started) return;
+      started = true;
+      /* the drawing first; 9s guard so nothing can hold the world hostage */
+      await Promise.race([P.drawn, new Promise(r => setTimeout(r, 9000))]);
+      for (const m of mods) { try { await import(m); } catch (e) {} await breathe(); }
+      import('./js/main.js');
+    };
+    requestAnimationFrame(() => requestAnimationFrame(world));
+    setTimeout(world, 250);        // guard only, for a tab where rAF is asleep
+  </script>
+</body>
+</html>

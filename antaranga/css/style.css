@@ -1,0 +1,1037 @@
+/* RAYARA ANTARANGA · editorial layer
+   One typography system, one motion language, one website. */
+
+/* ---------------- global tokens ---------------- */
+:root {
+  /* ============================ TYPE ============================
+     ONE Latin face on the entire site: ONEST — the variable face used by
+     mengto.github.io/kage — vendored offline as a single 300-700 file per
+     subset (fonts/fonts.local.css). Kannada and Devanagari stay Noto,
+     because Onest carries no Indic glyphs; they are always paired with a
+     translation set in Onest.
+
+     ---- the ladder ----
+     Every size on the site is a step on ONE geometric scale:
+
+         step n  =  14px x 1.2^n          (minor third, anchored on body)
+
+     Nothing is set off the ladder, at any breakpoint, in any component.
+     That is the symmetry: two sizes that look related ARE related, by an
+     exact power of 1.2, and the same interval repeats all the way up.
+
+     The anchor is deliberate. Reading copy stays at 14px and every other
+     step lands AT OR BELOW the size it replaced -- the ladder rationalises
+     the scale without walking back the "everything is too big" pass.
+
+        step   px       replaces   role
+        -2      9.72    10         label   caps + .22em tracking
+        -1     11.67    12         anno    sub-labels, credits, captions
+         0     14.00    14         body    ALL running copy  <- anchor
+        +1     16.80    18         title   statements, work titles, scripts
+        +3     24.19    24         display floor
+        +4     29.03    28         hero floor
+        +5     34.84    36         display ceiling
+        +6     41.81    44         (flowing-document headings floor)
+        +7     50.17    52         hero ceiling
+        +8     60.20    64         giant floor
+        +10    86.69    90         word floor
+        +11   104.03   110         (flowing-document headings ceiling)
+        +12   124.84                (mobile word ceiling)
+        +13   149.80   150         giant ceiling
+        +18   372.77   380         word ceiling
+
+     The four reading steps (-2 -1 0 +1) are FIXED px: a paragraph is 14px
+     on every screen, in every scene. Only display type breathes, and it
+     breathes between two LADDER STEPS at the vw rate already tuned for
+     this site -- so the bounds are systematic and the sizes you actually
+     see at every width are the ones that were signed off. */
+  --ratio: 1.2;
+
+  --step--2:   9.72px;
+  --step--1:  11.67px;
+  --step-0:   14.00px;
+  --step-1:   16.80px;
+  --step-2:   20.16px;
+  --step-3:   24.19px;
+  --step-4:   29.03px;
+  --step-5:   34.84px;
+  --step-6:   41.81px;
+  --step-7:   50.17px;
+  --step-8:   60.20px;
+  --step-9:   72.24px;
+  --step-10:  86.69px;
+  --step-11: 104.03px;
+  --step-12: 124.84px;
+  --step-13: 149.80px;
+  --step-18: 372.77px;
+
+  /* the faces */
+  --font-display:    'Onest', 'Satoshi', 'Segoe UI', system-ui, sans-serif;
+  --font-body:       'Onest', 'Satoshi', 'Segoe UI', system-ui, sans-serif;
+  --font-micro:      'Onest', 'Satoshi', 'Segoe UI', system-ui, sans-serif;
+  --font-kannada:    'Noto Sans Kannada', 'Onest', sans-serif;
+  --font-devanagari: 'Noto Serif Devanagari', serif;
+
+  /* the roles — every font-size in this file names one of these */
+  --size-label:   var(--step--2);   /* always caps + tracking */
+  --size-anno:    var(--step--1);
+  --size-body:    var(--step-0);
+  --size-title:   var(--step-1);
+  /* fluid: ladder step -> ladder step, at this site's tuned vw rate */
+  --size-display: clamp(var(--step-3),  2.4vw, var(--step-5));
+  --size-hero:    clamp(var(--step-4),  3.6vw, var(--step-7));
+  --size-giant:   clamp(var(--step-8), 10.0vw, var(--step-13));
+  --size-word:    clamp(var(--step-10),16.5vw, var(--step-18));
+
+  /* weight — TWO cuts of Onest, nothing else.
+       300 -> everything monumental (display, hero, giant)
+       500 -> everything else (body, titles, labels, the word)
+     Labels are told apart by caps + tracking + size, never by weight. */
+  --weight-display: 300;
+  --weight-title:   500;
+  --weight-body:    500;
+  --weight-bold:    500;
+
+  /* tracking — one ladder, tightening as type grows, opening as it shrinks */
+  --tracking-giant:   -.03em;   /* step +7 and above */
+  --tracking-display: -.02em;   /* steps +3 .. +5 */
+  --tracking-title:   -.005em;  /* step +1 */
+  --tracking-body:     0;       /* step  0 */
+  --tracking-list:     .02em;   /* step  0, in lists and menus */
+  --tracking-caps:     .16em;   /* step -2, in tight columns */
+  --tracking-label:    .22em;   /* step -2, everywhere else */
+
+  /* leading — one ladder, loosening as type shrinks */
+  --leading-giant:   .92;
+  --leading-flat:    1;
+  --leading-display: 1.1;
+  --leading-title:   1.35;
+  --leading-body:    1.7;
+  --leading-script:  1.9;       /* Kannada / Devanagari need the room */
+
+  /* color — body copy sits over moving imagery, so the dim tone was lifted
+     until it holds against the brightest scene (the dawn river) */
+  --ink: #f2ece0;
+  --ink-dim: #ded6c6;
+  --ink-faint: #a79d8b;
+  --amber: #c8813b;
+  --gopi: #c8a66a;          /* gopichandana gold — the drawing hue */
+  --stone: #171310;
+  --ground: #0a0806;
+
+  /* layout */
+  --gutter: clamp(44px, 5.8vw, 112px);
+  --maxw: 34em;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* the ladder's anchor step, so anything that sets no size of its own
+     inherits step 0 rather than the browser's off-ladder 16px default */
+  font-size: var(--size-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}
+
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; display: block; }
+#scroll-space { position: relative; width: 1px; visibility: hidden; }
+
+/* ---------------- opening hero ---------------- */
+#hero {
+  position: fixed; left: var(--gutter); top: max(11%, 104px); z-index: 7;
+  max-width: 860px; width: 46vw; min-width: 480px; pointer-events: none;
+  transition: none;
+}
+/* a quiet indigo atmosphere behind the copy — readable over the sunrise */
+#hero::before {
+  content: ''; position: absolute; z-index: -1; left: -40%; top: -60%; right: -45%; bottom: -85%;
+  background: radial-gradient(closest-side, rgba(20,26,44,.74) 0%, rgba(20,26,44,.50) 42%, rgba(20,26,44,.18) 72%, rgba(20,26,44,0) 100%);
+  pointer-events: none;
+}
+#hero .hero-eyebrow {
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--gopi); margin: 0 0 2.2em;
+  text-shadow: 0 1px 12px rgba(10,14,24,.7);
+  display: flex; align-items: center; gap: 10px;
+}
+#hero .hero-eyebrow::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gopi); flex: none;
+}
+#hero .hero-heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display); font-size: var(--size-hero);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display); color: var(--ink); margin: 0 0 .7em;
+  text-shadow: 0 2px 26px rgba(10,14,24,.6);
+  white-space: nowrap;
+}
+#hero .hero-body {
+  font-weight: var(--weight-body); font-size: var(--size-body); line-height: var(--leading-body);
+  color: var(--ink-dim);
+  max-width: 460px; margin: 0 0 .9em;
+  text-shadow: 0 1px 4px rgba(10,14,24,.75), 0 1px 16px rgba(10,14,24,.7);
+}
+#cta {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 14px;
+  background: none; border: none; cursor: pointer; padding: 12px 0; margin-top: 1.6em;
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); color: var(--gopi); text-transform: uppercase;
+  transition: color .4s, gap .4s;
+}
+#cta i { display: block; width: 38px; height: 1px; background: linear-gradient(to right, var(--gopi), rgba(200,166,106,.15)); transition: width .4s; }
+#cta:hover, #cta:focus-visible { color: #e8d9b8; gap: 18px; }
+#cta:hover i { width: 52px; }
+#cta:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 6px; }
+
+/* the word: one line of flat bone-white type across most of the width */
+#word {
+  position: fixed; left: 50%; bottom: -2.4vw; transform: translateX(-50%); z-index: 6;
+  font-family: var(--font-display); font-weight: var(--weight-body);
+  font-size: var(--size-word); line-height: var(--leading-flat); letter-spacing: var(--tracking-list);
+  color: rgba(237,226,199,.78); white-space: nowrap; pointer-events: none; user-select: none;
+  text-shadow: 0 2px 44px rgba(6,9,18,.4);
+  transition: none;
+  will-change: transform;
+}
+/* pre-dawn: the interface layer waits in the dark and arrives with the light */
+body.predawn #ui { opacity: 0; }
+#ui { transition: opacity 2.4s ease; }
+
+/* tablet + mobile adjustments for the opening layer */
+@media (max-width: 1024px) {
+  #hero { top: 9%; max-width: 500px; min-width: 0; width: auto; }
+  #hero .hero-heading { white-space: normal; }
+}
+@media (max-width: 768px) {
+  #hero { left: 7%; right: 7%; top: max(15%, calc(96px + var(--safe-t))); max-width: none; width: auto; min-width: 0; }
+  #hero .hero-heading { white-space: normal; }
+  #hero::before { left: -20%; right: -20%; top: -40%; bottom: -40%; }
+  #word { font-size: clamp(var(--step-8), 19vw, var(--step-12)); bottom: -2.6vw; letter-spacing: var(--tracking-list); }
+}
+
+/* film grain + vignette (retired in the composition pass; kept for reference) */
+#grain, #vignette { display: none; }
+#veil { position: fixed; inset: 0; z-index: 4; pointer-events: none; background: #060403; opacity: 0; }
+
+/* ---------------- captions / editorial blocks ---------------- */
+#captions { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+.cap {
+  position: absolute; opacity: 0; will-change: opacity, transform;
+  max-width: min(var(--maxw), 82vw);
+}
+.cap.pos-center { left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+.cap.pos-low    { left: 50%; bottom: calc(13vh + var(--safe-b)); transform: translateX(-50%); text-align: center; }
+.cap.pos-left   { left: clamp(24px, 7vw, 120px); top: 50%; transform: translateY(-50%); text-align: left; }
+.cap.pos-right  { right: clamp(24px, 7vw, 120px); top: 50%; transform: translateY(-50%); text-align: left; }
+.cap.pos-high   { left: 50%; top: 14vh; transform: translateX(-50%); text-align: center; }
+.cap.pos-edgeR  { right: 20px; top: 50%; transform: translateY(-50%); max-width: none; text-align: center; }
+.cap.pos-bleedL { left: -3vw; bottom: 4vh; transform: none; max-width: none; text-align: left; }
+
+/* ---- editorial hierarchy ----
+   Four sizes, two weights, one family. Every scene draws from this and
+   nothing else; scene personality comes from composition, not new type. */
+/* chapter number / location / date marker */
+.t-loc {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); text-transform: uppercase;
+  color: var(--gopi); margin-bottom: 1.4em;
+  text-shadow: 0 1px 12px rgba(0,0,0,.7);
+}
+/* scene display */
+.t-display {
+  font-family: var(--font-display);
+  font-size: var(--size-display); font-weight: var(--weight-display);
+  line-height: var(--leading-display); letter-spacing: var(--tracking-display);
+  color: var(--ink); margin-bottom: .4em;
+  text-shadow: 0 2px 30px rgba(0,0,0,.65);
+}
+.t-display.t-xl { font-size: var(--size-hero); line-height: var(--leading-flat); letter-spacing: var(--tracking-giant); }
+.t-display.t-kn { font-family: var(--font-kannada); line-height: var(--leading-title); }
+/* major statement */
+.t-sub {
+  font-family: var(--font-display);
+  font-size: var(--size-title); font-weight: var(--weight-title);
+  line-height: var(--leading-title); letter-spacing: var(--tracking-title);
+  color: var(--ink); margin-bottom: .55em;
+  text-shadow: 0 1px 20px rgba(0,0,0,.6);
+}
+/* body */
+.t-body {
+  font-size: var(--size-body); font-weight: var(--weight-body);
+  line-height: var(--leading-body); color: var(--ink-dim);
+  text-shadow: 0 1px 14px rgba(0,0,0,.72);
+}
+.t-body + .t-body { margin-top: 1em; }
+.t-body strong { color: var(--ink); font-weight: var(--weight-bold); }
+/* body-small is an alias of body — one reading size across the site */
+.t-small {
+  font-size: var(--size-body); font-weight: var(--weight-body);
+  line-height: var(--leading-body); color: var(--ink-dim);
+  text-shadow: 0 1px 12px rgba(0,0,0,.72);
+}
+/* moment of extreme scale */
+.t-num {
+  font-family: var(--font-display);
+  font-size: var(--size-hero); font-weight: var(--weight-display);
+  line-height: var(--leading-flat); letter-spacing: var(--tracking-giant); color: var(--ink);
+  text-shadow: 0 2px 40px rgba(0,0,0,.7);
+}
+/* scripts, always paired with translation */
+.t-script {
+  font-family: var(--font-kannada); font-weight: var(--weight-body);
+  font-size: var(--size-title); line-height: var(--leading-script); color: var(--ink);
+}
+.t-script-dev {
+  font-family: var(--font-devanagari); font-weight: 400;   /* the Noto face's only cut */
+  font-size: var(--size-title); line-height: var(--leading-script); color: var(--ink);
+}
+.t-trans {
+  font-size: var(--size-body); font-weight: var(--weight-body);
+  line-height: var(--leading-body); color: var(--ink-faint); margin-top: 1em;
+}
+/* a Brindavana question — the architectural register: a fine rule, a held line */
+.t-q {
+  font-family: var(--font-display);
+  font-size: var(--size-title); font-weight: var(--weight-title);
+  line-height: var(--leading-title); letter-spacing: var(--tracking-title); color: var(--ink);
+  border-left: 2px solid var(--gopi); padding-left: clamp(14px, 1.4vw, 22px);
+  text-shadow: 0 1px 20px rgba(0,0,0,.6);
+  margin-bottom: .8em;
+}
+.pos-center .t-q, .pos-low .t-q { border-left: none; padding-left: 0; }
+.pos-center .t-q::after, .pos-low .t-q::after {
+  content: ''; display: block; width: 44px; height: 2px; background: var(--gopi);
+  margin: .7em auto 0; opacity: .8;
+}
+/* a selected work — its title carries the weight */
+.t-work {
+  font-family: var(--font-display);
+  font-size: var(--size-title); font-weight: var(--weight-title);
+  line-height: var(--leading-title); letter-spacing: var(--tracking-title); color: var(--ink);
+  margin-bottom: .5em;
+  text-shadow: 0 1px 22px rgba(0,0,0,.6);
+}
+/* the akṣara inside running copy */
+.t-om {
+  font-family: var(--font-devanagari); font-weight: 400; font-size: 1.35em; line-height: var(--leading-flat);
+  color: var(--gopi);
+}
+.t-rule {
+  width: 44px; height: 2px; background: var(--amber);
+  margin: 1.3em 0; opacity: .8;
+}
+/* an enormous word bleeding past the frame — environment, not caption */
+.t-giant {
+  font-family: var(--font-display); font-weight: var(--weight-display);
+  font-size: var(--size-giant); line-height: var(--leading-giant); letter-spacing: var(--tracking-giant);
+  color: rgba(242,236,224,.11); white-space: nowrap; pointer-events: none;
+  text-transform: uppercase; user-select: none;
+}
+/* tiny contextual annotation — the second information level */
+.t-anno {
+  font-family: var(--font-micro);
+  font-size: var(--size-anno); font-weight: var(--weight-body);
+  line-height: var(--leading-body); color: var(--ink-faint); max-width: 34ch;
+  text-shadow: 0 1px 10px rgba(0,0,0,.7);
+}
+.t-anno strong { color: var(--ink-dim); font-weight: var(--weight-bold); }
+/* the running chapter marker on the right edge — quiet orientation */
+.t-edge {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); text-transform: uppercase;
+  color: rgba(222,214,198,.55);
+  writing-mode: vertical-rl;
+}
+.pos-center .t-rule, .pos-low .t-rule, .pos-high .t-rule { margin-left: auto; margin-right: auto; }
+
+/* ---------------- Pañcabheda ---------------- */
+#panchabheda {
+  position: fixed; left: 50%; bottom: calc(9vh + var(--safe-b)); transform: translateX(-50%);
+  z-index: 6; width: min(560px, 92vw); text-align: center;
+  opacity: 0; pointer-events: none;
+}
+#panchabheda.live { pointer-events: auto; }
+#panchabheda .pb-hint {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--ink-faint); margin-bottom: 18px;
+}
+#panchabheda .pb-field {
+  display: flex; justify-content: center; align-items: flex-end; gap: clamp(10px, 3vw, 26px);
+  flex-wrap: wrap;
+}
+.pb-e {
+  min-width: 64px; min-height: 64px; border-radius: 50%;
+  background: rgba(10,10,12,.35); cursor: pointer;
+  font-family: var(--font-body); font-weight: var(--weight-body); font-size: var(--size-body);
+  color: var(--ink-dim);
+  border: 1px solid rgba(236,229,214,.25);
+  transition: border-color .3s, color .3s, box-shadow .3s, transform .3s;
+}
+.pb-e.pb-isvara {
+  min-width: 84px; min-height: 84px;
+  color: #e8c890; border-color: rgba(216,138,58,.6);
+  box-shadow: 0 0 26px rgba(216,138,58,.14) inset, 0 0 22px rgba(216,138,58,.1);
+}
+.pb-e.pb-jada { border-style: dashed; color: var(--ink-faint); }
+.pb-e:hover, .pb-e:focus-visible { color: var(--ink); border-color: rgba(236,229,214,.6); }
+.pb-e:focus-visible { outline: 1px solid rgba(236,229,214,.5); outline-offset: 4px; }
+.pb-e.sel {
+  color: #ffe9c2; border-color: var(--gopi);
+  box-shadow: 0 0 0 1px var(--gopi), 0 0 26px rgba(200,166,106,.22);
+  transform: translateY(-3px);
+}
+#panchabheda .pb-result {
+  min-height: 3.4em; margin-top: 20px;
+  display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;
+}
+#panchabheda .pb-result b {
+  font-family: var(--font-display); font-weight: var(--weight-title);
+  font-size: var(--size-title); color: var(--ink);
+  text-shadow: 0 1px 18px rgba(0,0,0,.6);
+}
+#panchabheda .pb-result span {
+  font-size: var(--size-body); color: var(--ink-dim);
+  text-shadow: 0 1px 12px rgba(0,0,0,.6);
+}
+#panchabheda .pb-foot {
+  display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 6px;
+}
+#panchabheda .pb-count {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-faint);
+}
+#panchabheda .pb-reset {
+  background: none; border: none; cursor: pointer; padding: 10px 6px;
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-faint);
+  border-bottom: 1px solid rgba(236,229,214,.25);
+  transition: color .3s;
+}
+#panchabheda .pb-reset:hover, #panchabheda .pb-reset:focus-visible { color: var(--ink); }
+#panchabheda .pb-reset:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 4px; }
+
+/* ---------------- 05 · The Works — the horizontal canvas ----------------
+   One continuous editorial composition: TEXT → BOOK → TAKEAWAY → NEXT WORK.
+   The chapter pins and vertical scroll becomes a slow lateral camera move;
+   each book is an object in the composition, its title runs behind it, its
+   takeaway sits beside it like a marginal annotation. On touch the same
+   canvas is a native scroll-snap reading track. */
+#works {
+  position: fixed; inset: 0; z-index: 6;
+  opacity: 0; pointer-events: none;
+}
+#works .wx-scrim {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(130% 115% at 50% 42%, rgba(6,4,3,0) 34%, rgba(6,4,3,.62) 100%),
+    linear-gradient(0deg, rgba(6,4,3,.45), rgba(6,4,3,0) 26%);
+}
+#works .wx-viewport { position: absolute; inset: 0; outline: none; }
+#works .wx-track {
+  display: flex; height: 100%; width: max-content; align-items: stretch;
+  will-change: transform;
+}
+#works .wx-intro, #works .wx-work, #works .wx-coda { flex: none; position: relative; }
+
+/* shared type roles */
+#works .wx-marker {
+  font-family: var(--font-micro); font-size: var(--size-label);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--gopi);
+  display: inline-flex; align-items: center; gap: 12px;
+}
+#works .wx-marker::before { content: ''; width: 26px; height: 1px; background: rgba(200,166,106,.6); }
+#works .wx-kn {
+  font-family: var(--font-kannada); font-weight: var(--weight-display);
+  font-size: var(--size-hero); line-height: var(--leading-display);
+  color: var(--ink); margin: .55em 0 .5em;
+  text-shadow: 0 2px 26px rgba(0,0,0,.5);
+}
+#works .wx-lead {
+  font-size: var(--size-body); line-height: var(--leading-body);
+  color: var(--ink-dim); max-width: 42ch;
+  text-shadow: 0 1px 12px rgba(0,0,0,.7);
+}
+#works .wx-title {
+  /* a headline that is READ, not scenery: hero register, fully visible */
+  font-family: var(--font-display); font-weight: var(--weight-display);
+  font-size: var(--size-hero);
+  line-height: var(--leading-display); letter-spacing: var(--tracking-display);
+  color: var(--ink); margin: 0;
+  text-shadow: 0 2px 24px rgba(0,0,0,.5);
+  will-change: transform, opacity;
+}
+#works .wx-book {
+  will-change: transform;
+  aspect-ratio: var(--r);
+}
+#works .wx-book img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  /* the object, not a card: one grounded shadow, no frame */
+  filter: drop-shadow(0 30px 52px rgba(0,0,0,.55)) drop-shadow(0 6px 16px rgba(0,0,0,.4));
+}
+#works .wx-dn {
+  display: block;
+  font-family: var(--font-devanagari); font-weight: 400;
+  font-size: var(--size-anno); line-height: var(--leading-script);
+  color: var(--ink-faint);
+}
+#works .wx-scope {
+  display: block; margin-top: .2em;
+  font-family: var(--font-micro); font-size: var(--size-anno);
+  color: var(--ink-faint); line-height: var(--leading-body);
+}
+#works .wx-desc {
+  margin-top: 1.1em;
+  font-size: var(--size-body); line-height: var(--leading-body);
+  color: var(--ink-dim); max-width: 30ch;
+  text-shadow: 0 1px 12px rgba(0,0,0,.7);
+}
+#works .wx-take { margin-top: 1.5em; border-top: 1px solid rgba(200,166,106,.4); padding-top: 1em; }
+#works .wx-take-label {
+  display: block; margin-bottom: .7em;
+  font-family: var(--font-micro); font-size: var(--size-label);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--gopi);
+}
+#works .wx-take-line {
+  font-family: var(--font-display); font-weight: var(--weight-title);
+  font-size: var(--size-title); line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title); color: var(--ink);
+  text-shadow: 0 1px 14px rgba(0,0,0,.65);
+}
+#works .wx-num {
+  font-family: var(--font-micro); font-size: var(--size-label);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+}
+#works .wx-side { will-change: transform, opacity; }
+
+/* ---- the pinned desktop canvas ---- */
+#works.wx-desk .wx-mhead, #works.wx-desk .wx-cue { display: none; }
+#works.wx-desk .wx-viewport { overflow: hidden; }
+#works.wx-desk .wx-intro {
+  width: 76vw; display: flex; flex-direction: column; justify-content: center;
+  padding-left: var(--gutter);
+}
+/* Books travel; the text does not. Each work's text is anchored to its own
+   book centre (50%) minus the focal x (52vw) plus the gutter — so the moment
+   its book reaches focus, the text sits exactly at the left gutter — and the
+   driver cancels the track's travel on it, so the column stays planted and
+   the works crossfade through one fixed, fully readable text zone while the
+   books make one continuous lateral move. */
+#works.wx-desk .wx-work { width: 34vw; height: 100%; }
+#works.wx-desk .wx-num {
+  position: absolute; left: calc(50% - 52vw + var(--gutter)); top: 22%; z-index: 4;
+}
+#works.wx-desk .wx-title {
+  position: absolute; left: calc(50% - 52vw + var(--gutter)); top: 27%; z-index: 4;
+  width: min(420px, 30vw);
+}
+#works.wx-desk .wx-book {
+  position: absolute; left: 50%; top: 49%; z-index: 2;
+  height: min(60vh, calc(32vw / var(--r)));
+  transform: translate(-50%, -50%);
+}
+#works.wx-desk .wx-side {
+  position: absolute; left: calc(50% - 52vw + var(--gutter)); top: 47%; z-index: 4;
+  width: clamp(220px, 22vw, 340px);
+}
+#works.wx-desk .wx-coda {
+  width: 94vw; display: flex; flex-direction: column; justify-content: center;
+  padding-left: 10vw; will-change: transform, opacity;
+}
+#works .wx-coda-a {
+  font-family: var(--font-display); font-weight: var(--weight-title);
+  font-size: var(--size-title); letter-spacing: var(--tracking-title);
+  line-height: var(--leading-title); color: var(--ink-dim);
+}
+#works .wx-coda-b {
+  font-family: var(--font-display); font-weight: var(--weight-display);
+  font-size: var(--size-hero); line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display); color: var(--ink); margin: .35em 0 .5em;
+}
+#works .wx-coda-c {
+  font-size: var(--size-body); line-height: var(--leading-body);
+  color: var(--ink-faint); max-width: 44ch;
+}
+#works .wx-progress {
+  /* bottom-right: the site's chapter chip owns the bottom-left corner */
+  position: absolute; right: var(--gutter); bottom: calc(30px + var(--safe-b));
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-micro); font-size: var(--size-label);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+}
+#works .wx-progress .wx-p-now { color: var(--gopi); font-weight: var(--weight-bold); }
+#works .wx-p-line { width: 120px; height: 1px; background: rgba(236,229,214,.16); overflow: hidden; }
+#works .wx-p-line i {
+  display: block; width: 100%; height: 100%;
+  background: rgba(200,166,106,.85);
+  transform: scaleX(0); transform-origin: left center; will-change: transform;
+}
+
+/* ---- the touch reading track (coarse pointers and phones) ---- */
+#works.wx-touch .wx-intro, #works.wx-touch .wx-progress { display: none; }
+#works.wx-touch .wx-mhead {
+  position: absolute; left: 24px; right: 24px; top: calc(7vh + 12px);
+}
+#works.wx-touch .wx-kn { font-size: var(--size-display); margin: .45em 0 .35em; }
+#works.wx-touch .wx-lead { max-width: none; }
+#works.wx-touch .wx-viewport {
+  position: absolute; left: 0; right: 0; top: 22vh;
+  bottom: calc(54px + var(--safe-b));   /* clear of the chapter chip */
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+#works.wx-touch .wx-viewport::-webkit-scrollbar { display: none; }
+#works.wx-touch.live .wx-viewport { pointer-events: auto; }
+#works.wx-touch .wx-track { padding: 0 9vw; }
+#works.wx-touch .wx-work {
+  width: 82vw; scroll-snap-align: center;
+  display: flex; flex-direction: column; justify-content: flex-start;
+  padding: 0 3vw;
+}
+#works.wx-touch .wx-num { order: -1; margin-bottom: .9em; }
+#works.wx-touch .wx-title {
+  font-size: calc(clamp(var(--step-6), 12vw, var(--step-9)) * var(--ts, 1));
+  white-space: normal;
+}
+#works.wx-touch .wx-book {
+  margin: 2vh auto;
+  height: min(34vh, calc(58vw / var(--r)));
+}
+#works.wx-touch .wx-desc { display: none; }
+#works.wx-touch .wx-dn, #works.wx-touch .wx-scope { display: inline; }
+#works.wx-touch .wx-scope { margin: 0 0 0 .6em; }
+#works.wx-touch .wx-take { margin-top: .9em; }
+@media (max-height: 700px) {
+  #works.wx-touch .wx-book { height: min(28vh, calc(50vw / var(--r))); }
+  #works.wx-touch .wx-title { font-size: calc(clamp(var(--step-5), 10.5vw, var(--step-8)) * var(--ts, 1)); }
+}
+#works.wx-touch .wx-coda {
+  width: 82vw; scroll-snap-align: center;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 3vw;
+}
+#works.wx-touch .wx-cue {
+  position: absolute; left: 50%; bottom: calc(16px + var(--safe-b));
+  transform: translateX(-50%);
+  font-family: var(--font-micro); font-size: var(--size-label);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--ink-faint); white-space: nowrap;
+  transition: opacity .7s;
+}
+#works.wx-touch .wx-cue b { color: var(--gopi); font-weight: var(--weight-bold); }
+#works.wx-cue-off .wx-cue { opacity: 0; }
+
+/* the flowing document reads the same works as plain text */
+body.nowebgl #works { position: static; opacity: 1; pointer-events: auto; padding: 0 var(--gutter) 10vh; }
+body.nowebgl #works .wx-scrim, body.nowebgl #works .wx-progress,
+body.nowebgl #works .wx-cue, body.nowebgl #works .wx-mhead { display: none; }
+body.nowebgl #works .wx-viewport { position: static; overflow: visible; }
+body.nowebgl #works .wx-track {
+  display: block; width: auto; transform: none !important;
+  max-width: var(--maxw); margin: 0 auto;
+}
+body.nowebgl #works .wx-intro, body.nowebgl #works .wx-work, body.nowebgl #works .wx-coda {
+  width: auto; height: auto; display: block; padding: 0; margin: 0 0 3em;
+  opacity: 1 !important; transform: none !important;
+}
+body.nowebgl #works .wx-title {
+  position: static; white-space: normal;
+  font-size: var(--size-display); line-height: var(--leading-display);
+  transform: none !important; opacity: 1 !important; margin-bottom: .5em;
+}
+body.nowebgl #works .wx-book {
+  position: static; height: auto; width: min(300px, 72vw); margin: 1.2em 0;
+  transform: none !important;
+}
+body.nowebgl #works .wx-side, body.nowebgl #works .wx-num {
+  position: static; width: auto; transform: none !important; opacity: 1 !important;
+}
+body.nowebgl #works .wx-desc { display: block; }
+
+/* ---------------- persistent UI ---------------- */
+#ui { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+#wordmark {
+  position: absolute; top: 34px; left: var(--gutter); display: flex; align-items: center; gap: 12px;
+  color: var(--ink); opacity: .92; transition: opacity 1.2s;
+}
+#wordmark .mark { width: 30px; height: 30px; color: var(--gopi); flex: none; }
+#wordmark .wm-text { display: flex; flex-direction: column; gap: 3px; font-family: var(--font-micro); }
+#wordmark .wm-text b { font-weight: var(--weight-bold); font-size: var(--size-anno); letter-spacing: var(--tracking-caps); }
+#wordmark .wm-text small { font-weight: var(--weight-bold); font-size: var(--size-label); letter-spacing: var(--tracking-label); color: var(--ink-faint); }
+
+/* the waveform sound control */
+#audio-toggle {
+  position: absolute; top: 72px; right: var(--gutter); pointer-events: auto; cursor: pointer;
+  background: none; border: none; padding: 8px 2px; color: var(--ink);
+  opacity: .72; transition: opacity .5s;
+}
+#audio-toggle:hover, #audio-toggle.playing { opacity: 1; }
+#audio-toggle:focus-visible { outline: 1px solid rgba(236,229,214,.55); outline-offset: 4px; }
+#audio-toggle svg { display: block; width: 48px; height: 15px; overflow: visible; }
+#audio-toggle svg path { transition: stroke-width .3s; }
+#audio-toggle.playing svg path { stroke-width: 1.1; }
+
+/* top navigation */
+#topnav {
+  position: absolute; top: 38px; right: var(--gutter); pointer-events: auto;
+  display: flex; gap: 30px;
+}
+#topnav button {
+  background: none; border: none; cursor: pointer; padding: 8px 0;
+  font-family: var(--font-micro); font-weight: var(--weight-bold); font-size: var(--size-label); letter-spacing: var(--tracking-label);
+  color: var(--ink-dim); transition: color .4s;
+}
+#topnav button:hover, #topnav button:focus-visible { color: var(--ink); }
+#topnav button:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 4px; }
+
+/* chapter control — one compact chip at every size. It reports where you
+   are and opens the full index; nothing else lives in the margins. */
+#chip {
+  display: flex;
+  position: absolute; left: var(--gutter); bottom: calc(30px + var(--safe-b)); pointer-events: auto;
+  background: none; border: none; border-left: 1px solid rgba(200,166,106,.5);
+  padding: 6px 0 6px 14px; cursor: pointer; text-align: left;
+  color: var(--ink); font-family: var(--font-micro);   /* buttons do not inherit it */
+  flex-direction: column; gap: 4px; min-height: 44px; justify-content: center;
+  transition: border-color .4s;
+}
+#chip:hover, #chip:focus-visible { border-left-color: var(--gopi); }
+#chip #chip-num { font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); color: var(--gopi); }
+#chip #chip-name { font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); }
+#chip:focus-visible { outline: 1px solid rgba(236,229,214,.5); outline-offset: 6px; }
+
+/* the chapter sheet */
+#sheet {
+  position: fixed; inset: 0; z-index: 30;
+  background: rgba(4,5,7,.78);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; transition: opacity .3s ease;
+}
+#sheet.open { opacity: 1; }
+#sheet .sheet-in {
+  width: 100%; max-width: 560px; max-height: 78dvh; overflow-y: auto;
+  background: #0b0a08;
+  border-top: 1px solid rgba(200,166,106,.3);
+  padding: 18px 22px calc(26px + var(--safe-b));
+  transform: translateY(24px); transition: transform .32s cubic-bezier(.32,.72,.35,1);
+}
+#sheet.open .sheet-in { transform: none; }
+#sheet .sheet-head {
+  font-family: var(--font-micro);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 2px 14px;
+  font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+  border-bottom: 1px solid rgba(236,229,214,.12); margin-bottom: 8px;
+}
+#sheet .sheet-close {
+  background: none; border: none; cursor: pointer; color: var(--ink-dim);
+  font-family: var(--font-body); font-weight: var(--weight-body);
+  font-size: var(--size-body); padding: 10px 12px; min-width: 44px; min-height: 44px;
+}
+#sheet .sheet-close:focus-visible { outline: 1px solid rgba(236,229,214,.5); }
+#sheet .sheet-list { display: flex; flex-direction: column; }
+#sheet .sheet-list button {
+  display: flex; align-items: baseline; gap: 16px;
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: 13px 4px; min-height: 44px;
+  border-bottom: 1px solid rgba(236,229,214,.07);
+  color: var(--ink-dim); font-family: var(--font-body);
+}
+#sheet .sheet-list button b {
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-caps); color: var(--gopi);
+  width: 26px; flex: none;
+}
+#sheet .sheet-list button span {
+  font-size: var(--size-body); font-weight: var(--weight-body); letter-spacing: var(--tracking-list); color: var(--ink);
+}
+#sheet .sheet-list button:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: -1px; }
+
+#aaradhane-link {
+  position: absolute; bottom: calc(30px + var(--safe-b)); right: 30px; pointer-events: auto;
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); text-transform: uppercase;
+  color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid rgba(200,129,59,.5);
+  padding-bottom: 3px; opacity: 0; transition: opacity 1s, color .4s;
+}
+#aaradhane-link:hover { color: var(--ink); }
+#aaradhane-link.visible { opacity: .95; }
+
+body.ui-quiet #wordmark { opacity: .14; }
+
+/* ---------------- footer — the last page, not another scene ----------------
+   It reads as a colophon: the world above ends on a rule, then a masthead
+   column beside a chapter index, then a thin meta row along the bottom. */
+#footer {
+  position: relative; z-index: 8;
+  background: linear-gradient(to bottom, rgba(6,8,9,0), #060809 14%, #060809);
+  padding: 34vh 0 0;
+}
+#footer .f-in {
+  max-width: 1180px; margin: 0 auto;
+  padding: 0 var(--gutter) calc(30px + var(--safe-b));
+  border-top: 1px solid rgba(236,229,214,.14);
+}
+/* the masthead sits left, the index right — an editorial colophon */
+#footer .f-top {
+  display: flex; gap: clamp(32px, 7vw, 120px); align-items: flex-start;
+  padding: 44px 0 56px;
+}
+#footer .f-brand { flex: 1 1 300px; min-width: 0; }
+#footer .f-mark {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--gopi); margin-bottom: 1.1em;
+}
+#footer .f-sub {
+  font-family: var(--font-display);
+  font-size: var(--size-title); font-weight: var(--weight-title);
+  line-height: var(--leading-title); letter-spacing: var(--tracking-title); color: var(--ink);
+  margin-bottom: 1.6em;
+}
+#footer .f-note p {
+  font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-faint);
+  margin-bottom: .7em; max-width: 42ch;
+}
+/* the index: two tidy columns of small caps, the way a contents page runs */
+#footer .f-chapters {
+  flex: 0 1 auto;
+  display: grid;
+  /* a contents page reads DOWN its first column, then down the second */
+  grid-template-rows: repeat(6, auto); grid-auto-flow: column;
+  grid-auto-columns: minmax(130px, 1fr);
+  gap: 0 clamp(24px, 4vw, 64px); align-content: start;
+}
+#footer .f-chapters button {
+  display: flex; align-items: baseline; gap: 12px;
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: 9px 0; min-height: 40px;
+  border-bottom: 1px solid rgba(236,229,214,.07);
+  font-family: var(--font-body); font-size: var(--size-body); font-weight: var(--weight-body);
+  letter-spacing: var(--tracking-list); color: var(--ink-dim); transition: color .35s;
+}
+#footer .f-chapters button b {
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint); width: 20px; flex: none;
+}
+#footer .f-chapters button:hover, #footer .f-chapters button:focus-visible { color: var(--ink); }
+#footer .f-chapters button:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 2px; }
+/* the meta row: credits left, invocation right, on one hairline */
+#footer .f-meta {
+  display: flex; flex-wrap: wrap; gap: 16px 32px;
+  align-items: baseline; justify-content: space-between;
+  padding: 22px 0 0; border-top: 1px solid rgba(236,229,214,.1);
+}
+#footer .f-credit {
+  font-family: var(--font-micro); font-size: var(--size-anno); line-height: var(--leading-body); color: var(--ink-faint);
+  max-width: 62ch; margin: 0;
+}
+#footer .f-namah {
+  font-family: var(--font-micro);
+  font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); text-transform: uppercase;
+  color: var(--gopi); white-space: nowrap;
+}
+@media (max-width: 860px) {
+  #footer .f-top { flex-direction: column; gap: 40px; padding: 36px 0 40px; }
+  #footer .f-chapters { width: 100%; }
+}
+
+/* ---------------- no-WebGL fallback: the biography as a document ---------- */
+body.nowebgl { background: linear-gradient(to bottom, #0b0e14, #0a0806 30%, #0a0806); }
+body.nowebgl #gl, body.nowebgl #veil, body.nowebgl #word,
+body.nowebgl #chip, body.nowebgl #audio-toggle { display: none; }
+body.nowebgl #hero { position: static; margin: 140px auto 0; padding: 0 var(--gutter); opacity: 1 !important; }
+/* the scene's legibility scrim: once #hero is static its offsets resolve
+   against the viewport and push the page wide — and the flat document
+   background needs no scrim anyway */
+body.nowebgl #hero::before { display: none; }
+body.nowebgl #captions.static {
+  position: static; pointer-events: auto;
+  padding: 8vh var(--gutter) 12vh;
+}
+body.nowebgl #captions.static .static-note {
+  max-width: var(--maxw); margin: 0 auto 10vh;
+  font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-faint);
+  border-left: 2px solid var(--gopi); padding-left: 18px;
+}
+body.nowebgl #captions.static .cap {
+  position: static; opacity: 1 !important; visibility: visible !important;
+  transform: none !important; max-width: var(--maxw);
+  margin: 0 auto 14vh; text-align: left;
+}
+/* the Pañcabheda reads as plain text where WebGL (and its controller) cannot run */
+body.nowebgl #panchabheda { position: static; transform: none; opacity: 1; margin: 0 auto 14vh; width: auto; max-width: var(--maxw); text-align: left; padding: 0 var(--gutter); }
+body.nowebgl #panchabheda .pb-hint, body.nowebgl #panchabheda .pb-field,
+body.nowebgl #panchabheda .pb-result, body.nowebgl #panchabheda .pb-foot { display: none; }
+body.nowebgl #panchabheda .visually-hidden {
+  position: static; width: auto; height: auto; margin: 0; clip: auto; clip-path: none;
+  overflow: visible; white-space: normal; list-style: none;
+}
+body.nowebgl #panchabheda .visually-hidden li {
+  font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-dim); margin-bottom: .6em;
+}
+/* in the flowing document, environmental type becomes ordinary headings */
+body.nowebgl .t-giant {
+  font-size: clamp(var(--step-6), 9vw, var(--step-11)); white-space: normal; color: var(--ink);
+  line-height: var(--leading-flat);
+}
+body.nowebgl .cap.pos-edgeR { display: none; }
+body.nowebgl .t-edge { writing-mode: horizontal-tb; }
+body.nowebgl #footer .f-chapters { display: none; }
+
+/* ---------------- reduced motion ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  #sheet, #sheet .sheet-in, #cta, #cta i { transition: none; }
+}
+
+/* ---------------- BrindavanaPreloader — architectural drafting ------------ */
+:root {
+  --bx: 200, 166, 106;            /* #C8A66A  Gopi Chandana */
+}
+#preloader {
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 9999;
+  overflow: hidden;
+  background: #060809;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .6s cubic-bezier(.45, 0, .55, 1), visibility .6s;
+}
+#preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+#preloader .pre-in {
+  display: flex; flex-direction: column; align-items: center;
+  transform: translateY(-1vh);
+}
+#preloader .pre-mark {
+  position: relative;
+  height: clamp(520px, 70vh, 680px);
+  display: flex; justify-content: center;
+  transform-origin: 50% 50%;
+  transition: transform 1.1s cubic-bezier(.33, 0, .3, 1), opacity 1.1s ease;
+}
+#preloader.grown .pre-mark { transform: scale(1.03); }
+/* the exit: the finished drawing lifts off the page as the world arrives */
+#preloader.done .pre-mark { transform: translateY(-12px) scale(1.035); }
+#preloader .pre-mark svg { height: 100%; width: auto; display: block; overflow: visible; }
+
+/* The drawing is not shown at all until every path has been measured and
+   closed behind its own dash — the sheet must open truly blank. */
+#preloader:not(.armed) .pre-mark svg { visibility: hidden; }
+#preloader:not(.armed) #pre-build path,
+#preloader:not(.armed) #pre-guides path { opacity: 0; }
+
+/* every line: no fills, rounded joins, crisp on retina.
+   No vector-effect here: under non-scaling-stroke the dash resolves in
+   RENDERED pixels — on displays with OS scaling every stroke leaked its
+   tail. In user units getTotalLength() is exact by spec. */
+#preloader svg path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  shape-rendering: geometricPrecision;
+}
+
+/* --- construction geometry --- */
+#pre-guides path { transition: opacity .75s ease; }
+#pre-guides .bx-grid   { stroke: rgba(var(--bx), .18); stroke-width: .65; stroke-dasharray: 3 6; }
+#pre-guides .bx-frame  { stroke: rgba(var(--bx), .50); stroke-width: .75; }
+#pre-guides .bx-guide  { stroke: rgba(var(--bx), .40); stroke-width: .65; }
+#pre-guides .bx-axis   { stroke: rgba(var(--bx), .55); stroke-width: .75; }
+#pre-guides .bx-arc    { stroke: rgba(var(--bx), .38); stroke-width: .65; }
+#pre-guides .bx-tick   { stroke: rgba(var(--bx), .44); stroke-width: .7; }
+#pre-guides .bx-node   { stroke: rgba(var(--bx), .48); stroke-width: .7; }
+#pre-guides .bx-dot    { stroke: rgba(var(--bx), .18); stroke-width: .65; stroke-dasharray: 2 7; }
+
+/* completion, stage 1: the measurement guides go */
+#preloader.settled .bx-tick,
+#preloader.settled .bx-node,
+#preloader.settled .bx-guide { opacity: 0; }
+/* completion, stage 2: the grid, the dotted paths and the axes go */
+#preloader.cleared .bx-grid,
+#preloader.cleared .bx-dot,
+#preloader.cleared .bx-axis,
+#preloader.cleared .bx-arc,
+#preloader.cleared .bx-frame { opacity: 0; }
+
+/* --- the structure: working line -> finished line --- */
+#pre-build path {
+  stroke: rgba(var(--bx), .42);
+  stroke-width: 1.2;
+  transition: stroke .85s ease, stroke-width .85s ease;
+}
+#pre-build path.s { stroke: rgba(var(--bx), .48); stroke-width: 1.35; }
+#pre-build path.d { stroke: rgba(var(--bx), .36); stroke-width: 1.25; }
+#pre-build path.ink   { stroke: rgba(var(--bx), .72); stroke-width: 1.3; }
+#pre-build path.s.ink { stroke: rgba(var(--bx), .8);  stroke-width: 1.35; }
+#pre-build path.d.ink { stroke: rgba(var(--bx), .62); stroke-width: 1.25; }
+
+/* --- reduced motion: the finished drawing, immediately --- */
+#preloader.reduced #pre-guides { display: none; }
+#preloader.reduced #pre-build path { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    #preloader .pre-mark { transition: none; }
+}
+
+/* tablet */
+@media (max-width: 1024px) {
+  #preloader .pre-mark { height: clamp(460px, 64vh, 600px); }
+}
+
+/* mobile — the primary platform */
+@media (max-width: 768px) {
+  :root { --maxw: 30em; }
+  #preloader .pre-mark { height: auto; width: min(68vw, 360px); max-height: 72vh; }
+  #preloader .pre-mark svg { width: 100%; height: auto; max-height: 72vh; }
+  #wordmark { top: calc(20px + var(--safe-t)); left: 20px; }
+  #wordmark .wm-text small { display: none; }
+  #audio-toggle { top: calc(20px + var(--safe-t)); right: 20px; }
+  #chip { left: 20px; bottom: calc(20px + var(--safe-b)); }
+  .cap.pos-left, .cap.pos-right {
+    left: 24px; right: 24px; max-width: none; transform: none; top: auto; bottom: calc(17vh + var(--safe-b));
+  }
+  .cap.pos-edgeR { left: auto; right: 10px; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .cap.pos-bleedL { left: -4vw; right: auto; bottom: 3vh; top: auto; transform: none; }
+  .cap.pos-low { bottom: calc(13vh + var(--safe-b)); width: 88vw; }
+  #aaradhane-link { bottom: calc(22px + var(--safe-b)); right: 20px; }
+  #panchabheda { bottom: calc(15vh + var(--safe-b)); }
+  .pb-e { min-width: 56px; min-height: 56px; font-size: var(--size-anno); }
+  .pb-e.pb-isvara { min-width: 72px; min-height: 72px; }
+  #footer { padding-top: 24vh; }
+  #footer .f-in { padding-left: 24px; padding-right: 24px; }
+  /* ch-based measures are wider than a phone column — let the text fill it */
+  #footer .f-note p, #footer .f-credit { max-width: none; }
+  #footer .f-meta { flex-direction: column; gap: 20px; }
+  #footer .f-chapters { gap: 0 20px; }
+  /* the nav drops below the mark on a phone rather than colliding with it */
+  #topnav { top: calc(64px + var(--safe-t)); right: auto; left: 20px; gap: 18px; }
+
+}
+
+/* review aid: ?domonly renders the interface over a transparent ground */
+body.domonly { background: transparent; }
+body.domonly #gl, body.domonly #grain, body.domonly #vignette, body.domonly #veil { display: none; }
