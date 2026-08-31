@@ -145,7 +145,7 @@ function buildDOM(host) {
     <div class="wx-progress" aria-hidden="true">
       <b class="wx-p-now">01</b><span class="wx-p-line"><i></i></span><b>${pad2(N)}</b>
     </div>
-    <div class="wx-cue" aria-hidden="true"><b>01</b>&nbsp;/&nbsp;${pad2(N)}&nbsp;→</div>`;
+    <div class="wx-cue" aria-hidden="true"><b>01</b>&nbsp;/&nbsp;${pad2(N)}&nbsp;<i>→</i></div>`;
 }
 
 export function createWorks({ reduced = false } = {}) {

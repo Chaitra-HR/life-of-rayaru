@@ -4,7 +4,7 @@
 // Everything here is restrained: no halos, no glowing markers, no fantasy
 // sky. The air is what makes a miniature read as a country.
 import * as THREE from 'three';
-import { canvas, tex, glowTexture, mulberry, clamp01, lerp, smooth } from '../../util.js';
+import { canvas, tex, glowTexture, mulberry, lerp } from '../../util.js';
 import { height, westCoastX } from './field.js';
 
 /* the seaward slope of the crest, where the cloud actually sits */

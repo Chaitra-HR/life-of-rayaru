@@ -7,12 +7,9 @@ export const clamp01 = v => clamp(v, 0, 1);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const remap = (v, a, b) => clamp01((v - a) / (b - a));
 export const smooth = t => t * t * (3 - 2 * t);
-export const smoother = t => t * t * t * (t * (t * 6 - 15) + 10);
+const smoother = t => t * t * t * (t * (t * 6 - 15) + 10);
 // window: 0 outside [a,d], 1 inside [b,c], smooth ramps between
 export const win = (v, a, b, c, d) => smooth(remap(v, a, b)) * (1 - smooth(remap(v, c, d)));
-export const easeIn = t => t * t;
-export const easeOut = t => 1 - (1 - t) * (1 - t);
-export const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 // frame-rate independent damping
 export const damp = (cur, target, lambda, dt) => lerp(cur, target, 1 - Math.exp(-lambda * dt));
 
@@ -297,20 +294,6 @@ export function flame(scale = 1) {
 }
 
 export const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-
-/* piecewise keyframe track: [[u, value…]] with smooth interpolation */
-export function track(keys) {
-  return (u) => {
-    if (u <= keys[0][0]) return keys[0].slice(1);
-    if (u >= keys[keys.length - 1][0]) return keys[keys.length - 1].slice(1);
-    let i = 0; while (keys[i + 1][0] < u) i++;
-    const a = keys[i], b = keys[i + 1];
-    const t = smooth(remap(u, a[0], b[0]));
-    const out = [];
-    for (let k = 1; k < a.length; k++) out.push(lerp(a[k], b[k], t));
-    return out;
-  };
-}
 
 /* camera path helper: keys of {u,pos,look,fov} — smoothstep-blended per segment */
 export function camTrack(keys) {

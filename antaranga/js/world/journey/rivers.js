@@ -4,7 +4,7 @@
 // map: the water lies below its banks, catches the sky at glancing angles
 // and moves very slowly.
 import * as THREE from 'three';
-import { clamp01, lerp } from '../../util.js';
+import { lerp } from '../../util.js';
 import { RIVERS, height, widthAt } from './field.js';
 
 export const SEA_LEVEL = -.12;

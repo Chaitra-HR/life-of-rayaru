@@ -9,7 +9,7 @@
 // across the land, a mid model, and the near model with its carving.
 import * as THREE from 'three';
 import { mergeGeometries } from '../../../vendor/BufferGeometryUtils.js';
-import { canvas, stoneCanvas, tex, mulberry, lerp } from '../../util.js';
+import { canvas, stoneCanvas, tex, lerp } from '../../util.js';
 import { height } from './field.js';
 
 /* ---------------- materials ---------------- */

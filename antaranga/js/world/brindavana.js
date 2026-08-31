@@ -1,9 +1,11 @@
 // ANTARANGA · procedural Brindavana — an original, art-directed reconstruction
-// guided by the real structure's character: dark krishna-shila, stepped plinth,
-// lotus base, pilastered body with arched niches, rosette medallion band,
-// stepped cornices and a crown of pointed kalasha merlons.
+// following the Moola Brindavana reference: dark krishna-shila; a broad flaring
+// base of cushioned mouldings under a scallop band; stepped mouldings up to a
+// pilastered niche level; a rosette medallion band; a tall framed upper block;
+// a cornice flaring outward beneath a crown of pointed leaf merlons; and the
+// tulasi-mani garland — two strands of large pale beads draped down the front.
 import * as THREE from 'three';
-import { stoneCanvas, rosetteCanvas, latticeCanvas, dentilCanvas, nichePanelCanvas, tex, mulberry } from '../util.js';
+import { stoneCanvas, rosetteCanvas, latticeCanvas, dentilCanvas, nichePanelCanvas, tex } from '../util.js';
 
 let _shared = null;
 function sharedMaterials() {
@@ -25,36 +27,15 @@ function box(w, h, d, mat) {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
 }
 
-/* lotus petal ring */
-function lotusRing(radius, petalW, petalH, petalD, count, mat, up = true) {
-  const g = new THREE.Group();
-  const shape = new THREE.Shape();
-  shape.moveTo(-petalW / 2, 0);
-  shape.quadraticCurveTo(-petalW / 2, petalH * .55, 0, petalH);
-  shape.quadraticCurveTo(petalW / 2, petalH * .55, petalW / 2, 0);
-  shape.closePath();
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: petalD, bevelEnabled: true, bevelThickness: .02, bevelSize: .015, bevelSegments: 1 });
-  geo.translate(0, 0, -petalD / 2);
-  const inst = new THREE.InstancedMesh(geo, mat, count);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
-  for (let i = 0; i < count; i++) {
-    const a = i / count * Math.PI * 2;
-    e.set(up ? -.42 : Math.PI + .42, a, 0, 'YXZ');
-    q.setFromEuler(e);
-    m.compose(new THREE.Vector3(Math.sin(a) * radius, 0, Math.cos(a) * radius), q, new THREE.Vector3(1, 1, 1));
-    inst.setMatrixAt(i, m);
-  }
-  g.add(inst);
-  return g;
-}
-
-/* pointed merlon (crown crenellation) */
-function merlonGeo(w = .3, h = .5, d = .12) {
+/* pointed leaf merlon (crown crenellation) — tall ogee silhouette */
+function merlonGeo(w = .3, h = .56, d = .1) {
   const s = new THREE.Shape();
   s.moveTo(-w / 2, 0);
-  s.lineTo(-w / 2, h * .55);
-  s.quadraticCurveTo(-w / 2, h * .8, 0, h);
-  s.quadraticCurveTo(w / 2, h * .8, w / 2, h * .55);
+  s.lineTo(-w / 2, h * .3);
+  s.quadraticCurveTo(-w / 2, h * .62, -w * .16, h * .8);
+  s.quadraticCurveTo(0, h * .92, 0, h);
+  s.quadraticCurveTo(0, h * .92, w * .16, h * .8);
+  s.quadraticCurveTo(w / 2, h * .62, w / 2, h * .3);
   s.lineTo(w / 2, 0);
   s.closePath();
   const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false });
@@ -80,46 +61,80 @@ function kalasha(mat, scale = 1) {
 }
 
 /**
- * Builds the brindavana. Returns { group, parts, explode(u), setEnvIntensity }.
- * Total height ≈ 4.7, base footprint ≈ 4.4.
+ * Builds the brindavana. Returns { group, parts, explode(u), height, materials }.
+ * Total height ≈ 5.5, base footprint ≈ 4.3.
  * parts: named groups so scenes can address/explode them.
  */
-export function buildBrindavana({ withMala = false, detail = 1 } = {}) {
+export function buildBrindavana({ withMala = false } = {}) {
   const M = sharedMaterials();
   const root = new THREE.Group();
   const parts = {};
   const P = (name) => { const g = new THREE.Group(); parts[name] = g; root.add(g); return g; };
 
+  /* half-width of the structure's face at height y — the built silhouette the
+     garland rests against (kept in step with the courses below) */
+  const surf = (y) =>
+    y > 5.03 ? 1.50 :        // crown ring
+    y > 4.58 ? 1.53 :        // cornice courses
+    y > 3.24 ? 1.37 :        // rosette band + upper block (one shoulder)
+    y > 1.92 ? 1.38 :        // niche level (pilasters proud of the face)
+    y > 1.52 ? 1.44 :        // stepped mouldings and ledge
+    y > .62 ? 1.92 :         // cushion base
+    2.16;                    // plinth
+
   let y = 0;
 
-  /* ---- stepped plinth ---- */
+  /* ---- plinth ---- */
   const plinth = P('plinth');
-  const steps = [[4.4, .32], [3.95, .3], [3.55, .28]];
-  for (const [w, h] of steps) {
+  for (const [w, h] of [[4.3, .30], [4.0, .26]]) {
     const b = box(w, h, w, M.stone);
     b.position.y = y + h / 2; plinth.add(b); y += h;
   }
-  // oxide seam above plinth
-  const seam0 = box(3.42, .07, 3.42, M.oxide); seam0.position.y = y + .035; plinth.add(seam0); y += .07;
+  const seam0 = box(3.86, .06, 3.86, M.oxide); seam0.position.y = y + .03; plinth.add(seam0); y += .06;
 
-  /* ---- lotus base ---- */
+  /* ---- the flaring base: two cushioned torus courses + a scallop band ---- */
   const lotus = P('lotus');
-  const lotusBase = box(3.3, .18, 3.3, M.stoneDark); lotusBase.position.y = y + .09; lotus.add(lotusBase);
-  const ringUp = lotusRing(1.5, .36, .44, .14, 20, M.stone, true);
-  ringUp.position.y = y + .2; lotus.add(ringUp);
-  const lotusTop = box(2.9, .16, 2.9, M.stone); lotusTop.position.y = y + .66; lotus.add(lotusTop);
-  y += .74;
+  const cushion = (widths, sliceH) => {
+    for (const w of widths) {
+      const b = box(w, sliceH, w, M.stoneDark);
+      b.position.y = y + sliceH / 2; lotus.add(b); y += sliceH;
+    }
+  };
+  cushion([3.5, 3.78, 3.84, 3.62], .10);               // the great lower cushion
+  const fillet = box(3.2, .05, 3.2, M.stone); fillet.position.y = y + .025; lotus.add(fillet); y += .05;
+  cushion([3.2, 3.4, 3.24], .09);                      // the upper cushion
+  // scallop band: a row of round bosses on each face — the lotus rim
+  const scallops = box(2.95, .18, 2.95, M.stoneDark);
+  scallops.position.y = y + .09; lotus.add(scallops);
+  const bossGeo = new THREE.CylinderGeometry(.105, .105, .06, 14);
+  bossGeo.rotateX(Math.PI / 2);
+  const bosses = new THREE.InstancedMesh(bossGeo, M.stone, 32);
+  {
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    let i = 0;
+    for (let f = 0; f < 4; f++) {
+      const a = f * Math.PI / 2, nx = Math.sin(a), nz = Math.cos(a);
+      for (let k = 0; k < 8; k++) {
+        const off = (k - 3.5) * .335;
+        e.set(0, a, 0); q.setFromEuler(e);
+        m.compose(new THREE.Vector3(nx * 1.475 + Math.cos(a) * off, y + .09, nz * 1.475 - Math.sin(a) * off), q, new THREE.Vector3(1, 1, 1));
+        bosses.setMatrixAt(i++, m);
+      }
+    }
+  }
+  lotus.add(bosses);
+  y += .18;
 
-  /* ---- lower molding ---- */
+  /* ---- stepped mouldings + the dentilled lower ledge ---- */
   const lower = P('lower');
-  const lm = box(2.72, .34, 2.72, M.stoneDark); lm.position.y = y + .17; lower.add(lm);
-  const seam1 = box(2.6, .06, 2.6, M.oxide); seam1.position.y = y + .37; lower.add(seam1);
-  y += .4;
+  for (const [w, h, mat] of [[2.85, .13, M.stone], [2.72, .11, M.stoneDark]]) {
+    const b = box(w, h, w, mat); b.position.y = y + h / 2; lower.add(b); y += h;
+  }
+  const ledge = box(2.88, .16, 2.88, M.dentil); ledge.position.y = y + .08; lower.add(ledge); y += .16;
 
-  /* ---- main body: niche walls + corner pilasters ---- */
+  /* ---- niche level: arched faces + corner pilasters ---- */
   const body = P('body');
-  const bodyH = 1.35, bodyW = 2.5;
-  // four niche faces
+  const bodyH = 1.22, bodyW = 2.4;
   for (let f = 0; f < 4; f++) {
     const face = new THREE.Mesh(new THREE.PlaneGeometry(bodyW * .92, bodyH), M.niche);
     const a = f * Math.PI / 2;
@@ -129,7 +144,6 @@ export function buildBrindavana({ withMala = false, detail = 1 } = {}) {
   }
   const core = box(bodyW - .04, bodyH, bodyW - .04, M.stoneDark);
   core.position.y = y + bodyH / 2; body.add(core);
-  // pilasters: corners + a slimmer central strip on each face
   const pw = .3;
   const half = bodyW / 2 + pw * .26;
   const pilPositions = [];
@@ -149,96 +163,137 @@ export function buildBrindavana({ withMala = false, detail = 1 } = {}) {
 
   /* ---- rosette medallion band ---- */
   const band = P('band');
-  const bandH = .42;
-  const bandBox = box(2.8, bandH, 2.8, M.stoneDark);
+  const bandH = .40;
+  const bandBox = box(2.7, bandH, 2.7, M.stoneDark);
   bandBox.position.y = y + bandH / 2; band.add(bandBox);
-  const discGeo = new THREE.CylinderGeometry(.205, .205, .05, 24);
+  const discGeo = new THREE.CylinderGeometry(.195, .195, .05, 24);
   discGeo.rotateX(Math.PI / 2);
   for (let f = 0; f < 4; f++) {
     const a = f * Math.PI / 2;
     for (let i = 0; i < 5; i++) {
-      const off = (i - 2) * .52;
+      const off = (i - 2) * .5;
       const disc = new THREE.Mesh(discGeo, M.rosette);
       const nx = Math.sin(a), nz = Math.cos(a);
-      disc.position.set(nx * 1.42 + Math.cos(a) * off, y + bandH / 2, nz * 1.42 - Math.sin(a) * off);
+      disc.position.set(nx * 1.37 + Math.cos(a) * off, y + bandH / 2, nz * 1.37 - Math.sin(a) * off);
       disc.rotation.y = a;
       band.add(disc);
     }
   }
   y += bandH;
 
-  /* ---- cornices ---- */
-  const cornice = P('cornice');
-  const c1 = box(3.0, .22, 3.0, M.stone); c1.position.y = y + .11; cornice.add(c1);
-  const dentilBand = box(3.06, .12, 3.06, M.dentil); dentilBand.position.y = y + .28; cornice.add(dentilBand);
-  const c2 = box(3.3, .2, 3.3, M.stoneDark); c2.position.y = y + .44; cornice.add(c2);
-  const seam2 = box(3.1, .06, 3.1, M.oxide); seam2.position.y = y + .57; cornice.add(seam2);
-  y += .6;
-
-  /* ---- attic ---- */
+  /* ---- the tall upper block: a framed panel between latticed strips.
+          Same width as the rosette band below — one continuous shoulder. ---- */
   const attic = P('attic');
-  const at = box(2.35, .5, 2.35, M.stone); at.position.y = y + .25; attic.add(at);
-  // small relief squares
-  const sqGeo = new THREE.PlaneGeometry(.3, .3);
+  const atH = .80, atW = 2.7;
+  const at = box(atW, atH, atW, M.stone); at.position.y = y + atH / 2; attic.add(at);
+  const panelGeo = new THREE.PlaneGeometry(1.5, atH * .74);
+  const stripGeo = new THREE.PlaneGeometry(.36, atH * .82);
   for (let f = 0; f < 4; f++) {
-    const a = f * Math.PI / 2;
-    for (let i = -2; i <= 2; i++) {
-      const sq = new THREE.Mesh(sqGeo, M.lattice);
-      sq.position.set(Math.sin(a) * 1.18 + Math.cos(a) * i * .42, y + .25, Math.cos(a) * 1.18 - Math.sin(a) * i * .42);
-      sq.rotation.y = a;
-      attic.add(sq);
+    const a = f * Math.PI / 2, nx = Math.sin(a), nz = Math.cos(a);
+    const panel = new THREE.Mesh(panelGeo, M.niche);
+    panel.position.set(nx * (atW / 2 + .005), y + atH / 2, nz * (atW / 2 + .005));
+    panel.rotation.y = a;
+    attic.add(panel);
+    for (const s of [-1, 1]) {
+      const strip = new THREE.Mesh(stripGeo, M.lattice);
+      strip.position.set(nx * (atW / 2 + .005) + Math.cos(a) * s * 1.0, y + atH / 2, nz * (atW / 2 + .005) - Math.sin(a) * s * 1.0);
+      strip.rotation.y = a;
+      attic.add(strip);
     }
   }
-  y += .5;
+  y += atH;
 
-  /* ---- crown of merlons ---- */
+  /* ---- cornice: a carved border, then courses flaring outward ---- */
+  const cornice = P('cornice');
+  const border = box(2.42, .14, 2.42, M.dentil); border.position.y = y + .07; cornice.add(border); y += .14;
+  for (const [w, h, mat] of [[2.6, .13, M.stone], [2.82, .13, M.stoneDark], [3.06, .14, M.stone]]) {
+    const c = box(w, h, w, mat); c.position.y = y + h / 2; cornice.add(c); y += h;
+  }
+  const seam2 = box(2.9, .05, 2.9, M.oxide); seam2.position.y = y + .025; cornice.add(seam2); y += .05;
+
+  /* ---- crown of leaf merlons ---- */
   const crown = P('crown');
-  const crownBase = box(2.5, .14, 2.5, M.stoneDark); crownBase.position.y = y + .07; crown.add(crownBase);
-  const mGeo = merlonGeo(.32, .55, .12);
-  const perSide = 6;
-  crown.userData.merlons = [];
+  const crownBase = box(3.0, .10, 3.0, M.stoneDark); crownBase.position.y = y + .05; crown.add(crownBase);
+  const mGeo = merlonGeo(.3, .52, .1);
+  const perSide = 7;
   for (let f = 0; f < 4; f++) {
     const a = f * Math.PI / 2;
     for (let i = 0; i < perSide; i++) {
       const off = (i - (perSide - 1) / 2) * .42;
       const mer = new THREE.Mesh(mGeo, M.stone);
-      mer.position.set(Math.sin(a) * 1.2 + Math.cos(a) * off, y + .14, Math.cos(a) * 1.2 - Math.sin(a) * off);
+      mer.position.set(Math.sin(a) * 1.42 + Math.cos(a) * off, y + .10, Math.cos(a) * 1.42 - Math.sin(a) * off);
       mer.rotation.y = a;
       crown.add(mer);
-      crown.userData.merlons.push(mer);
     }
   }
-  y += .58;
+  y += .62;
 
   /* ---- crown cap: the real Brindavana is flat-topped — a recessed slab
           inside the ring of merlons and one small kalasha, no dome ---- */
   const shikhara = P('shikhara');
-  const cap = box(2.2, .16, 2.2, M.stoneDark); cap.position.y = y + .08; shikhara.add(cap);
-  const capSeam = box(2.0, .05, 2.0, M.oxide); capSeam.position.y = y + .185; shikhara.add(capSeam);
-  const capTop = box(1.2, .1, 1.2, M.stone); capTop.position.y = y + .26; shikhara.add(capTop);
-  const k = kalasha(M.stoneDark, .8); k.position.y = y + .31; shikhara.add(k);
+  const cap = box(2.2, .14, 2.2, M.stoneDark); cap.position.y = y - .28; shikhara.add(cap);
+  const capTop = box(1.2, .09, 1.2, M.stone); capTop.position.y = y - .17; shikhara.add(capTop);
+  const k = kalasha(M.stoneDark, .75); k.position.y = y - .13; shikhara.add(k);
 
-  /* ---- tulasi mala draped over the structure ---- */
+  const totalH = y + .22;
+
+  /* ---- tulasi-mani garland: ONE strand hung from the crown and falling
+          into a deep U down the front — large cream tulasi-wood beads
+          alternating with coils of brass wire, resting just proud of every
+          ledge it crosses ---- */
   if (withMala) {
     const mala = P('mala');
-    const beadMat = new THREE.MeshStandardMaterial({ color: 0x4a3d22, roughness: .8 });
-    const makeStrand = (from, mid, to) => {
-      const curve = new THREE.CatmullRomCurve3([from, mid, to]);
-      const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(.035, 8, 8), beadMat, 46);
-      const m = new THREE.Matrix4();
-      for (let i = 0; i < 46; i++) {
-        const p = curve.getPoint(i / 45);
-        m.makeTranslation(p.x, p.y, p.z);
-        beads.setMatrixAt(i, m);
+    const beadMat = new THREE.MeshStandardMaterial({ color: 0xa8977a, roughness: .82, metalness: 0 });
+    const coilMat = new THREE.MeshStandardMaterial({ color: 0x8f7226, roughness: .42, metalness: .65 });
+    const BR = .041;                                   // bead radius — true to scale against the structure
+    /* the hanging U in x/y. Its z runs from the ledge it hangs off down to
+       the ledge its bottom rests on, never passing inside a course between
+       them — the drape of real weight against stepped stone. */
+    const x0 = 1.05, y0 = totalH - .34, yBot = 1.05;
+    const zTop = surf(y0) + BR + .02;
+    const zBot = surf(yBot) + BR + .06;
+    const raw = [];
+    const cy = 2 * yBot - y0;                          // quadratic control for the sag
+    for (let i = 0; i <= 30; i++) {
+      const u = i / 30;
+      const x = (1 - 2 * u) * -x0;
+      const yy = (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * cy + u * u * y0;
+      const drop = (y0 - yy) / Math.max(y0 - yBot, .001);
+      const z = Math.max(surf(yy) + BR + .02, zTop + (zBot - zTop) * drop);
+      raw.push(new THREE.Vector3(x, yy, z));
+    }
+    const curve = new THREE.CatmullRomCurve3(raw);
+    /* stations every half bead-pitch: beads on the even stations, a brass
+       coil in each gap between them — the reference garland's rhythm */
+    const nBead = Math.max(2, Math.round(curve.getLength() / (BR * 3.2)));
+    const pts = curve.getSpacedPoints(nBead * 2);
+    const beadGeo = new THREE.SphereGeometry(BR, 12, 10);
+    beadGeo.scale(1, 1, 1.3);                          // oval, long axis along the strand
+    const coilGeo = new THREE.TorusGeometry(BR * .42, BR * .17, 6, 12);
+    const beads = new THREE.InstancedMesh(beadGeo, beadMat, nBead + 1);
+    const coils = new THREE.InstancedMesh(coilGeo, coilMat, nBead * 2);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+    const Z = new THREE.Vector3(0, 0, 1), T = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+    let bi = 0, ci = 0;
+    for (let i = 0; i < pts.length; i++) {
+      T.subVectors(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]).normalize();
+      q.setFromUnitVectors(Z, T);
+      if (i % 2 === 0) {
+        m.compose(pts[i], q, one);
+        beads.setMatrixAt(bi++, m);
+      } else {
+        // two wire rings per gap read as a wound coil at any distance
+        for (const s of [-.55, .55]) {
+          m.compose(new THREE.Vector3().copy(pts[i]).addScaledVector(T, s * BR * .5), q, one);
+          coils.setMatrixAt(ci++, m);
+        }
       }
-      mala.add(beads);
-    };
-    makeStrand(new THREE.Vector3(-.45, y + .82, 1.3), new THREE.Vector3(-1.05, 2.5, 1.42), new THREE.Vector3(-1.3, 1.1, 1.3));
-    makeStrand(new THREE.Vector3(.45, y + .82, 1.3), new THREE.Vector3(1.05, 2.5, 1.42), new THREE.Vector3(1.3, 1.1, 1.3));
-    mala.userData.beadMat = beadMat;
+    }
+    beads.count = bi; coils.count = ci;
+    beads.castShadow = coils.castShadow = true;
+    mala.add(beads, coils);
+    mala.userData.mats = [beadMat, coilMat];
   }
-
-  const totalH = y + .7;
 
   /* explode: 0 = assembled, 1 = fully separated (slow, reverential drift) */
   const home = {};
@@ -249,25 +304,19 @@ export function buildBrindavana({ withMala = false, detail = 1 } = {}) {
     lower: new THREE.Vector3(0, -.18, 0),
     body: new THREE.Vector3(0, 0, 0),
     band: new THREE.Vector3(0, .55, 0),
-    cornice: new THREE.Vector3(0, 1.15, 0),
-    attic: new THREE.Vector3(0, 1.8, 0),
+    attic: new THREE.Vector3(0, 1.15, 0),
+    cornice: new THREE.Vector3(0, 1.8, 0),
     crown: new THREE.Vector3(0, 2.5, 0),
     shikhara: new THREE.Vector3(0, 3.3, 0),
-    mala: new THREE.Vector3(0, .0, 0),
+    mala: new THREE.Vector3(0, 0, 0),
   };
   function explode(u) {
     for (const name in parts) {
       const off = offsets[name] || new THREE.Vector3();
       parts[name].position.copy(home[name]).addScaledVector(off, u);
     }
-    // crown merlons breathe slightly outward
-    if (crown.userData.merlons) {
-      for (const mer of crown.userData.merlons) {
-        const dir = new THREE.Vector3(mer.position.x, 0, mer.position.z).normalize();
-        mer.position.addScaledVector(dir, 0); // positions are absolute; radial spread via scale of group
-      }
-      crown.scale.setScalar(1 + u * .12);
-    }
+    // the crown ring breathes slightly outward as it lifts
+    parts.crown.scale.setScalar(1 + u * .12);
   }
 
   return { group: root, parts, explode, height: totalH, materials: M };

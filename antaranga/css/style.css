@@ -34,11 +34,12 @@
         +6     41.81    44         (flowing-document headings floor)
         +7     50.17    52         hero ceiling
         +8     60.20    64         giant floor
-        +10    86.69    90         word floor
         +11   104.03   110         (flowing-document headings ceiling)
-        +12   124.84                (mobile word ceiling)
         +13   149.80   150         giant ceiling
-        +18   372.77   380         word ceiling
+
+     The one deliberate exception is #word — MANTRALAYA spans the full
+     viewport width, so its size is a pure ratio of the viewport (14.3vw),
+     not a ladder step. See the #word rule.
 
      The four reading steps (-2 -1 0 +1) are FIXED px: a paragraph is 14px
      on every screen, in every scene. Only display type breathes, and it
@@ -59,11 +60,8 @@
   --step-7:   50.17px;
   --step-8:   60.20px;
   --step-9:   72.24px;
-  --step-10:  86.69px;
   --step-11: 104.03px;
-  --step-12: 124.84px;
   --step-13: 149.80px;
-  --step-18: 372.77px;
 
   /* the faces */
   --font-display:    'Onest', 'Satoshi', 'Segoe UI', system-ui, sans-serif;
@@ -81,7 +79,6 @@
   --size-display: clamp(var(--step-3),  2.4vw, var(--step-5));
   --size-hero:    clamp(var(--step-4),  3.6vw, var(--step-7));
   --size-giant:   clamp(var(--step-8), 10.0vw, var(--step-13));
-  --size-word:    clamp(var(--step-10),16.5vw, var(--step-18));
 
   /* weight — TWO cuts of Onest, nothing else.
        300 -> everything monumental (display, hero, giant)
@@ -116,7 +113,6 @@
   --ink-faint: #a79d8b;
   --amber: #c8813b;
   --gopi: #c8a66a;          /* gopichandana gold — the drawing hue */
-  --stone: #171310;
   --ground: #0a0806;
 
   /* layout */
@@ -150,14 +146,21 @@ body {
 #scroll-space { position: relative; width: 1px; visibility: hidden; }
 
 /* ---------------- opening hero ---------------- */
+/* the copy opens well below the wordmark: air between the interface band
+   and the editorial block, at every size */
 #hero {
-  position: fixed; left: var(--gutter); top: max(11%, 104px); z-index: 7;
-  max-width: 860px; width: 46vw; min-width: 480px; pointer-events: none;
+  /* below the interface layer (z 6): the phone menu panel must cover it */
+  position: fixed; left: var(--gutter); top: max(23vh, 180px); z-index: 5;
+  max-width: 860px; width: 46vw; min-width: 480px;
+  /* real, selectable text — main.js turns pointer-events off once the block
+     has faded out with the first scroll */
+  pointer-events: auto;
   transition: none;
 }
-/* a quiet indigo atmosphere behind the copy — readable over the sunrise */
+/* a quiet indigo atmosphere behind the copy — readable over the sunrise.
+   It ends just under the copy: the risen sun stands clear of it below. */
 #hero::before {
-  content: ''; position: absolute; z-index: -1; left: -40%; top: -60%; right: -45%; bottom: -85%;
+  content: ''; position: absolute; z-index: -1; left: -40%; top: -60%; right: -45%; bottom: -30%;
   background: radial-gradient(closest-side, rgba(20,26,44,.74) 0%, rgba(20,26,44,.50) 42%, rgba(20,26,44,.18) 72%, rgba(20,26,44,0) 100%);
   pointer-events: none;
 }
@@ -185,42 +188,69 @@ body {
   max-width: 460px; margin: 0 0 .9em;
   text-shadow: 0 1px 4px rgba(10,14,24,.75), 0 1px 16px rgba(10,14,24,.7);
 }
-#cta {
-  pointer-events: auto; display: inline-flex; align-items: center; gap: 14px;
-  background: none; border: none; cursor: pointer; padding: 12px 0; margin-top: 1.6em;
-  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-label); color: var(--gopi); text-transform: uppercase;
-  transition: color .4s, gap .4s;
-}
-#cta i { display: block; width: 38px; height: 1px; background: linear-gradient(to right, var(--gopi), rgba(200,166,106,.15)); transition: width .4s; }
-#cta:hover, #cta:focus-visible { color: #e8d9b8; gap: 18px; }
-#cta:hover i { width: 52px; }
-#cta:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 6px; }
 
-/* the word: one line of flat bone-white type across most of the width */
+/* the word: one line of flat bone-white type spanning the full viewport.
+   MANTRALAYA in Onest 500 at .02em tracking measures 6.918em wide, so
+   97.5vw / 6.918 = 14.1vw spans edge to edge — the first M and final A stay
+   whole at every width, with the ~1.2vw side margins sized to absorb the
+   cursor parallax (±.6vw, main.js) without ever clipping either letter. */
 #word {
   position: fixed; left: 50%; bottom: -2.4vw; transform: translateX(-50%); z-index: 6;
   font-family: var(--font-display); font-weight: var(--weight-body);
-  font-size: var(--size-word); line-height: var(--leading-flat); letter-spacing: var(--tracking-list);
-  color: rgba(237,226,199,.78); white-space: nowrap; pointer-events: none; user-select: none;
+  font-size: 14.1vw; line-height: var(--leading-flat); letter-spacing: var(--tracking-list);
+  color: rgba(237,226,199,.78); white-space: nowrap;
+  /* selectable like every other word on the site; main.js turns pointer-events
+     off once the word has faded out with the first scroll */
+  pointer-events: auto;
   text-shadow: 0 2px 44px rgba(6,9,18,.4);
   transition: none;
   will-change: transform;
 }
+#word > span { display: inline-block; }
 /* pre-dawn: the interface layer waits in the dark and arrives with the light */
 body.predawn #ui { opacity: 0; }
 #ui { transition: opacity 2.4s ease; }
 
+/* ---- hero entrance — the KAGE register: masked lines rise word by word on
+   an expo-out ease, the annotations breathe up after them, the great word
+   surfaces last. The copy is HIDDEN from the very first paint and released
+   once (body.hero-in, added as the dawn begins) — it only ever travels
+   upward, never down into hiding. Transform/opacity only; skipped entirely
+   under reduced motion; always visible in the nowebgl/domonly documents. ---- */
+#hero .hero-heading .hw { display: inline-block; overflow: hidden; vertical-align: top; }
+@media (prefers-reduced-motion: no-preference) {
+  #hero .hero-eyebrow { transition: opacity 1.1s cubic-bezier(.16,1,.3,1); }
+  #hero .hero-body { transition: opacity .9s cubic-bezier(.16,1,.3,1) .68s, transform 1.05s cubic-bezier(.16,1,.3,1) .68s; }
+  #hero .hero-heading .hw > span {
+    display: inline-block;
+    transition: transform .82s cubic-bezier(.16,1,.3,1), opacity .5s cubic-bezier(.16,1,.3,1);
+    transition-delay: calc(.12s + var(--wd, 0s));
+  }
+  #hero .hw:nth-of-type(2) > span { --wd: .07s; }
+  #hero .hw:nth-of-type(3) > span { --wd: .14s; }
+  #hero .hw:nth-of-type(4) > span { --wd: .21s; }
+  #hero .hw:nth-of-type(5) > span { --wd: .28s; }
+  #hero .hw:nth-of-type(6) > span { --wd: .38s; }
+  #hero .hw:nth-of-type(7) > span { --wd: .45s; }
+  #hero .hw:nth-of-type(8) > span { --wd: .52s; }
+  #word > span { transition: transform 1.5s cubic-bezier(.16,1,.3,1) .55s, opacity 1s cubic-bezier(.16,1,.3,1) .55s; }
+  body:not(.hero-in):not(.nowebgl):not(.domonly) #hero .hero-eyebrow { opacity: 0; }
+  body:not(.hero-in):not(.nowebgl):not(.domonly) #hero .hero-body { opacity: 0; transform: translateY(26px); }
+  body:not(.hero-in):not(.nowebgl):not(.domonly) #hero .hero-heading .hw > span { opacity: 0; transform: translate3d(0, 112%, 0); }
+  body:not(.hero-in):not(.nowebgl):not(.domonly) #word > span { opacity: 0; transform: translate3d(0, 22%, 0); }
+}
+
 /* tablet + mobile adjustments for the opening layer */
 @media (max-width: 1024px) {
-  #hero { top: 9%; max-width: 500px; min-width: 0; width: auto; }
+  #hero { top: max(17vh, 150px); max-width: 500px; min-width: 0; width: auto; }
   #hero .hero-heading { white-space: normal; }
 }
 @media (max-width: 768px) {
-  #hero { left: 7%; right: 7%; top: max(15%, calc(96px + var(--safe-t))); max-width: none; width: auto; min-width: 0; }
-  #hero .hero-heading { white-space: normal; }
+  #hero { left: 7%; right: 7%; top: max(15vh, calc(120px + var(--safe-t))); max-width: none; width: auto; min-width: 0; }
+  /* sized so each authored line holds as ONE line on a phone — the copy sits
+     whole in the sky above the gateway instead of breaking across it */
+  #hero .hero-heading { white-space: normal; font-size: min(var(--size-hero), 6.9vw); }
   #hero::before { left: -20%; right: -20%; top: -40%; bottom: -40%; }
-  #word { font-size: clamp(var(--step-8), 19vw, var(--step-12)); bottom: -2.6vw; letter-spacing: var(--tracking-list); }
 }
 
 /* film grain + vignette (retired in the composition pass; kept for reference) */
@@ -232,12 +262,14 @@ body.predawn #ui { opacity: 0; }
 .cap {
   position: absolute; opacity: 0; will-change: opacity, transform;
   max-width: min(var(--maxw), 82vw);
+  /* the narrative is real, copyable text. The layer above stays inert; each
+     visible block accepts the cursor (visibility:hidden releases it again) */
+  pointer-events: auto;
 }
 .cap.pos-center { left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
 .cap.pos-low    { left: 50%; bottom: calc(13vh + var(--safe-b)); transform: translateX(-50%); text-align: center; }
 .cap.pos-left   { left: clamp(24px, 7vw, 120px); top: 50%; transform: translateY(-50%); text-align: left; }
 .cap.pos-right  { right: clamp(24px, 7vw, 120px); top: 50%; transform: translateY(-50%); text-align: left; }
-.cap.pos-high   { left: 50%; top: 14vh; transform: translateX(-50%); text-align: center; }
 .cap.pos-edgeR  { right: 20px; top: 50%; transform: translateY(-50%); max-width: none; text-align: center; }
 .cap.pos-bleedL { left: -3vw; bottom: 4vh; transform: none; max-width: none; text-align: left; }
 
@@ -261,7 +293,6 @@ body.predawn #ui { opacity: 0; }
   text-shadow: 0 2px 30px rgba(0,0,0,.65);
 }
 .t-display.t-xl { font-size: var(--size-hero); line-height: var(--leading-flat); letter-spacing: var(--tracking-giant); }
-.t-display.t-kn { font-family: var(--font-kannada); line-height: var(--leading-title); }
 /* major statement */
 .t-sub {
   font-family: var(--font-display);
@@ -278,31 +309,12 @@ body.predawn #ui { opacity: 0; }
 }
 .t-body + .t-body { margin-top: 1em; }
 .t-body strong { color: var(--ink); font-weight: var(--weight-bold); }
-/* body-small is an alias of body — one reading size across the site */
-.t-small {
-  font-size: var(--size-body); font-weight: var(--weight-body);
-  line-height: var(--leading-body); color: var(--ink-dim);
-  text-shadow: 0 1px 12px rgba(0,0,0,.72);
-}
 /* moment of extreme scale */
 .t-num {
   font-family: var(--font-display);
   font-size: var(--size-hero); font-weight: var(--weight-display);
   line-height: var(--leading-flat); letter-spacing: var(--tracking-giant); color: var(--ink);
   text-shadow: 0 2px 40px rgba(0,0,0,.7);
-}
-/* scripts, always paired with translation */
-.t-script {
-  font-family: var(--font-kannada); font-weight: var(--weight-body);
-  font-size: var(--size-title); line-height: var(--leading-script); color: var(--ink);
-}
-.t-script-dev {
-  font-family: var(--font-devanagari); font-weight: 400;   /* the Noto face's only cut */
-  font-size: var(--size-title); line-height: var(--leading-script); color: var(--ink);
-}
-.t-trans {
-  font-size: var(--size-body); font-weight: var(--weight-body);
-  line-height: var(--leading-body); color: var(--ink-faint); margin-top: 1em;
 }
 /* a Brindavana question — the architectural register: a fine rule, a held line */
 .t-q {
@@ -318,29 +330,18 @@ body.predawn #ui { opacity: 0; }
   content: ''; display: block; width: 44px; height: 2px; background: var(--gopi);
   margin: .7em auto 0; opacity: .8;
 }
-/* a selected work — its title carries the weight */
-.t-work {
-  font-family: var(--font-display);
-  font-size: var(--size-title); font-weight: var(--weight-title);
-  line-height: var(--leading-title); letter-spacing: var(--tracking-title); color: var(--ink);
-  margin-bottom: .5em;
-  text-shadow: 0 1px 22px rgba(0,0,0,.6);
-}
 /* the akṣara inside running copy */
 .t-om {
   font-family: var(--font-devanagari); font-weight: 400; font-size: 1.35em; line-height: var(--leading-flat);
   color: var(--gopi);
 }
-.t-rule {
-  width: 44px; height: 2px; background: var(--amber);
-  margin: 1.3em 0; opacity: .8;
-}
-/* an enormous word bleeding past the frame — environment, not caption */
+/* an enormous word bleeding past the frame — environment, not caption,
+   but still real text: selectable like everything else */
 .t-giant {
   font-family: var(--font-display); font-weight: var(--weight-display);
   font-size: var(--size-giant); line-height: var(--leading-giant); letter-spacing: var(--tracking-giant);
-  color: rgba(242,236,224,.11); white-space: nowrap; pointer-events: none;
-  text-transform: uppercase; user-select: none;
+  color: rgba(242,236,224,.11); white-space: nowrap;
+  text-transform: uppercase;
 }
 /* tiny contextual annotation — the second information level */
 .t-anno {
@@ -358,7 +359,6 @@ body.predawn #ui { opacity: 0; }
   color: rgba(222,214,198,.55);
   writing-mode: vertical-rl;
 }
-.pos-center .t-rule, .pos-low .t-rule, .pos-high .t-rule { margin-left: auto; margin-right: auto; }
 
 /* ---------------- Pañcabheda ---------------- */
 #panchabheda {
@@ -524,6 +524,11 @@ body.predawn #ui { opacity: 0; }
   color: var(--ink-faint);
 }
 #works .wx-side { will-change: transform, opacity; }
+/* the canvas's copy is real, copyable text: while the chapter is live each
+   text block accepts the cursor for selection (the pinned desktop canvas has
+   no pointer interactions of its own, so nothing is stolen from it) */
+#works.live .wx-title, #works.live .wx-side, #works.live .wx-num,
+#works.live .wx-intro, #works.live .wx-coda, #works.live .wx-mhead { pointer-events: auto; }
 
 /* ---- the pinned desktop canvas ---- */
 #works.wx-desk .wx-mhead, #works.wx-desk .wx-cue { display: none; }
@@ -574,7 +579,6 @@ body.predawn #ui { opacity: 0; }
   color: var(--ink-faint); max-width: 44ch;
 }
 #works .wx-progress {
-  /* bottom-right: the site's chapter chip owns the bottom-left corner */
   position: absolute; right: var(--gutter); bottom: calc(30px + var(--safe-b));
   display: flex; align-items: center; gap: 12px;
   font-family: var(--font-micro); font-size: var(--size-label);
@@ -598,7 +602,7 @@ body.predawn #ui { opacity: 0; }
 #works.wx-touch .wx-lead { max-width: none; }
 #works.wx-touch .wx-viewport {
   position: absolute; left: 0; right: 0; top: 22vh;
-  bottom: calc(54px + var(--safe-b));   /* clear of the chapter chip */
+  bottom: calc(54px + var(--safe-b));   /* clear of the touch cue */
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -644,6 +648,12 @@ body.predawn #ui { opacity: 0; }
   transition: opacity .7s;
 }
 #works.wx-touch .wx-cue b { color: var(--gopi); font-weight: var(--weight-bold); }
+/* the directional arrow is the ONE glyph on the site outside Onest's
+   unicode-range (U+2192). Left in the Onest stack it fell through to
+   Satoshi and fetched satoshi-500.woff2 (~25 KB) on every touch device,
+   for one arrowhead. Pinned to the system UI face instead: identical
+   affordance, no font request, and Satoshi stays a Latin-only fallback. */
+#works.wx-touch .wx-cue i { font-family: system-ui, sans-serif; font-style: normal; }
 #works.wx-cue-off .wx-cue { opacity: 0; }
 
 /* the flowing document reads the same works as plain text */
@@ -673,34 +683,218 @@ body.nowebgl #works .wx-side, body.nowebgl #works .wx-num {
 }
 body.nowebgl #works .wx-desc { display: block; }
 
+/* ---------------- 01 · Pūrvāśrama — the chapter's editorial layer --------
+   A full-screen cover over the house (label / headline left / introduction
+   right / biographical strip / cue), then ONE stable left column that
+   carries the narrative a single beat at a time. Palette: the site's ink
+   and gopi gold over the scene's own indigo, earth and lamplight. */
+#purva { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+
+#purva .pv-cover { position: absolute; inset: 0; opacity: 0; }
+#purva .pv-label {
+  position: absolute; left: var(--gutter); top: max(13vh, 108px);
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); color: var(--gopi);
+  text-shadow: 0 1px 12px rgba(10,8,4,.7);
+}
+#purva .pv-head {
+  position: absolute; left: var(--gutter); top: max(20vh, 168px); margin: 0;
+  font-family: var(--font-display); font-weight: var(--weight-display);
+  font-size: clamp(var(--step-7), 5.6vw, var(--step-9));
+  line-height: 1.04; letter-spacing: var(--tracking-giant); color: var(--ink);
+  text-shadow: 0 2px 26px rgba(8,6,3,.6);
+}
+#purva .pv-hl { display: block; overflow: hidden; }
+#purva .pv-hl > span { display: block; }
+#purva .pv-intro {
+  position: absolute; right: var(--gutter); top: max(20vh, 172px);
+  width: min(480px, 33vw);
+}
+#purva .pv-intro p {
+  font-size: var(--size-body); font-weight: var(--weight-body); line-height: var(--leading-body);
+  color: var(--ink-dim); margin: 0 0 1.1em;
+  text-shadow: 0 1px 4px rgba(10,8,4,.8), 0 1px 16px rgba(10,8,4,.6);
+}
+#purva .pv-cue {
+  margin-top: 1.8em; display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label); color: var(--gopi);
+  text-shadow: 0 1px 10px rgba(10,8,4,.7);
+}
+#purva .pv-cue i { font-family: system-ui, sans-serif; font-style: normal; }
+#purva .pv-strip {
+  position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(30px + var(--safe-b));
+  display: flex; gap: clamp(20px, 4vw, 64px);
+  border-top: 1px solid rgba(200,166,106,.25); padding-top: 16px;
+}
+#purva .pv-strip > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+#purva .pv-strip b {
+  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps); color: var(--gopi); white-space: nowrap;
+}
+#purva .pv-strip span { font-size: var(--size-anno); color: var(--ink-faint); }
+
+/* the narrative column: one place, one passage at a time */
+#purva .pv-beat {
+  position: absolute; left: var(--gutter); top: 50%; transform: translateY(-50%);
+  width: min(480px, 36vw); opacity: 0; visibility: hidden;
+  will-change: opacity, transform;
+}
+#purva .pv-beat p {
+  font-size: var(--size-body); font-weight: var(--weight-body); line-height: var(--leading-body);
+  color: var(--ink-dim); margin: 0 0 1em;
+  text-shadow: 0 1px 4px rgba(6,4,2,.85), 0 1px 16px rgba(6,4,2,.7);
+}
+#purva .pv-eight {
+  font-family: var(--font-display); font-weight: var(--weight-title);
+  font-size: var(--size-title); letter-spacing: .08em; color: var(--gopi);
+  margin: 1.2em 0 !important;
+  text-shadow: 0 1px 14px rgba(6,4,2,.8);
+}
+#purva .pv-eight i { font-style: normal; color: var(--ink-faint); padding: 0 .35em; }
+
+/* the chapter's central question — held over the written ॐ */
+#purva .pv-q {
+  position: absolute; left: var(--gutter); top: 50%; transform: translateY(-52%);
+  opacity: 0; pointer-events: none;
+  font-family: var(--font-display); font-weight: var(--weight-display);
+  font-size: clamp(var(--step-5), 3.4vw, var(--step-7));
+  line-height: 1.14; letter-spacing: var(--tracking-display); color: var(--ink);
+  text-shadow: 0 2px 26px rgba(4,3,1,.75);
+}
+#purva .pv-q::before {
+  content: ''; display: block; width: 44px; height: 2px;
+  background: var(--gopi); margin-bottom: 1.1em; opacity: .85;
+}
+#purva .pv-ql { display: block; overflow: hidden; }
+#purva .pv-ql > span { display: block; }
+
+/* the header steps back while the viewer is inside the house */
+body.purva-quiet #topnav, body.purva-quiet #wordmark { opacity: .35; }
+#topnav { transition: opacity .8s ease; }
+
+/* ---- motion: masked entrances in the KAGE rhythm; the cover leaves the
+   way it arrived. All of it sits inside no-preference — under reduced
+   motion the copy is simply present, at full opacity windows. ---- */
+@media (prefers-reduced-motion: no-preference) {
+  #purva .pv-label { opacity: 0; transition: opacity .9s cubic-bezier(.16,1,.3,1); }
+  #purva .pv-hl > span {
+    transform: translate3d(0, 112%, 0);
+    transition: transform .85s cubic-bezier(.16,1,.3,1);
+    transition-delay: calc(.14s + var(--wd, 0s));
+  }
+  #purva .pv-hl:nth-child(2) > span { --wd: .09s; }
+  #purva .pv-hl:nth-child(3) > span { --wd: .18s; }
+  #purva .pv-hl:nth-child(4) > span { --wd: .27s; }
+  #purva .pv-intro p, #purva .pv-cue {
+    opacity: 0; transform: translateY(22px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .95s cubic-bezier(.16,1,.3,1);
+  }
+  #purva .pv-intro p:nth-of-type(1) { transition-delay: .55s; }
+  #purva .pv-intro p:nth-of-type(2) { transition-delay: .72s; }
+  #purva .pv-intro p:nth-of-type(3) { transition-delay: .89s; }
+  #purva .pv-strip {
+    opacity: 0; transform: translateY(26px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1) 1.05s, transform .95s cubic-bezier(.16,1,.3,1) 1.05s;
+  }
+  #purva .pv-cue { transition-delay: 1.2s; }
+  #purva .pv-cover.pv-on .pv-label { opacity: 1; }
+  #purva .pv-cover.pv-on .pv-hl > span { transform: none; }
+  #purva .pv-cover.pv-on .pv-intro p, #purva .pv-cover.pv-on .pv-cue { opacity: 1; transform: none; }
+  #purva .pv-cover.pv-on .pv-strip { opacity: 1; transform: none; }
+  /* the leave: headline masks upward first, the copy follows, the strip
+     drops below the viewport — every delay short, every move forward */
+  #purva .pv-cover.pv-leave .pv-hl > span { transform: translate3d(0, -112%, 0); transition-delay: calc(var(--wd, 0s) * .5); }
+  #purva .pv-cover.pv-leave .pv-intro p { opacity: 0; transform: translateY(-16px); }
+  #purva .pv-cover.pv-leave .pv-intro p:nth-of-type(1) { transition-delay: 0s; }
+  #purva .pv-cover.pv-leave .pv-intro p:nth-of-type(2) { transition-delay: .1s; }
+  #purva .pv-cover.pv-leave .pv-intro p:nth-of-type(3) { transition-delay: .2s; }
+  #purva .pv-cover.pv-leave .pv-cue { opacity: 0; transform: translateY(-12px); transition-delay: 0s; }
+  #purva .pv-cover.pv-leave .pv-strip { opacity: 0; transform: translateY(60px); transition-delay: 0s; }
+  #purva .pv-cover.pv-leave .pv-label { opacity: 0; }
+  /* the question rises line by line */
+  #purva .pv-ql > span {
+    transform: translate3d(0, 112%, 0);
+    transition: transform .8s cubic-bezier(.16,1,.3,1);
+    transition-delay: var(--wd, 0s);
+  }
+  #purva .pv-ql:nth-child(2) > span { --wd: .09s; }
+  #purva .pv-ql:nth-child(3) > span { --wd: .18s; }
+  #purva .pv-ql:nth-child(4) > span { --wd: .27s; }
+  #purva .pv-q.pv-qon .pv-ql > span { transform: none; }
+  /* the eight components arrive one after another */
+  #purva .pv-eight span, #purva .pv-eight i {
+    display: inline-block; opacity: 0; transform: translateY(10px);
+    transition: opacity .5s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+  }
+  #purva .pv-eight span:nth-of-type(1) { transition-delay: .30s; }
+  #purva .pv-eight i:nth-of-type(1)    { transition-delay: .38s; }
+  #purva .pv-eight span:nth-of-type(2) { transition-delay: .46s; }
+  #purva .pv-eight i:nth-of-type(2)    { transition-delay: .54s; }
+  #purva .pv-eight span:nth-of-type(3) { transition-delay: .62s; }
+  #purva .pv-eight i:nth-of-type(3)    { transition-delay: .70s; }
+  #purva .pv-eight span:nth-of-type(4) { transition-delay: .78s; }
+  #purva .pv-eight i:nth-of-type(4)    { transition-delay: .88s; }
+  #purva .pv-eight span:nth-of-type(5) { transition-delay: .98s; }
+  #purva .pv-eight i:nth-of-type(5)    { transition-delay: 1.08s; }
+  #purva .pv-eight span:nth-of-type(6) { transition-delay: 1.18s; }
+  #purva .pv-eight i:nth-of-type(6)    { transition-delay: 1.28s; }
+  #purva .pv-eight span:nth-of-type(7) { transition-delay: 1.38s; }
+  #purva .pv-eight i:nth-of-type(7)    { transition-delay: 1.48s; }
+  #purva .pv-eight span:nth-of-type(8) { transition-delay: 1.58s; }
+  #purva .pv-beat.pv-bon .pv-eight span, #purva .pv-beat.pv-bon .pv-eight i { opacity: 1; transform: none; }
+}
+
+/* tablet: the intro takes more of the right side */
+@media (max-width: 1024px) {
+  #purva .pv-head { font-size: clamp(var(--step-6), 5.4vw, var(--step-8)); }
+  #purva .pv-intro { width: min(440px, 42vw); }
+  #purva .pv-beat { width: min(460px, 44vw); }
+}
+
+/* mobile: a deliberate stacked cover — headline above the introduction,
+   the strip as one horizontally scrollable row, copy over the safe areas */
+@media (max-width: 768px) {
+  #purva .pv-cover { overflow-y: auto; }
+  #purva .pv-label { position: static; padding: calc(96px + var(--safe-t)) 7% 0; }
+  #purva .pv-head {
+    position: static; padding: 14px 7% 0;
+    font-size: clamp(var(--step-5), 8.4vw, var(--step-7));
+  }
+  #purva .pv-intro { position: static; width: auto; padding: 20px 7% 0; }
+  #purva .pv-cue { margin-top: 1.2em; }
+  #purva .pv-strip {
+    position: static; margin: 22px 7% calc(24px + var(--safe-b));
+    overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; gap: 26px;
+    padding-right: 8px;
+  }
+  #purva .pv-strip::-webkit-scrollbar { display: none; }
+  #purva .pv-beat { left: 7%; right: 7%; width: auto; top: auto; bottom: calc(12vh + var(--safe-b)); transform: none; }
+  #purva .pv-q {
+    left: 7%; right: 7%; top: auto; bottom: calc(16vh + var(--safe-b)); transform: none;
+    font-size: clamp(var(--step-3), 6.3vw, var(--step-6));
+  }
+}
+
 /* ---------------- persistent UI ---------------- */
 #ui { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
 #wordmark {
   position: absolute; top: 34px; left: var(--gutter); display: flex; align-items: center; gap: 12px;
   color: var(--ink); opacity: .92; transition: opacity 1.2s;
+  pointer-events: auto;   /* its text is copyable like the rest of the site */
 }
 #wordmark .mark { width: 30px; height: 30px; color: var(--gopi); flex: none; }
 #wordmark .wm-text { display: flex; flex-direction: column; gap: 3px; font-family: var(--font-micro); }
 #wordmark .wm-text b { font-weight: var(--weight-bold); font-size: var(--size-anno); letter-spacing: var(--tracking-caps); }
 #wordmark .wm-text small { font-weight: var(--weight-bold); font-size: var(--size-label); letter-spacing: var(--tracking-label); color: var(--ink-faint); }
 
-/* the waveform sound control */
-#audio-toggle {
-  position: absolute; top: 72px; right: var(--gutter); pointer-events: auto; cursor: pointer;
-  background: none; border: none; padding: 8px 2px; color: var(--ink);
-  opacity: .72; transition: opacity .5s;
-}
-#audio-toggle:hover, #audio-toggle.playing { opacity: 1; }
-#audio-toggle:focus-visible { outline: 1px solid rgba(236,229,214,.55); outline-offset: 4px; }
-#audio-toggle svg { display: block; width: 48px; height: 15px; overflow: visible; }
-#audio-toggle svg path { transition: stroke-width .3s; }
-#audio-toggle.playing svg path { stroke-width: 1.1; }
-
 /* top navigation */
 #topnav {
   position: absolute; top: 38px; right: var(--gutter); pointer-events: auto;
   display: flex; gap: 30px;
 }
+/* the menu button exists only on a phone */
+#menu-btn { display: none; }
 #topnav button {
   background: none; border: none; cursor: pointer; padding: 8px 0;
   font-family: var(--font-micro); font-weight: var(--weight-bold); font-size: var(--size-label); letter-spacing: var(--tracking-label);
@@ -708,69 +902,6 @@ body.nowebgl #works .wx-desc { display: block; }
 }
 #topnav button:hover, #topnav button:focus-visible { color: var(--ink); }
 #topnav button:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: 4px; }
-
-/* chapter control — one compact chip at every size. It reports where you
-   are and opens the full index; nothing else lives in the margins. */
-#chip {
-  display: flex;
-  position: absolute; left: var(--gutter); bottom: calc(30px + var(--safe-b)); pointer-events: auto;
-  background: none; border: none; border-left: 1px solid rgba(200,166,106,.5);
-  padding: 6px 0 6px 14px; cursor: pointer; text-align: left;
-  color: var(--ink); font-family: var(--font-micro);   /* buttons do not inherit it */
-  flex-direction: column; gap: 4px; min-height: 44px; justify-content: center;
-  transition: border-color .4s;
-}
-#chip:hover, #chip:focus-visible { border-left-color: var(--gopi); }
-#chip #chip-num { font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); color: var(--gopi); }
-#chip #chip-name { font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); }
-#chip:focus-visible { outline: 1px solid rgba(236,229,214,.5); outline-offset: 6px; }
-
-/* the chapter sheet */
-#sheet {
-  position: fixed; inset: 0; z-index: 30;
-  background: rgba(4,5,7,.78);
-  display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; transition: opacity .3s ease;
-}
-#sheet.open { opacity: 1; }
-#sheet .sheet-in {
-  width: 100%; max-width: 560px; max-height: 78dvh; overflow-y: auto;
-  background: #0b0a08;
-  border-top: 1px solid rgba(200,166,106,.3);
-  padding: 18px 22px calc(26px + var(--safe-b));
-  transform: translateY(24px); transition: transform .32s cubic-bezier(.32,.72,.35,1);
-}
-#sheet.open .sheet-in { transform: none; }
-#sheet .sheet-head {
-  font-family: var(--font-micro);
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 4px 2px 14px;
-  font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label);
-  color: var(--ink-faint);
-  border-bottom: 1px solid rgba(236,229,214,.12); margin-bottom: 8px;
-}
-#sheet .sheet-close {
-  background: none; border: none; cursor: pointer; color: var(--ink-dim);
-  font-family: var(--font-body); font-weight: var(--weight-body);
-  font-size: var(--size-body); padding: 10px 12px; min-width: 44px; min-height: 44px;
-}
-#sheet .sheet-close:focus-visible { outline: 1px solid rgba(236,229,214,.5); }
-#sheet .sheet-list { display: flex; flex-direction: column; }
-#sheet .sheet-list button {
-  display: flex; align-items: baseline; gap: 16px;
-  background: none; border: none; cursor: pointer; text-align: left;
-  padding: 13px 4px; min-height: 44px;
-  border-bottom: 1px solid rgba(236,229,214,.07);
-  color: var(--ink-dim); font-family: var(--font-body);
-}
-#sheet .sheet-list button b {
-  font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-caps); color: var(--gopi);
-  width: 26px; flex: none;
-}
-#sheet .sheet-list button span {
-  font-size: var(--size-body); font-weight: var(--weight-body); letter-spacing: var(--tracking-list); color: var(--ink);
-}
-#sheet .sheet-list button:focus-visible { outline: 1px solid rgba(236,229,214,.4); outline-offset: -1px; }
 
 #aaradhane-link {
   position: absolute; bottom: calc(30px + var(--safe-b)); right: 30px; pointer-events: auto;
@@ -863,8 +994,7 @@ body.ui-quiet #wordmark { opacity: .14; }
 
 /* ---------------- no-WebGL fallback: the biography as a document ---------- */
 body.nowebgl { background: linear-gradient(to bottom, #0b0e14, #0a0806 30%, #0a0806); }
-body.nowebgl #gl, body.nowebgl #veil, body.nowebgl #word,
-body.nowebgl #chip, body.nowebgl #audio-toggle { display: none; }
+body.nowebgl #gl, body.nowebgl #veil, body.nowebgl #word { display: none; }
 body.nowebgl #hero { position: static; margin: 140px auto 0; padding: 0 var(--gutter); opacity: 1 !important; }
 /* the scene's legibility scrim: once #hero is static its offsets resolve
    against the viewport and push the page wide — and the flat document
@@ -903,11 +1033,22 @@ body.nowebgl .t-giant {
 body.nowebgl .cap.pos-edgeR { display: none; }
 body.nowebgl .t-edge { writing-mode: horizontal-tb; }
 body.nowebgl #footer .f-chapters { display: none; }
-
-/* ---------------- reduced motion ---------------- */
-@media (prefers-reduced-motion: reduce) {
-  #sheet, #sheet .sheet-in, #cta, #cta i { transition: none; }
+/* the Pūrvāśrama chapter flows as ordinary document text */
+body.nowebgl #purva { position: static; pointer-events: auto; padding: 8vh var(--gutter) 0; }
+body.nowebgl #purva .pv-cover, body.nowebgl #purva .pv-beat, body.nowebgl #purva .pv-q {
+  position: static; opacity: 1 !important; visibility: visible !important;
+  transform: none !important; width: auto; max-width: var(--maxw); margin: 0 auto 8vh;
 }
+body.nowebgl #purva .pv-label, body.nowebgl #purva .pv-head, body.nowebgl #purva .pv-intro,
+body.nowebgl #purva .pv-strip { position: static; width: auto; padding: 0; }
+body.nowebgl #purva .pv-head { font-size: var(--size-hero); margin: .4em 0 .6em; }
+body.nowebgl #purva .pv-hl > span, body.nowebgl #purva .pv-ql > span { transform: none !important; }
+body.nowebgl #purva .pv-intro p, body.nowebgl #purva .pv-cue, body.nowebgl #purva .pv-strip,
+body.nowebgl #purva .pv-eight span, body.nowebgl #purva .pv-eight i { opacity: 1 !important; transform: none !important; }
+body.nowebgl #purva .pv-cue { display: none; }
+body.nowebgl #purva .pv-strip { margin-top: 2em; flex-wrap: wrap; }
+body.nowebgl #purva .pv-q { font-size: var(--size-display); }
+
 
 /* ---------------- BrindavanaPreloader — architectural drafting ------------ */
 :root {
@@ -1008,9 +1149,6 @@ body.nowebgl #footer .f-chapters { display: none; }
   #preloader .pre-mark { height: auto; width: min(68vw, 360px); max-height: 72vh; }
   #preloader .pre-mark svg { width: 100%; height: auto; max-height: 72vh; }
   #wordmark { top: calc(20px + var(--safe-t)); left: 20px; }
-  #wordmark .wm-text small { display: none; }
-  #audio-toggle { top: calc(20px + var(--safe-t)); right: 20px; }
-  #chip { left: 20px; bottom: calc(20px + var(--safe-b)); }
   .cap.pos-left, .cap.pos-right {
     left: 24px; right: 24px; max-width: none; transform: none; top: auto; bottom: calc(17vh + var(--safe-b));
   }
@@ -1027,9 +1165,37 @@ body.nowebgl #footer .f-chapters { display: none; }
   #footer .f-note p, #footer .f-credit { max-width: none; }
   #footer .f-meta { flex-direction: column; gap: 20px; }
   #footer .f-chapters { gap: 0 20px; }
-  /* the nav drops below the mark on a phone rather than colliding with it */
-  #topnav { top: calc(64px + var(--safe-t)); right: auto; left: 20px; gap: 18px; }
-
+  /* one clear header row on a phone: the mark left, a menu button right.
+     The section links live in a small panel the button opens. */
+  #menu-btn {
+    display: flex; flex-direction: column; justify-content: center; gap: 7px;
+    position: absolute; top: calc(14px + var(--safe-t)); right: 12px;
+    width: 44px; height: 44px; padding: 0 10px;
+    background: none; border: none; cursor: pointer; pointer-events: auto;
+  }
+  #menu-btn span {
+    display: block; height: 1.5px; background: var(--ink);
+    transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+  }
+  #menu-btn span:first-child { width: 24px; }
+  #menu-btn span:last-child { width: 16px; }
+  body.nav-open #menu-btn span:first-child { transform: translateY(4.25px) rotate(45deg); width: 22px; }
+  body.nav-open #menu-btn span:last-child { transform: translateY(-4.25px) rotate(-45deg); width: 22px; }
+  #topnav {
+    top: calc(64px + var(--safe-t)); right: 0; left: 0; gap: 0;
+    flex-direction: column;
+    background: rgba(6,8,9,.94);
+    border-top: 1px solid rgba(200,166,106,.25);
+    border-bottom: 1px solid rgba(236,229,214,.1);
+    visibility: hidden; opacity: 0; transform: translateY(-8px);
+    transition: opacity .28s cubic-bezier(.16,1,.3,1), transform .28s cubic-bezier(.16,1,.3,1), visibility .28s;
+  }
+  body.nav-open #topnav { visibility: visible; opacity: 1; transform: none; }
+  #topnav button {
+    padding: 15px 20px; min-height: 48px; text-align: left;
+    border-bottom: 1px solid rgba(236,229,214,.07);
+  }
+  #topnav button:last-child { border-bottom: none; }
 }
 
 /* review aid: ?domonly renders the interface over a transparent ground */

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { buildBrindavana } from './brindavana.js';
 import { stoneSet } from './opening.js';
 import { createOpening, APPROACH_ROT, makeShoreMask } from './hero.js';
-import { stoneCanvas, rosetteCanvas, dentilCanvas, nichePanelCanvas, tex, glowSprite, glowTexture, flame, mulberry, lerp, clamp01, remap, smooth, win } from '../util.js';
+import { stoneCanvas, tex, glowSprite, glowTexture, flame, mulberry, remap, smooth } from '../util.js';
 
 export const BRND_POS = new THREE.Vector3(0, 1.18, -26);
 
@@ -82,7 +82,7 @@ void main(){
   vec3 deepDawn = vec3(0.014, 0.020, 0.046);
   vec3 deepMorn = vec3(0.040, 0.046, 0.046);
   vec3 deep = mix(deepDawn, deepMorn, uMode);
-  deep = mix(deep, vec3(0.085, 0.105, 0.145), uDawn);   // first-light water: slate blue, no longer night
+  deep = mix(deep, vec3(0.10, 0.104, 0.15), uDawn);   // first-light water: slate blue with the dawn's rose in it
 
   // planar reflection, displaced by the ripples so it tears and breaks
   vec2 ruv = vRefl.xy / vRefl.w;
@@ -105,13 +105,13 @@ void main(){
   vec3 bed = vec3(0.058, 0.062, 0.048) * (0.55 + 0.85 * uDawn + 0.6 * uMode);
   col = mix(col, bed, shal * 0.55);
   // cool sky fill on the ripple faces turned away from the viewer
-  col += vec3(0.05, 0.07, 0.12) * (1.0 - fres) * 0.35 * (1.0 - uMode);
+  col += vec3(0.068, 0.062, 0.115) * (1.0 - fres) * 0.35 * (1.0 - uMode);
 
   // sun glints: tight specular along the sunrise direction, broken by noise
   vec3 H = normalize(V + uSunDir);
   float spec = pow(max(dot(nrm, H), 0.0), 520.0);
   float sparkle = smoothstep(0.42, 0.92, vnoise(vWorld.xz*vec2(3.0, 9.0) + vec2(uTime*0.2, -uTime*0.1)));
-  vec3 sunCol = mix(vec3(0.95, 0.62, 0.30), vec3(0.98, 0.90, 0.78), uDawn);
+  vec3 sunCol = mix(vec3(0.95, 0.62, 0.30), vec3(1.0, 0.78, 0.78), uDawn);
   float calm = 1.0 - shal * 0.7;
   col += sunCol * spec * sparkle * (2.3 * uDawn + 1.6 * uMode) * calm;
   float specWide = pow(max(dot(nrm, H), 0.0), 36.0);
@@ -140,6 +140,7 @@ void main(){ vPos = position; gl_Position = projectionMatrix * modelViewMatrix *
 const skyFrag = /* glsl */`
 uniform float uMode;
 uniform float uDawn;
+uniform float uRise;
 uniform float uTime;
 uniform float uLinear;
 varying vec3 vPos;
@@ -170,26 +171,39 @@ void main(){
   /* the hero: first light. A deep blue-grey zenith, desaturated blue mid
      sky, a pale warm band only at the horizon, the sun small and low on
      the LEFT. Haze sits on the horizon line. */
-  float SUN_AZ = -0.31;   // far left, clear of the hero copy
+  float SUN_AZ = -0.09;   // low over the river, well left of the gateway — inside the frame at every breakpoint
   {
-    /* early morning at the river: a still-blue zenith over a pale luminous
-       mid sky, warm haze gathered low around the not-yet-risen sun */
-    vec3 mZen = vec3(0.13, 0.20, 0.34), mMid = vec3(0.32, 0.40, 0.54), mHor = vec3(0.62, 0.62, 0.61);
+    /* early morning at the river: deep muted blue above, easing through
+       blue-lavender into a dusty pink band and a restrained peach line at
+       the horizon. The hold camera only ever sees the lowest ~0.3 of the
+       dome, so the whole gradient lives in that band — mapped by elevation,
+       on overlapping curves, no visible banding. */
+    vec3 mZen = vec3(0.105, 0.175, 0.375), mMid = vec3(0.36, 0.385, 0.565);
+    vec3 mRose = vec3(0.615, 0.455, 0.50), mHor = vec3(0.76, 0.585, 0.46);
     float k = clamp(1.0 - h, 0.0, 1.0);
-    vec3 morning = mix(mZen, mMid, pow(k, 1.6));
-    morning = mix(morning, mHor, pow(k, 6.0));
+    vec3 morning = mix(mZen, mMid, 1.0 - smoothstep(0.10, 0.34, h));
+    morning = mix(morning, mRose, 1.0 - smoothstep(0.035, 0.15, h));
+    morning = mix(morning, mHor, 1.0 - smoothstep(0.004, 0.05, h));
     float pocket = exp(-pow((az - SUN_AZ) * 1.5, 2.0)) * pow(k, 5.0);
-    morning = mix(morning, vec3(1.0, 0.72, 0.42), pocket * 0.56);
-    morning += vec3(0.50, 0.22, 0.05) * exp(-pow((az - SUN_AZ) * 2.2, 2.0)) * pow(k, 13.0);
+    morning = mix(morning, vec3(1.0, 0.72, 0.46), pocket * 0.5);
+    morning += vec3(0.46, 0.20, 0.07) * exp(-pow((az - SUN_AZ) * 2.2, 2.0)) * pow(k, 13.0);
     col = mix(col, morning, uDawn * (1.0 - uMode));
   }
-  vec3 sunDir = normalize(vec3(sin(SUN_AZ)*cos(0.010), sin(0.010), -cos(SUN_AZ)*cos(0.010)));
+  /* the sun CLIMBS through the arrival (uRise, held at 1 afterwards):
+     below the horizon it is only a red stain in the haze, it crests as a
+     deep-orange coal, then lifts into a small warm morning sun — dim enough
+     that nothing near it fights the interface for the eye */
+  /* it crests to barely clear the horizon line — a low pink morning sun,
+     most of it still behind the river's far bank */
+  float SUN_EL = mix(-0.050, 0.004, uRise);
+  vec3 sunDir = normalize(vec3(sin(SUN_AZ)*cos(SUN_EL), sin(SUN_EL), -cos(SUN_AZ)*cos(SUN_EL)));
   float sunA = acos(clamp(dot(normalize(vPos), sunDir), -1.0, 1.0));
   float halo = exp(-sunA*sunA*10.0);
-  float disc = 1.0 - smoothstep(0.010, 0.017, sunA);
-  // the sun sits low and far, a warm coal half-lost in the horizon haze —
-  // dim enough that nothing near it fights the interface for the eye
-  col += (vec3(1.0, 0.78, 0.46) * disc * 0.66 + vec3(0.95, 0.52, 0.20) * halo * 0.20) * uDawn * (1.0 - uMode);
+  float disc = 1.0 - smoothstep(0.013, 0.022, sunA);
+  float crest = smoothstep(0.45, 0.90, uRise);   // the disc breaches at ~.56
+  vec3 discCol = mix(vec3(1.0, 0.32, 0.10), vec3(1.0, 0.66, 0.70), crest);
+  vec3 haloCol = mix(vec3(0.80, 0.22, 0.07), vec3(1.0, 0.52, 0.58), crest);
+  col += haloCol * halo * (0.16 + 0.12 * uRise) * uDawn * (1.0 - uMode);
 
   /* storm-lit clouds: slate banks overhead, their undersides caught amber
      where they face the sun, edges burning where they thin */
@@ -198,17 +212,25 @@ void main(){
     for(int i=0;i<4;i++){ cn += a*vn2(p2); p2 *= 2.15; a *= .5; } }
   float band = smoothstep(0.03, 0.12, h) * smoothstep(0.95, 0.40, h);
   float hero = uDawn * (1.0 - uMode);
+  // in the hero the banks become thin low streaks: the upper sky stays a
+  // clear deep blue, as it does before a real sunrise
+  band *= mix(1.0, 1.0 - smoothstep(0.05, 0.20, h), hero);
   float cloud = smoothstep(0.40, 0.74, cn) * band * (1.0 - 0.45 * hero);
+  // the sky clears in a pocket around the risen sun — no bank drifts over it
+  cloud *= 1.0 - exp(-sunA*sunA*7.0) * 0.75 * hero;
   float warmSide = mix(exp(-pow((az - 0.50)*1.4, 2.0)), exp(-pow((az - 0.30)*2.0, 2.0)), uMode);
   warmSide = mix(warmSide, exp(-pow((az + 0.26)*1.5, 2.0)), hero);
   float under = pow(clamp(1.0-h,0.0,1.0), 2.0);
   // in the hero the banks are soft grey-blue morning cloud, not storm slate
-  vec3 cloudDark = mix(vec3(0.030,0.038,0.070), vec3(0.36,0.41,0.50), hero);
+  vec3 cloudDark = mix(vec3(0.030,0.038,0.070), vec3(0.40,0.375,0.475), hero);
   vec3 cloudCol = mix(cloudDark, mix(vec3(0.50,0.27,0.11), vec3(0.88,0.62,0.36), hero), warmSide*max(uDawn*pow(under, 2.2)*0.8, uMode*0.7));
-  col = mix(col, cloudCol, cloud*mix(0.85, 0.55, hero));
+  col = mix(col, cloudCol, cloud*mix(0.85, 0.42, hero));
   float rim = smoothstep(0.42,0.58,cn) - smoothstep(0.56,0.82,cn);
 
   col += vec3(0.42,0.27,0.13) * max(rim, 0.0) * band * warmSide * uMode * 0.45;
+  /* a soft in-sky echo of the disc under the haze — the bright disc itself
+     is a sprite held in front of the clouds (see the stage's sun group) */
+  col += discCol * disc * (0.10 + 0.16 * crest) * uDawn * (1.0 - uMode);
   if (uLinear > 0.5) col = pow(max(col, 0.0), vec3(2.2));
   gl_FragColor = vec4(col, 1.0);
 }`;
@@ -219,7 +241,7 @@ export function makeWater(w, h, segs = 1) {
     uniforms: {
       uTime: { value: 0 }, uMode: { value: 0 }, uDawn: { value: 0 },
       uLamp: { value: new THREE.Vector3() }, uCam: { value: new THREE.Vector3() },
-      uSunDir: { value: new THREE.Vector3(-.31, .05, -.95).normalize() },
+      uSunDir: { value: new THREE.Vector3(-.09, .03, -.99).normalize() },
       uReflect: { value: null }, uHasRefl: { value: 0 }, uTextureMatrix: { value: new THREE.Matrix4() },
       uShore: { value: null }, uShoreRect: { value: new THREE.Vector4(0, 0, 0, 0) },
       uFog: { value: new THREE.Color(0x141826) }, uFogD: { value: .008 }, uLinear: { value: 0 },
@@ -291,9 +313,13 @@ export function createRiverStage(ctx) {
   /* sky dome */
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(210, 24, 16),
-    new THREE.ShaderMaterial({ vertexShader: skyVert, fragmentShader: skyFrag, side: THREE.BackSide, uniforms: { uMode: { value: 0 }, uDawn: { value: 0 }, uTime: { value: 0 }, uLinear: { value: 0 } }, depthWrite: false })
+    new THREE.ShaderMaterial({ vertexShader: skyVert, fragmentShader: skyFrag, side: THREE.BackSide, uniforms: { uMode: { value: 0 }, uDawn: { value: 0 }, uRise: { value: 0 }, uTime: { value: 0 }, uLinear: { value: 0 } }, depthWrite: false })
   );
   g.add(sky);
+
+  /* the sun itself is painted by the sky shader (disc + halo at SUN_AZ /
+     SUN_EL) — one sun, in the same space as the sky's own glow pocket, and
+     carried into the water by the planar reflection. */
 
   /* stars */
   const starN = ctx.isMobile ? 260 : 520;
@@ -381,7 +407,7 @@ export function createRiverStage(ctx) {
   ghat.rotation.y = APPROACH_ROT;   // turned with the opening's approach axis
   legacy.add(ghat);   // the hero builds its own platform; this is the return chapters' ghat
 
-  const brnd = buildBrindavana({ withMala: false });
+  const brnd = buildBrindavana({ withMala: true });
   brnd.group.position.copy(BRND_POS);
   g.add(brnd.group);
 
@@ -578,6 +604,8 @@ export function createRiverStage(ctx) {
       wu.uDawn.value = openT;
       sky.material.uniforms.uMode.value = mode;
       sky.material.uniforms.uDawn.value = openT;
+      sky.material.uniforms.uRise.value = rise;
+
       legacy.visible = openRaw < .02;
       stars.material.opacity = .75 * (1 - mode);
       dawn.intensity = mode * 1.6;

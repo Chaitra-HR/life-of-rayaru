@@ -61,10 +61,15 @@ antaranga/
     scroll.js           CHAPTERS, CAPTIONS, VEILS — the narrative source of truth
     util.js             math, canvas-texture helpers, in-scene type (textMesh)
     preloader.js        the architectural drafting animation
-    audio.js            synthesised ambience (opt-in)
     post.js             the grade used by the opening
     works.js            chapter 05, the horizontal canvas of the five granthas
+    purva.js            chapters 01–03, the Pūrvāśrama editorial layer (#purva)
     world/              one module per chapter
+      purvashrama.js    chapters 01–03 — the Bhuvanagiri house world
+                        (models/purvashrama-house.glb: the supplied traditional
+                        house, simplified 1.8M→150k tris and re-encoded webp;
+                        the original asset is untouched outside the repo)
+      interior.js       chapter 04 only — the sannyāsa corridor and chamber
       journey/          chapter 07's terrain system — see docs/journey-chapter.md
   vendor/               three.js r160 + BufferGeometryUtils
   fonts/ assets/ models/
@@ -93,13 +98,14 @@ adds the offset back when positioning the camera:
 | stage | Y offset |
 | --- | --- |
 | river (opening + return) | 0 |
-| interior | 400 |
+| interior (scene 04) | 400 |
 | parimala | 800 |
 | bheda | 1200 |
 | journey | 1600 |
 | manchale | 2000 |
 | pravesha | 2400 |
 | antaranga | 2800 |
+| purvashrama (scenes 01–03) | 3200 |
 
 ### The chapter map
 
@@ -153,10 +159,10 @@ is a decision, not a tidy-up.
 - Sizes come from the `--step-*` ladder (`14px × 1.2ⁿ`). **Do not write a raw
   px font-size, letter-spacing or line-height into `style.css`.**
 
-**Motion and sound**
+**Motion**
 - Restrained. `prefers-reduced-motion` is honoured everywhere: motion stops, the
   narrative does not.
-- Audio is synthesised, never a file, and strictly opt-in.
+- The site is silent — the former synthesised ambience and its toggle were removed.
 
 **Accessibility**
 - The whole narrative must survive without WebGL. Test with `?nowebgl` after any
@@ -249,6 +255,68 @@ stylised 3D landscape of South India. Details, dials and regression traps are in
 [`docs/journey-chapter.md`](docs/journey-chapter.md). Reference frames from the
 current build are in [`journey-review/`](journey-review/).
 
+**Polish pass (Aug 2026).** Four chapters completed against the production
+brief, without touching the settled systems:
+
+- *Chapter 01, Bhuvanagiri* — the settlement now has a real morning: a
+  gradient sky dome with a low sun pocket (same idiom as Manchale's dusk
+  dome, faded by the `indoors` blend), a sun-glow sprite, warmer sun + hemi,
+  and a lighter chapter fog (`ATMOS[1].d` .011 → .0085). It read as a grey
+  dusk before.
+- *Chapter 03, Kumbhakonam* — the hall of learning is legible now: five
+  lamps instead of three (intensity 8.5 → 14), a hall-scoped warm hemi, a
+  second daylight shaft deep in the corridor. All raised and retired with
+  the existing `hallOn` window.
+- *Chapter 06, Tattvavāda* — the scene rebuilt as ONE ordered field:
+  hand-drawn contour rings (line loops, additive, staggered arrival) that
+  settle into a shared plane as the composition organises; five jīvas with
+  distinct scale/rhythm/inclination instead of two; eight matter shards on
+  orbits INCLINED so their front crossing never eclipses the centre on the
+  camera's sightline (`ud.vt`); a prabhā ring; a form-giving key light; the
+  camera travels deeper and pulls back at the end to see the whole field.
+  Labels render over everything (`depthTest: false`) and are pulled inside
+  the frustum on phones.
+- *Chapter 07 captions* — each of the five stops now has an editorial beat
+  synced to its arrival (`u0` mapped through `t = .570 + u·.085`), placed on
+  the open side of the frame; the short verbs ride the legs between stops.
+  The windows are listed in `scroll.js` with the mapping in a comment.
+
+**Dead-code pass (Aug 2026).** Removed, all verified unreferenced before
+deletion and re-verified by a full end-to-end scrub afterwards:
+
+- `js/world/anugraha.js` (288 lines) — never imported by anything. Its third
+  beat lives in `manchale.js`; the rest was orphaned.
+- The second half of `js/world/opening.js` (~320 lines) — `createOpening` and
+  its `APPROACH_ROT` / `GATE_Z` / `BRND_LOCAL` / `approachToWorld` / `STYLED`
+  constants, all superseded by `world/hero.js`. What remains is the shared
+  toolkit hero.js and river.js build the opening FROM (stone set, material,
+  boxUV, shadowed, loadArch, grass cutout/sheet).
+- **Cormorant Garamond** — 15 `@font-face` blocks and `f1`–`f10.woff2`
+  (~235 KB). No `font-family` in the CSS or JS ever named it; the site is
+  Onest-only for Latin, as the type guardrail says.
+- Three `Noto Sans Kannada` weight-500 faces — measured: Kannada only ever
+  computes to 300, Devanagari only to 400.
+- `fonts/fonts.css` — an unreferenced older copy of `fonts.local.css`.
+- Eight dead caption classes (`.t-rule .t-work .t-small .t-script
+  .t-script-dev .t-trans .t-kn .pos-high`) and the orphan `--stone` token.
+- `util.js`: `easeIn` / `easeOut` / `easeInOut` / `track` (zero references);
+  `smoother` demoted from export to local (used only inside util.js).
+- 23 unused named imports across 12 modules.
+- Root `antaranga-hero-refined.jpg` — byte-identical duplicate of the shipped
+  `antaranga/assets/og.jpg`.
+
+**One real fetch removed.** `→` (U+2192) in the Works touch cue was the only
+glyph on the site outside Onest's unicode-range, so it fell through the stack
+to Satoshi and pulled `satoshi-500.woff2` (~25 KB) on every touch device. It
+is now pinned to `system-ui` (`#works.wx-touch .wx-cue i`). Satoshi stays
+declared as the Latin offline fallback but is no longer downloaded — verified
+via `document.fonts` (`Satoshi 500` now reports `unloaded`).
+
+**Deliberately kept.** The `--step-*` and `--tracking-*` ladders are complete
+by design even where a rung is currently unused — the guardrail is "nothing is
+set off the ladder", so the unused rungs are the scale, not dead code. The
+four Satoshi files stay as the documented offline fallback (never fetched).
+
 **Known open items**
 
 - *Chapter 07 colour.* The inland plateau legs read fairly uniform. The dials are
@@ -256,10 +324,12 @@ current build are in [`journey-review/`](journey-review/).
 - *Chapter 07 sea coverage.* The Bay of Bengal takes more of the Srirangam and
   Kumbakonam frames than is ideal. Geographically honest, compositionally heavy.
   The dial is the per-destination `frame` value in `js/world/journey.js`.
-- *Boot stalls.* Two stages still block the main thread while building
-  (`presence` ≈ 940 ms, `river` ≈ 640 ms in the software pane). They build behind
-  the live site so they are not visible, but deferring `presence` further would
-  remove the worst of it.
+- *Boot stalls.* `presence`'s throwaway brindavana build + surface sampling
+  (~940 ms) now runs OFF the stage-build task — the build in one deferred
+  task, the sampling in 300-point chunks behind it, the throwaway geometry
+  disposed; the stage guards itself (`pts.visible`) until the points exist.
+  `river` (≈ 640 ms in the software pane) still builds in one piece behind
+  the live site.
 
 **Approaches already tried and rejected — do not retry**
 

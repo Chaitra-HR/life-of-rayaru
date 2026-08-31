@@ -3,7 +3,7 @@
 // 1,200 Lakshminarayana Shaligramas.
 import * as THREE from 'three';
 import { buildBrindavana } from './brindavana.js';
-import { stoneCanvas, palmLeafCanvas, canvas, tex, textMesh, glowSprite, mulberry, lerp, clamp01, remap, smooth, win, V3 } from '../util.js';
+import { stoneCanvas, palmLeafCanvas, canvas, tex, textMesh, glowSprite, mulberry, lerp, remap, smooth, win, V3 } from '../util.js';
 
 export const ANTARANGA_Y = 2800;
 
@@ -52,7 +52,7 @@ export function createAntarangaStage(ctx) {
 
   /* the inner enclosure + presence, revealed by the separation */
   const inner = new THREE.Group();
-  inner.position.y = 1.55;
+  inner.position.y = 1.85;   // centred in the niche cavity of the rebuilt structure
   g.add(inner);
   const innerBox = new THREE.Mesh(
     new THREE.BoxGeometry(1.7, 1.5, 1.7),
@@ -274,8 +274,7 @@ export function createAntarangaStage(ctx) {
       if (brnd.parts.mala) {
         const mv = 1 - smooth(remap(u, .14, .3));
         brnd.parts.mala.visible = mv > .01;
-        const bm = brnd.parts.mala.userData.beadMat;
-        if (bm) { bm.transparent = true; bm.opacity = mv; }
+        for (const bm of brnd.parts.mala.userData.mats || []) { bm.transparent = true; bm.opacity = mv; }
       }
 
       /* inner enclosure becomes visible as parts clear */

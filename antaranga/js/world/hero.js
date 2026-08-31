@@ -5,7 +5,7 @@
 // Environment systems live in their own modules (clouds, birds, vegetation).
 // THE BRINDAVANA IS A LOCKED ASSET — only its staging is touched here.
 import * as THREE from 'three';
-import { mulberry, fbm, flame } from '../util.js';
+import { mulberry, fbm, flame, smooth } from '../util.js';
 import { stoneMaterial, boxUV, shadowed, loadArch, grassCutout, grassSheet } from './opening.js';
 import { createClouds } from './clouds.js';
 import { createBirds } from './birds.js';
@@ -17,7 +17,6 @@ export const BRND = { x: 11.4, z: 2, scale: 1.15 };
 export const GATE = { x: 8.6, z: 15, rot: -.50, h: 11.5 };
 // the whole sacred group faces ~17° left of the camera axis, toward the copy
 export const SACRED_ROT = -.50;
-export const GATE_Z = GATE.z;
 export const STYLED = { fog: true, bloom: false, rays: false, linear: false };
 export function approachToWorld(brndPos, x, y, z) {
   return new THREE.Vector3(brndPos.x + x - BRND.x, y, brndPos.z + z - BRND.z);
@@ -269,86 +268,61 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     var brndGlow = glow;
   }
 
-  /* ---- the tulasi mala: as at Mantralaya — one long garland hung from the
-          cornice corners, sagging in a deep U across the whole front, and a
-          shorter loop above it. Leafy green strands, not a brass chain:
-          small clustered tulasi beads with the occasional wooden bead. ---- */
-  {
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x3d4a28, roughness: .88, metalness: 0 });
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x5e452a, roughness: .7, metalness: .05 });
-    const rr2 = mulberry(19);
-    const loops = [
-      { a: [-1.58, 5.10, 1.42], m: [0, -0.5, 2.10], b: [1.58, 5.10, 1.42], n: 96, r: .056 },  // the long U, down past the niche
-      { a: [-1.30, 5.20, 1.38], m: [0, 3.45, 1.75], b: [1.30, 5.20, 1.38], n: 60, r: .050 },  // the upper loop
-    ];
-    /* the structure's front silhouette (scaled S units): the strand can never
-       pass through stone — it rests just proud of each ledge it crosses and
-       hangs free between them, which is what real weight looks like */
-    const zSurf = (yy) =>
-      yy > 5.5 ? 1.46 :        // attic and crown
-      yy > 4.55 ? 1.92 :       // cornice courses
-      yy > 4.05 ? 1.63 :       // rosette band
-      yy > 1.95 ? 1.60 :       // body face and lower molding
-      yy > 1.10 ? 1.92 :       // lotus base
-      2.55;                    // plinth steps
-    const leafPts = [], woodPts = [];
-    for (const L of loops) {
-      for (let i = 0; i < L.n; i++) {
-        const u = i / (L.n - 1);
-        const x = (1 - u) * (1 - u) * L.a[0] + 2 * (1 - u) * u * L.m[0] + u * u * L.b[0];
-        const y = (1 - u) * (1 - u) * L.a[1] + 2 * (1 - u) * u * L.m[1] + u * u * L.b[1];
-        let z = (1 - u) * (1 - u) * L.a[2] + 2 * (1 - u) * u * L.m[2] + u * u * L.b[2];
-        z = Math.max(z, zSurf(y) + .10);
-        // a garland is not a row of spheres: each station is a small cluster
-        if (i % 7 === 3) { woodPts.push([x, y, z, L.r * 1.35]); continue; }
-        const nCl = 2 + (rr2() * 2 | 0);
-        for (let c = 0; c < nCl; c++) {
-          leafPts.push([x + (rr2() - .5) * .07, y + (rr2() - .5) * .07, z + (rr2() - .5) * .05,
-                        L.r * (.6 + rr2() * .7)]);
-        }
-      }
-    }
-    const put = (mesh, pts) => {
-      const mm = new THREE.Matrix4(), e = new THREE.Euler();
-      pts.forEach(([x, y, z, r], i) => {
-        e.set(rr2() * 3, rr2() * 3, rr2() * 3);
-        mm.makeRotationFromEuler(e);
-        mm.scale(new THREE.Vector3(r, r * .72, r));
-        mm.setPosition(x, y, z);
-        mesh.setMatrixAt(i, mm);
-      });
-      mesh.castShadow = true;
-      S.add(mesh);
-    };
-    put(new THREE.InstancedMesh(new THREE.SphereGeometry(1, 7, 5), leafMat, leafPts.length), leafPts);
-    put(new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), woodMat, woodPts.length), woodPts);
-    // a single marigold knot where the long strand bottoms out
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(.085, 10, 8),
-      new THREE.MeshStandardMaterial({ color: 0x9a5b1c, roughness: .8 }));
-    knot.position.set(0, 2.28, 1.78); knot.scale.y = .8;
-    S.add(knot);
-  }
+  /* the tulasi-mani garland is part of the Brindavana asset itself
+     (buildBrindavana withMala) — nothing is draped over it here */
 
-  /* ---- exactly two standing deepas, one either side of the Brindavana.
-          Warm gold — a soft-burnished lamp brass that stays luminous even
-          against the light, without ever glowing like an ornament. ---- */
-  const bronze = new THREE.MeshStandardMaterial({ color: 0xb08a42, roughness: .46, metalness: .32, emissive: 0x241704 });
-  const bronzeDark = new THREE.MeshStandardMaterial({ color: 0x3e2c12, roughness: .6, metalness: .3 });
-  const lathe = (pts, mat) => shadowed(new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 28), mat));
+  /* ---- exactly two standing deepas, one either side of the Brindavana:
+          traditional brass lamps — a tiered bell foot, a knopped baluster
+          stem, a wide circular oil basin with four wick spouts, and a small
+          finial. The body is built once and cloned, so both lamps share
+          every geometry and material. Aged brass, never flat gold. ---- */
+  const brass = new THREE.MeshStandardMaterial({ color: 0x8a6226, roughness: .5, metalness: .45 });
+  const brassDeep = new THREE.MeshStandardMaterial({ color: 0x4a350f, roughness: .55, metalness: .5 });
+  const mkLathe = (pts) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 26);
+  const deepaBody = new THREE.Group();
+  {
+    const add = (geo, mat = brass) => deepaBody.add(shadowed(new THREE.Mesh(geo, mat)));
+    // tiered bell base
+    add(mkLathe([[0, 0], [.30, 0], [.305, .035], [.25, .062], [.262, .10], [.21, .132], [.222, .17], [.16, .21], [.12, .26], [.096, .30]]));
+    // knopped baluster stem
+    add(mkLathe([[.096, .30], [.052, .36], [.094, .42], [.05, .47], [.048, .58], [.098, .64], [.048, .70], [.045, .82], [.088, .88], [.048, .94], [.045, 1.06], [.078, 1.12], [.04, 1.18]]));
+    // the wide circular oil basin — a broad shallow dish with a raised lip
+    add(mkLathe([[0, 1.175], [.09, 1.18], [.22, 1.205], [.30, 1.24], [.315, 1.285], [.285, 1.30], [.255, 1.262], [.09, 1.25], [0, 1.25]]));
+    const oil = new THREE.Mesh(new THREE.CircleGeometry(.235, 22), brassDeep);
+    oil.rotation.x = -Math.PI / 2; oil.position.y = 1.262;
+    deepaBody.add(oil);
+    // central finial above the basin — a short kalasha bud
+    add(mkLathe([[0, 1.25], [.03, 1.25], [.034, 1.36], [.065, 1.41], [.028, 1.47], [.036, 1.50], [0, 1.545]]));
+    // four wick spouts on the rim
+    const spoutGeo = new THREE.BoxGeometry(.11, .034, .055);
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2 + Math.PI / 4;
+      const sp = shadowed(new THREE.Mesh(spoutGeo, brass));
+      sp.position.set(Math.cos(a) * .32, 1.268, Math.sin(a) * .32);
+      sp.rotation.y = -a;
+      deepaBody.add(sp);
+    }
+  }
   const deepa = (x, y, z, s) => {
-    const d = new THREE.Group();
-    d.add(lathe([[0, 0], [.26, 0], [.26, .035], [.195, .06], [.125, .115], [.085, .17], [.06, .22], [0, .22]], bronze));   // broad weighted foot
-    d.add(lathe([[.05, .21], [.068, .37], [.045, .47], [.041, .70], [.070, .77], [.041, .84], [.038, 1.04], [.064, 1.11], [.038, 1.18], [.034, 1.30], [0, 1.30]], bronze));   // a stem with real girth, two knops
-    d.add(lathe([[0, 1.28], [.05, 1.28], [.12, 1.30], [.165, 1.332], [.155, 1.356], [.115, 1.346], [.045, 1.332], [0, 1.332]], bronze));   // broad shallow oil bowl
-    const oil = new THREE.Mesh(new THREE.CircleGeometry(.105, 22), bronzeDark); oil.rotation.x = -Math.PI / 2; oil.position.y = 1.338; d.add(oil);
-    const fl = flame(.19); fl.position.set(0, 1.378, 0); d.add(fl); d.userData.fl = fl;
-    const pl = new THREE.PointLight(0xffa850, 0, 2.8, 2); pl.position.y = 1.44; d.add(pl); d.userData.pl = pl;
+    const d = deepaBody.clone();          // geometries and materials shared
+    const fls = [];
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2 + Math.PI / 4;
+      const fl = flame(.22);
+      fl.position.set(Math.cos(a) * .375, 1.315, Math.sin(a) * .375);
+      d.add(fl);
+      fls.push(fl);
+    }
+    const pl = new THREE.PointLight(0xffa850, 0, 2.8, 2);
+    pl.position.y = 1.36;
+    d.add(pl);
+    d.userData.fls = fls; d.userData.pl = pl;
     d.scale.setScalar(s); d.position.set(x, y, z);
     S.add(d); return d;
   };
   const deepas = [
-    deepa(-3.8, 1.10, 1.9, 1.7),
-    deepa(3.8, 1.10, 1.9, 1.7),
+    deepa(-3.8, 1.10, 1.9, 1.45),
+    deepa(3.8, 1.10, 1.9, 1.45),
   ];
 
   /* ---- the ruins bundle: real weathered rocks along the platform edges,
@@ -420,6 +394,16 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
       const h = groundHeight(x, z, 7);
       if (h > .05) tufts.push([G(), x, h - .04, z, rr() * 6.3, .05 + rr() * .04]);
     });
+    // ground cover scattered through the near strip's open soil, between the
+    // carpets — varied scale and rotation, crest-height land only: a tuft on
+    // the waterline slope stands against open water and reads as a prop
+    for (let i = 0; i < 30; i++) {
+      const x = -9.5 + rr() * 20, z = 33.5 + rr() * 8.8;
+      if (z < 39 && x > -3.5 && x < 5) continue;   // the bay mouth stays clear
+      const h = groundHeight(x, z, 7);
+      if (h < .55) continue;
+      tufts.push([G(), x, h - .06, z, rr() * 6.3, .022 + rr() * .028]);
+    }
     // a soft belt just above the waterline, where the soil stays damp —
     // never in the open water itself
     for (let i = 0; i < 60 && tufts.length < 130; i++) {
@@ -445,7 +429,9 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
           and grass at the waterline; a low hazy tree line on the far bank ---- */
   // must track ATMOS[0] or distant cards go pale; during the arrival the
   // same colour is pulled down toward night so the cards darken with the sky
-  const fogDay = new THREE.Color(0x93a3b4), fogNight = new THREE.Color(0x121722);
+  const fogDay = new THREE.Color(0x9c9fb4), fogNight = new THREE.Color(0x121722);
+  /* the sun's colour ride: deep orange at the horizon, warm gold once risen */
+  const SUN_LOW = new THREE.Color(0xff7a30), SUN_HIGH = new THREE.Color(0xffc890), EDGE_HIGH = new THREE.Color(0xffcf9a);
   const fogC = fogDay.clone();
   const veg = [];
   // par: mouse-parallax factor per layer — negative pulls near layers against
@@ -510,7 +496,7 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     // and one clump on the flank of the grassy point — a buried sheet shows
     // only its tallest tips, which read as pale specks, so it stands proud
     const bank3 = grassSheet(grassCutout(131, { crest: .5, peak: .26, wide: .8, blades: 5200, len: 20, warm: 0, day: true, rough: .65, crest2: .3 }), 8, 1.2, fogC);
-    bank3.position.set(-5.6, 1.10, 39.4);
+    bank3.position.set(-5.6, .85, 39.4);   // low on the point's flank, under the camera's eye-line
     for (const gr of [bank1, bank2, bank3]) {
       gr.material.uniforms.uTint.value = .5; gr.renderOrder = 4;
       gr.userData.par = -.02; gr.userData.bx = gr.position.x;
@@ -530,7 +516,9 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     grassSheet(grassCutout(223, { crest: .42, peak: .40, wide: .70, blades: 12000, len: 42, warm: .25, day: true, crest2: .34, crest3: .34, rough: .75 }), 12, 2.1, fogC),
     grassSheet(grassCutout(227, { crest: .52, peak: .44, wide: .62, blades: 11000, len: 46, warm: .25, day: true, crest2: .28, crest3: .32, rough: .75 }), 10.5, 2.2, fogC),
   ];
-  fore[0].position.set(-7.2, 1.1, 38.6); fore[0].rotation.y = .14;     // the grassy point, left of centre
+  // the grassy point, left of centre — shifted left so its right end stops
+  // on the point's own land, never against the open bay behind it
+  fore[0].position.set(-8.6, groundHeight(-8.6, 39.0, 7) + .55, 39.0); fore[0].rotation.y = .14;
   fore[1].position.set(9.0, 1.0, 37.4); fore[1].rotation.y = -.12;     // a cluster on the right sweep
   // (the two body:false straggler sheets that sat at local x −1.6 and 0.8
   // were removed — they projected to screen x 29% and 58%, hanging blades
@@ -545,9 +533,27 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
   fore[2].position.set(-3.2, 1.18, 43.9);                              // the bottom-left corner, right under the lens
   fore.push(grassSheet(grassCutout(241, { crest: .45, peak: .36, wide: .75, blades: 6000, len: 34, warm: .25, day: true, crest2: .32, rough: .7 }), 7, 1.6, fogC));
   fore[3].position.set(12.0, 1.35, 35.0); fore[3].rotation.y = -.08;   // the right corner, on the bank sweep
+  /* the phone framing looks straight down the near strip, which the corner
+     sheets leave open — two broad LOW carpets keep that band grassed. They
+     sit deep in the terrain so only a fringe of tips shows on the brown
+     bank: this near the lens, a taller sheet's crown would climb past the
+     camera's eye-line and hang its blades across the open water beyond. */
+  fore.push(grassSheet(grassCutout(251, { crest: .48, peak: .30, wide: .85, blades: 7000, len: 26, warm: .15, day: true, crest2: .3, rough: .7 }), 9, 1.5, fogC));
+  fore[4].position.set(6.8, groundHeight(6.8, 40.8, 7) + .12, 40.8); fore[4].rotation.y = .06;
+  fore.push(grassSheet(grassCutout(257, { crest: .5, peak: .28, wide: .8, blades: 6000, len: 24, warm: 0, day: true, crest2: .28, rough: .7 }), 8, 1.35, fogC));
+  fore[5].position.set(-5.4, groundHeight(-5.4, 42.0, 7) + .1, 42.0); fore[5].rotation.y = -.1;
+  /* the tablet and portrait framings look across a broader stretch of the
+     strip — three more irregular low carpets break up the open soil while
+     leaving trodden earth showing between them */
+  fore.push(grassSheet(grassCutout(263, { crest: .46, peak: .3, wide: .78, blades: 6200, len: 24, warm: .1, day: true, crest2: .3, rough: .7 }), 7.5, 1.25, fogC));
+  fore[6].position.set(.6, groundHeight(.6, 41.4, 7) + .1, 41.4); fore[6].rotation.y = .18;
+  fore.push(grassSheet(grassCutout(271, { crest: .52, peak: .27, wide: .72, blades: 5400, len: 22, warm: 0, day: true, crest2: .26, rough: .68 }), 6.8, 1.2, fogC));
+  fore[7].position.set(7.6, groundHeight(7.6, 43.2, 7) + .1, 43.2); fore[7].rotation.y = -.14;
+  fore.push(grassSheet(grassCutout(277, { crest: .48, peak: .29, wide: .8, blades: 5000, len: 22, warm: .18, day: true, crest2: .3, rough: .72 }), 6, 1.15, fogC));
+  fore[8].position.set(-8.4, groundHeight(-8.4, 42.6, 7) + .12, 42.6); fore[8].rotation.y = .08;
   // the frame's edges sit in dawn shadow: brighter than the mid-ground bank,
   // the foreground reads as a pasted-on green band rather than near land
-  const foreTint = [.28, .28, .27, .27];
+  const foreTint = [.28, .28, .27, .27, .30, .30, .30, .29, .30];
   fore.forEach((f, i) => {
     f.material.uniforms.uTint.value = foreTint[i]; f.renderOrder = 6;
     f.userData.par = -.08; f.userData.bx = f.position.x; f.userData.by = f.position.y;   // nearest parallax layer
@@ -597,6 +603,12 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     placeWord() {},
     update(time, openT, reduced, fogDensity = .006, camera = null, dt = .016) {
       const a = openT;
+      /* a true sunrise, not a fade: the sky's own light comes up first
+         (civil twilight), then the sun crests the horizon and its direct
+         light sweeps in — deep orange and near-horizontal at first, warming
+         and climbing as the disc lifts */
+      const twilight = smooth(THREE.MathUtils.clamp(a * 1.5, 0, 1));
+      const crest = smooth(THREE.MathUtils.clamp((a - .5) / .45, 0, 1));   // as the disc breaches the horizon
       fogC.copy(fogNight).lerp(fogDay, a);
       /* layered mouse parallax: the camera already drifts; each depth band
          slides a touch more (near, against) or less (far, with) so the
@@ -609,32 +621,43 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
           if (s.userData.by !== undefined) s.position.y = s.userData.by + ms.y * .03;
         }
       }
-      hemi.intensity = 1.15 * a;
-      sun.intensity = 2.9 * a;
-      fill.intensity = 1.0 * a;
-      edge.intensity = 1.0 * a;
-      amb.intensity = .34 * a;
-      brndKey.intensity = .9 * a;
-      brndGlow.material.opacity = .10 * a;                 // a breath of air, not a spotlight
-      mist.material.opacity = .16 * a;
+      hemi.intensity = 1.15 * twilight;
+      fill.intensity = 1.0 * twilight;
+      amb.intensity = .34 * twilight;
+      /* the sun itself: below the horizon until it crests, then rising —
+         its light long and deep orange at first, whitening as it climbs */
+      sun.intensity = 2.9 * crest;
+      sun.color.copy(SUN_LOW).lerp(SUN_HIGH, crest);
+      sun.position.set(-48, THREE.MathUtils.lerp(.5, 12, crest), -44);
+      edge.intensity = 1.0 * crest;
+      edge.color.copy(SUN_LOW).lerp(EDGE_HIGH, crest);
+      brndKey.intensity = .9 * (twilight * .3 + crest * .7);
+      brndGlow.material.opacity = .10 * twilight;          // a breath of air, not a spotlight
+      mist.material.opacity = .16 * twilight;
       for (const k in brnd.materials) {
-        const m = brnd.materials[k]; if (!m || !m.color) continue;
+        // only the map-based stone materials, whose base color is white — a
+        // scalar on the colored ones (oxide seams, the mala) would bleach them
+        const m = brnd.materials[k]; if (!m || !m.color || !m.map) continue;
         // the krishna-shila stays dark stone — only a whisper of lift
         const lift = (k === 'rosette') ? .92 : 1.0;
         m.color.setScalar(1 + (lift - 1) * a);
       }
       for (const d of deepas) {
-        const f = d.userData.fl.userData.flicker(time + d.position.x * 2.7);
-        d.userData.pl.intensity = a * (.5 + f * .22);
+        // the lamps were lit before dawn — they burn from the first moments
+        let f = .9;
+        for (let i = 0; i < d.userData.fls.length; i++) {
+          f = d.userData.fls[i].userData.flicker(time + d.position.x * 2.7 + i * 1.9);
+        }
+        d.userData.pl.intensity = Math.min(1, a * 4) * (.5 + f * .22);
       }
       for (const s of veg) {
         const u = s.material.uniforms;
-        u.uTime.value = time; u.uFade.value = a; u.uFogD.value = fogDensity;
+        u.uTime.value = time; u.uFade.value = twilight; u.uFogD.value = fogDensity;
         if (reduced) u.uSway.value = Math.min(u.uSway.value, .15);
       }
       for (const s of grass) {
         const u = s.material.uniforms;
-        u.uTime.value = time; u.uSway.value = reduced ? .2 : 1; u.uFade.value = a; u.uLinear.value = 0; u.uFogD.value = fogDensity;
+        u.uTime.value = time; u.uSway.value = reduced ? .2 : 1; u.uFade.value = twilight; u.uLinear.value = 0; u.uFogD.value = fogDensity;
       }
       clouds.update(time, reduced ? 0 : dt);
       birds.update(time, reduced ? 0 : dt, camera);

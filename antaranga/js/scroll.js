@@ -108,66 +108,11 @@ export class ScrollTimeline {
    tradition it is described as such. */
 export const CAPTIONS = [
 
-  /* ══ 01 · VENKATANATHA / BHUVANAGIRI ═══════════════════════════════
-     The chapter opens as a place, not a slide: one enormous word bleeds
-     past the frame while the settlement approaches, and the facts arrive
-     as small dated notations beside what the camera is looking at. */
-  { a: .0705, b: .118, pos: 'pos-bleedL', drift: .4, html: `
-    <div class="t-giant">Bhuvanagiri</div>` },
-
-  { a: .076, b: .098, pos: 'pos-left', html: `
-    <div class="t-anno">A small settlement in the Tamil country.</div>` },
-
-  { a: .086, b: .106, pos: 'pos-left', drift: .8, html: `
-    <div class="t-loc">c. 1595</div>
-    <div class="t-sub">Venkatanatha is born.</div>` },
-
-  { a: .104, b: .118, pos: 'pos-low', html: `
-    <div class="t-sub">Music came early. So did study.</div>` },
-
-  { a: .108, b: .124, pos: 'pos-right', html: `
-    <div class="t-anno">Born to <strong>Thimmanna Bhatta</strong> and <strong>Gopikamba</strong> — a family of śāstra and saṅgīta, associated with the Vijayanagara court.</div>` },
-
-  /* the akṣarābhyāsa moment — the ॐ stands in the scene; the copy answers it */
-  { a: .120, b: .1345, pos: 'pos-right', html: `
-    <div class="t-body">When his father explained that <span class="t-om">ॐ</span> represented the Lord, the young Venkatanatha asked how so small a symbol could contain the greatness of the Infinite.</div>` },
-
-  /* silence is left around this line — nothing else shares its window */
-  { a: .139, b: .1485, pos: 'pos-center', drift: .6, html: `
-    <div class="t-sub">His father would not live to see where that learning would lead.</div>` },
-
-  /* ══ 02 · GṚHASTHA ══════════════════════════════════════════════════
-     An interior chapter: the two statements stand apart in the room, and
-     the facts of scarcity surface one at a time, like things noticed. */
-  { a: .156, b: .172, pos: 'pos-left', html: `
-    <div class="t-sub">He returns from Madurai,<br>and marries Saraswati Bai.</div>
-    <div class="t-anno" style="margin-top:1.1em">They later have a son, Lakshminarayana.</div>` },
-
-  { a: .176, b: .193, pos: 'pos-left', drift: .7, html: `
-    <div class="t-display">A scholar of rare learning.</div>` },
-
-  { a: .188, b: .204, pos: 'pos-right', drift: .7, html: `
-    <div class="t-display">A household with almost nothing.</div>` },
-
-  { a: .2035, b: .210, pos: 'pos-low', html: `
-    <div class="t-sub">He would not demand payment for teaching.</div>` },
-  { a: .212, b: .218, pos: 'pos-low', html: `
-    <div class="t-sub">There were days when even oil for a festival bath was beyond the family’s means.</div>` },
-  { a: .220, b: .2265, pos: 'pos-low', html: `
-    <div class="t-sub">Yet his study, teaching and devotion continued.</div>` },
-
-  /* ══ 03 · KUMBHAKONAM ═══════════════════════════════════════════════
-     The hall of learning: a dated marker, one primary line, and the
-     disciplines listed like a manuscript's own margin note. */
-  { a: .231, b: .254, pos: 'pos-left', html: `
-    <div class="t-loc">KUMBHAKONAM · UNDER SRI SUDHEENDRA TIRTHA</div>
-    <div class="t-sub">Venkatanatha enters the world<br>that would define his life.</div>` },
-
-  { a: .256, b: .272, pos: 'pos-right', html: `
-    <div class="t-anno">Vedānta. Vyākaraṇa. Mīmāṃsā.<br>The works of Madhvacharya and Jayatirtha.</div>` },
-
-  { a: .275, b: .290, pos: 'pos-left', html: `
-    <div class="t-body">His learning was not limited to memorising texts. He became known for explaining difficult points of Tattvavāda with unusual clarity.</div>` },
+  /* ══ 01–03 · PŪRVĀŚRAMA ═══════════════════════════════════════════
+     Scenes 01–03 carry their own editorial layer — the chapter cover, the
+     akṣarābhyāsa, education, the gṛhastha household and Kumbhakonam all
+     live in #purva (js/purva.js), in one stable copy column. Nothing from
+     that span is authored here. */
 
   /* ══ 04 · RAGHAVENDRA TIRTHA ════════════════════════════════════════
      The account arrives in quiet fragments; then a long-held pause; then
@@ -219,14 +164,39 @@ export const CAPTIONS = [
     <div class="t-sub">Five distinctions. Not ignorance to be dissolved — the structure of existence itself.</div>` },
 
   /* ══ 07 · THE JOURNEY ═══════════════════════════════════════════════
-     Movement itself carries the chapter; the beats pass like milestones. */
-  { a: .575, b: .592, pos: 'pos-left', drift: .7, html: `
+     Movement itself carries the chapter. The in-scene labels name each
+     place; these beats say why the glide slows there — each window is
+     synced to its destination's arrival (u0 in journey/config.js, mapped
+     through t = .570 + u·.085), and the short verbs ride the legs between. */
+  { a: .5715, b: .5875, pos: 'pos-left', drift: .7, html: `
     <div class="t-display">The siddhānta was not meant<br>to remain inside manuscripts.</div>` },
 
-  { a: .598, b: .607, pos: 'pos-low', html: `<div class="t-sub">He taught.</div>` },
-  { a: .610, b: .619, pos: 'pos-low', html: `<div class="t-sub">He debated.</div>` },
-  { a: .622, b: .631, pos: 'pos-low', html: `<div class="t-sub">He worshipped Moola Rama.</div>` },
-  { a: .633, b: .642, pos: 'pos-low', html: `
+  /* Srirangam · u .075 → t .5764 */
+  { a: .5735, b: .5808, pos: 'pos-right', html: `
+    <div class="t-loc">SRIRANGAM · ON THE KAVERI</div>
+    <div class="t-sub">The island temple of Sri Ranganatha —<br>the journey begins among the great shrines of the Tamil country.</div>` },
+
+  /* Kumbakonam · u .16 → t .5836 */
+  { a: .5818, b: .5895, pos: 'pos-right', html: `
+    <div class="t-loc">KUMBHAKONAM</div>
+    <div class="t-sub">The hall where Venkatanatha had studied<br>receives him again — now as its ācārya.</div>` },
+
+  { a: .5905, b: .5958, pos: 'pos-low', html: `<div class="t-sub">He taught.</div>` },
+
+  /* Madurai · u .32 → t .5972 */
+  { a: .5962, b: .6035, pos: 'pos-right', html: `
+    <div class="t-loc">MADURAI</div>
+    <div class="t-sub">He had come here once as a student.<br>He returns carrying the siddhānta south.</div>` },
+
+  { a: .6045, b: .6100, pos: 'pos-low', html: `<div class="t-sub">He debated.</div>` },
+  { a: .6110, b: .6170, pos: 'pos-low', html: `<div class="t-sub">He worshipped Moola Rama.</div>` },
+
+  /* Udupi · u .60 → t .621 */
+  { a: .6182, b: .6265, pos: 'pos-left', html: `
+    <div class="t-loc">UDUPI · KARNATAKA</div>
+    <div class="t-sub">Sri Krishna's town, Madhvacharya's own seat —<br>the wellspring of the Tattvavāda he carried.</div>` },
+
+  { a: .628, b: .640, pos: 'pos-low', html: `
     <div class="t-sub">He strengthened the Madhwa tradition across the places he visited.</div>` },
 
   /* the movement slows; one name remains */
@@ -312,9 +282,7 @@ export const CAPTIONS = [
 /* quiet orientation: a small vertical marker rides the right edge through
    each chapter — the narrative announces chapters, this only confirms them */
 const EDGE = [
-  ['01 · Bhuvanagiri', .074, .146],
-  ['02 · The Household', .154, .221],
-  ['03 · Kumbhakonam', .229, .291],
+  /* 01–03 (Pūrvāśrama) carry no edge marker: the chapter announces itself */
   ['04 · Tanjore · 1621', .299, .366],
   /* 05 ends early: the canvas carries its own chapter marker once the books arrive */
   ['05 · The Works', .374, .396],
@@ -342,18 +310,22 @@ export class Captions {
     for (const c of this.items) {
       const span = c.b - c.a;
       // longer, softer envelopes: a beat is leaving while the next arrives
-      const fade = Math.min(span * .38, .02);
-      const o = smooth(remap(t, c.a, c.a + fade)) * (1 - smooth(remap(t, c.b - fade, c.b)));
+      const fade = Math.min(span * .45, .028);
+      const oIn = smooth(remap(t, c.a, c.a + fade));
+      const oOut = 1 - smooth(remap(t, c.b - fade, c.b));
+      const o = oIn * oOut;
       const p = clamp01((t - c.a) / span);
       if (Math.abs(o - c.o) > .003 || (o === 0 && c.o !== 0) || (o > 0 && Math.abs(p - c.p) > .004)) {
         c.o = o; c.p = p;
         c.el.style.opacity = o.toFixed(3);
         if (!reduced) {
-          /* scroll-linked travel: the block glides through its whole life
-             instead of fading up in place — the copy belongs to the world's
-             movement, not to a slide. drift 0 pins it (edge markers). */
+          /* scroll-linked travel: the block RISES INTO its place while it
+             fades up, glides on through its whole life, and keeps rising as
+             it dissolves — one continuous physical movement, never text
+             switched on and off in place. Fully reversible with the scroll.
+             drift 0 pins it (edge markers). */
           const k = c.drift === undefined ? 1 : c.drift;
-          const dy = (0.5 - p) * 44 * k;
+          const dy = k * ((0.5 - p) * 44 + (1 - oIn) * 22 - (1 - oOut) * 16);
           c.inner.style.transform = `translateY(${dy.toFixed(1)}px)`;
         }
         c.el.style.visibility = o <= 0 ? 'hidden' : 'visible';
@@ -367,7 +339,8 @@ export class Captions {
    everywhere so a seam reads as passing shadow, never a slide change.
    Scenes 01–04 share one continuous interior travel — no veils between them. */
 const VEILS = [
-  [.070, .0075, .9],   // through the reflection → Bhuvanagiri (underwater)
+  [.123, .0035, .95],  // through the dark doorway → inside the house
+  [.295, .008, .85],   // the Matha threshold → the sannyāsa corridor
   [.370, .007, .6],    // the quiet mandapa → into the manuscript
   [.480, .008, .5],    // the line leaves the page → conceptual space
   [.570, .008, .5],    // the cosmos contracts → the map of South India

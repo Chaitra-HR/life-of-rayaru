@@ -1,7 +1,7 @@
 // ANTARANGA · scene 07 — Brindavana Pravesha. Time slows. The mala stops.
 // Stone slabs move into place around a seated stillness.
 import * as THREE from 'three';
-import { stoneCanvas, palmLeafCanvas, tex, flame, glowSprite, mulberry, lerp, clamp01, remap, smooth, win, V3 } from '../util.js';
+import { stoneCanvas, palmLeafCanvas, tex, flame, glowSprite, mulberry, lerp, remap, smooth, V3 } from '../util.js';
 
 export const PRAVESHA_Y = 2400;
 

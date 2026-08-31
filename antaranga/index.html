@@ -24,8 +24,8 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
 <link rel="modulepreload" href="vendor/three.module.js">
 <link rel="modulepreload" href="js/util.js">
 <link rel="modulepreload" href="js/scroll.js">
-<link rel="modulepreload" href="js/audio.js">
 <link rel="modulepreload" href="js/world/brindavana.js">
+<link rel="modulepreload" href="js/world/purvashrama.js">
 <link rel="modulepreload" href="js/world/river.js">
 <link rel="modulepreload" href="js/world/interior.js">
 <link rel="modulepreload" href="js/world/parimala.js">
@@ -84,6 +84,66 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
        Content (data) and DOM live in js/works.js; layout in css. -->
   <section id="works" aria-label="05 — The Works" hidden></section>
 
+  <!-- 01 · Pūrvāśrama — the editorial layer over the house world.
+       A chapter cover (label · headline · introduction · biographical strip ·
+       cue), then ONE stable copy column carrying the narrative a beat at a
+       time. State lives in js/purva.js; layout in css. Copy is approved
+       biographical text and is not to be rewritten. -->
+  <section id="purva" aria-label="01 — Pūrvāśrama" hidden>
+    <div class="pv-cover">
+      <div class="pv-label">01 — PŪRVĀŚRAMA</div>
+      <h2 class="pv-head">
+        <span class="pv-hl"><span>VENKATANATHA.</span></span>
+        <span class="pv-hl"><span>SCHOLAR.</span></span>
+        <span class="pv-hl"><span>TEACHER.</span></span>
+        <span class="pv-hl"><span>GṚHASTHA.</span></span>
+      </h2>
+      <div class="pv-intro">
+        <p>Before accepting Sannyasa, Rayaru was known as Venkatanatha. He was born into a family of scholars and musicians and was trained in grammar, logic, Mimamsa and Vedanta.</p>
+        <p>He studied under Lakshminarasimhacharya and later Sri Sudhindra Tirtha. His ability in Vyakarana earned him the title Mahabhashyacharya.</p>
+        <p>Venkatanatha lived through severe poverty, but continued his adhyayana and adhyapana. He taught students without treating knowledge as a means of personal gain.</p>
+        <div class="pv-cue">ENTER PŪRVĀŚRAMA <i aria-hidden="true">↓</i></div>
+      </div>
+      <div class="pv-strip" aria-label="Pūrvāśrama — places and titles">
+        <div><b>BHUVANAGIRI</b><span>Birth and childhood</span></div>
+        <div><b>MADURAI</b><span>Education</span></div>
+        <div><b>KUMBHAKONAM</b><span>Advanced study</span></div>
+        <div><b>MAHABHASHYACHARYA</b><span>Scholarship and teaching</span></div>
+      </div>
+    </div>
+    <div class="pv-beat" data-beat="aksara">
+      <p>During Venkatanatha’s Aksharabhyasa, Thimmanna Bhatta wrote Om and explained that it represented the Supreme Lord.</p>
+    </div>
+    <div class="pv-q">
+      <span class="pv-ql"><span>HOW COULD SO SMALL</span></span>
+      <span class="pv-ql"><span>A SYMBOL EXPRESS</span></span>
+      <span class="pv-ql"><span>THE INFINITE GREATNESS</span></span>
+      <span class="pv-ql"><span>OF LORD HARI?</span></span>
+    </div>
+    <div class="pv-beat" data-beat="pranava">
+      <p>When his father asked him to explain, the young Venkatanatha described the eight components of Pranava:</p>
+      <p class="pv-eight" aria-label="A, U, M, Nada, Bindu, Ghosha, Shanta, Atishanta">
+        <span>A</span><i>·</i><span>U</span><i>·</i><span>M</span><i>·</i><span>Nada</span><i>·</i><span>Bindu</span><i>·</i><span>Ghosha</span><i>·</i><span>Shanta</span><i>·</i><span>Atishanta</span>
+      </p>
+      <p>He related them to eight forms of the Supreme and continued through the Vyahritis, the Vedas and Purusha Sukta, explaining Om through the infinite auspicious attributes of Lord Hari.</p>
+    </div>
+    <div class="pv-beat" data-beat="astonished">
+      <p>The assembled scholars were astonished by the depth of the child’s explanation.</p>
+    </div>
+    <div class="pv-beat" data-beat="education">
+      <p>Following his father’s passing, Venkatanatha continued his education under Lakshminarasimhacharya at Madurai.</p>
+    </div>
+    <div class="pv-beat" data-beat="marriage">
+      <p>Venkatanatha married Saraswati Bai. Their son, Lakshminarayana, was born during his grihasthashrama.</p>
+    </div>
+    <div class="pv-beat" data-beat="poverty">
+      <p>Venkatanatha lived through severe poverty, but continued his adhyayana and adhyapana. He taught students without treating knowledge as a means of personal gain.</p>
+    </div>
+    <div class="pv-beat" data-beat="kumbhakonam">
+      <p>He studied under Lakshminarasimhacharya and later Sri Sudhindra Tirtha. His ability in Vyakarana earned him the title Mahabhashyacharya.</p>
+    </div>
+  </section>
+
   <!-- persistent UI -->
   <div id="ui" aria-hidden="false">
     <div id="wordmark">
@@ -111,10 +171,10 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
       </svg>
       <span class="wm-text"><b>RAYARA ANTARANGA</b><small>SRI RAGHAVENDRA TIRTHA</small></span>
     </div>
-    <button id="audio-toggle" type="button" aria-pressed="false" aria-label="Enable ambient sound">
-      <svg id="wave" viewBox="0 0 64 20" width="64" height="20" aria-hidden="true" focusable="false">
-        <path id="wave-path" d="M0 10 L64 10" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-      </svg>
+    <!-- sections: inline links on desktop; on a phone they live behind the
+         menu button, in a small panel below the header -->
+    <button id="menu-btn" type="button" aria-expanded="false" aria-controls="topnav" aria-label="Open menu">
+      <span></span><span></span>
     </button>
     <nav id="topnav" aria-label="Sections">
       <button type="button" data-ch="1">LIFE</button>
@@ -122,37 +182,20 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
       <button type="button" data-ch="6">TATTVAVĀDA</button>
       <button type="button" data-ch="9">BRINDAVANA</button>
     </nav>
-    <!-- chapter control: one compact chip at every size, opening the sheet.
-         (An always-visible right-hand rail was tried and removed — it read as
-         interface furniture down the side of every scene.) -->
-    <button id="chip" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Open chapter menu">
-      <span id="chip-num">00 / 09</span>
-      <span id="chip-name">MANTRALAYA</span>
-    </button>
     <a id="aaradhane-link" href="https://www.raghavendramutt.org/" target="_blank" rel="noopener">Aradhana · Mantralaya · 2026</a>
   </div>
 
-  <!-- mobile chapter sheet -->
-  <div id="sheet" role="dialog" aria-modal="true" aria-label="Chapters" hidden>
-    <div class="sheet-in">
-      <div class="sheet-head">
-        <span>CHAPTERS</span>
-        <button type="button" class="sheet-close" aria-label="Close chapter menu">×</button>
-      </div>
-      <div class="sheet-list"></div>
-    </div>
-  </div>
-
-  <!-- opening hero — layered over the first scene, fades with the first scroll -->
+  <!-- opening hero — layered over the first scene, fades with the first scroll.
+       Each heading word sits in its own overflow mask so the entrance can
+       raise the line word by word (css: "opening hero" + "hero entrance"). -->
   <section id="hero" aria-label="Introduction">
     <div class="hero-eyebrow">MANTRALAYA &middot; ON THE TUNGABHADRA</div>
-    <h1 class="hero-heading">THE LIFE AND WORKS OF<br>SRI RAGHAVENDRA TIRTHA</h1>
+    <h1 class="hero-heading"><span class="hw"><span>THE</span></span> <span class="hw"><span>LIFE</span></span> <span class="hw"><span>AND</span></span> <span class="hw"><span>WORKS</span></span> <span class="hw"><span>OF</span></span><br><span class="hw"><span>SRI</span></span> <span class="hw"><span>RAGHAVENDRA</span></span> <span class="hw"><span>TIRTHA</span></span></h1>
     <p class="hero-body">Explore the life and writings of Sri Raghavendra Tirtha, and the precision he brought to the understanding of Tattvavāda.</p>
-    <button id="cta" type="button" data-ch="1"><i aria-hidden="true"></i>BEGIN AT BHUVANAGIRI</button>
   </section>
 
   <!-- the word: flat editorial type across the lower area -->
-  <div id="word" aria-hidden="true">MANTRALAYA</div>
+  <div id="word" aria-hidden="true"><span>MANTRALAYA</span></div>
 
   <!-- the last page of the editorial: a colophon, not another scene -->
   <footer id="footer">
@@ -181,7 +224,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
         </nav>
       </div>
       <div class="f-meta">
-        <p class="f-credit">Temple gateway: “Temple arch” by Er.&nbsp;B.&nbsp;Nijithkumar (CC-BY-4.0) · Stone details: Temple Ruins asset pack by Bl4ckGh0st (CC-BY-4.0). All other environments, typography and sound are original and procedural.</p>
+        <p class="f-credit">Temple gateway: “Temple arch” by Er.&nbsp;B.&nbsp;Nijithkumar (CC-BY-4.0) · Stone details: Temple Ruins asset pack by Bl4ckGh0st (CC-BY-4.0). All other environments and typography are original and procedural.</p>
         <div class="f-namah">Śrī Rāghavendrāya Namaḥ</div>
       </div>
     </div>
@@ -355,7 +398,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
        run during the drawing, those blocks froze the pen mid-stroke. On the
        finished, still drawing the same blocks are invisible. */
     const mods = ['./vendor/three.module.js', './js/util.js', './js/scroll.js',
-      './js/audio.js', './js/world/brindavana.js', './js/world/river.js',
+      './js/world/brindavana.js', './js/world/river.js', './js/world/purvashrama.js',
       './js/world/interior.js', './js/world/parimala.js', './js/world/bheda.js',
       './js/world/journey.js', './js/world/manchale.js', './js/world/pravesha.js',
       './js/world/antaranga.js', './js/world/presence.js'];

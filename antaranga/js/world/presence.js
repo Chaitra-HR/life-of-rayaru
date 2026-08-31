@@ -3,10 +3,46 @@
 import * as THREE from 'three';
 import { buildBrindavana } from './brindavana.js';
 import { BRND_POS } from './river.js';
-import { glowTexture, mulberry, lerp, clamp01, remap, smooth, win, V3 } from '../util.js';
+import { glowTexture, mulberry, lerp, clamp01, remap, smooth, V3 } from '../util.js';
 
-/* sample points on the brindavana's surface for the reassembly */
-function sampleBrindavana(n) {
+/* sample points on the brindavana's surface for the reassembly.
+   This was the worst boot stall in the site (~940 ms in the software pane):
+   a full throwaway brindavana build plus area-weighted sampling, all inside
+   the stage factory. It now runs OFF the build task — the temporary build in
+   one deferred task, the sampling in chunks behind it — and the throwaway
+   geometry is disposed. The stage guards itself until the points exist
+   (it is not visible until t ≈ .85, long after this settles). */
+function sampleBrindavanaDeferred(n, done) {
+  setTimeout(() => {
+    const tris = collectTris();
+    const rnd = mulberry(909);
+    const out = new Float32Array(n * 3);
+    const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+    const areaSum = tris.length ? tris[tris.length - 1].cum : 0;
+    let i = 0;
+    const CHUNK = 300;
+    const step = () => {
+      const end = Math.min(n, i + CHUNK);
+      for (; i < end; i++) {
+        const target = rnd() * areaSum;
+        let lo = 0, hi = tris.length - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (tris[mid].cum < target) lo = mid + 1; else hi = mid; }
+        const tri = tris[lo];
+        let u = rnd(), v = rnd();
+        if (u + v > 1) { u = 1 - u; v = 1 - v; }
+        const p = va.copy(tri.a)
+          .addScaledVector(vb.copy(tri.b).sub(tri.a), u)
+          .addScaledVector(vc.copy(tri.c).sub(tri.a), v);
+        out[i * 3] = p.x; out[i * 3 + 1] = p.y; out[i * 3 + 2] = p.z;
+      }
+      if (i < n) setTimeout(step, 0);
+      else done(out);
+    };
+    step();
+  }, 0);
+}
+
+function collectTris() {
   const tmp = buildBrindavana({ withMala: false });
   tmp.group.position.copy(BRND_POS);
   tmp.group.updateMatrixWorld(true);
@@ -33,21 +69,15 @@ function sampleBrindavana(n) {
       tris.push({ a: va.clone(), b: vb.clone(), c: vc.clone(), cum: areaSum });
     }
   });
-  const rnd = mulberry(909);
-  const out = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    const target = rnd() * areaSum;
-    let lo = 0, hi = tris.length - 1;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (tris[mid].cum < target) lo = mid + 1; else hi = mid; }
-    const tri = tris[lo];
-    let u = rnd(), v = rnd();
-    if (u + v > 1) { u = 1 - u; v = 1 - v; }
-    const p = tri.a.clone()
-      .addScaledVector(vb.copy(tri.b).sub(tri.a), u)
-      .addScaledVector(vc.copy(tri.c).sub(tri.a), v);
-    out[i * 3] = p.x; out[i * 3 + 1] = p.y; out[i * 3 + 2] = p.z;
-  }
-  return out;
+  // the throwaway build is never rendered — release its GPU-bound resources
+  tmp.group.traverse(o => {
+    if (o.isMesh) {
+      if (o.geometry) o.geometry.dispose();
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) if (m) m.dispose();
+    }
+  });
+  return tris;
 }
 
 export function createPresenceStage(ctx) {
@@ -56,7 +86,8 @@ export function createPresenceStage(ctx) {
   const rnd = mulberry(919);
 
   const N = ctx.isMobile ? 520 : 1100;
-  const targets = sampleBrindavana(N);
+  let targets = null;
+  sampleBrindavanaDeferred(N, out => { targets = out; });
 
   /* per-point spread positions: a calm field wrapped around the pull-back path */
   const spread = new Float32Array(N * 3);
@@ -104,6 +135,10 @@ export function createPresenceStage(ctx) {
     setVisible(v) { g.visible = v; },
     cam,
     update(time, globalT, u) {
+      /* the sampled silhouette arrives a few tasks after the stage —
+         hold the points until it exists */
+      pts.visible = !!targets;
+      if (!targets) return;
       /* emerge + spread (0–.45), reassemble (.5–.9), hand over (.9–1) */
       const emerge = smooth(remap(u, 0, .1));
       const gather = smooth(remap(u, .5, .88));

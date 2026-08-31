@@ -1,7 +1,7 @@
 // ANTARANGA · scene 03 — Parimala. Aksharas lift from a manuscript, become a
 // stream, carry the visitor through the Guru Parampara, then form his works.
 import * as THREE from 'three';
-import { palmLeafCanvas, tex, canvas, textMesh, glowSprite, glowTexture, mulberry, lerp, clamp01, remap, smooth, win, camTrack, V3 } from '../util.js';
+import { palmLeafCanvas, tex, canvas, textMesh, glowSprite, glowTexture, mulberry, lerp, clamp01, remap, smooth, win, V3 } from '../util.js';
 
 export const PARIMALA_Y = 800;
 
