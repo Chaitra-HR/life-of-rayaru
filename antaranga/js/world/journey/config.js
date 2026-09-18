@@ -16,29 +16,35 @@ const AIR = {
   inland:  { sun: 0xd3c4ab, sky: 0x878373, ground: 0x2c2720, mist: .36, warm: .48 },
 };
 
+/* The road passes five places. Four are NAMED in the world (a word on the
+   land, labels.js) and given a beat in the narrative column (scroll.js);
+   Srirangam stays on the route but is passed without a name — the story
+   has nothing to say there, and a stop without a story is a tour. The
+   stations (uTarget) are spaced so each named place has a viewport of
+   scroll to be read; scroll.js maps them through t = .560 + u·.095. */
 export const DESTINATIONS = [
   {
-    id: 'srirangam', num: '01', name: 'SRIRANGAM', region: 'TAMIL NADU',
-    x: 6, z: 26, scale: 1.0, landmark: 'srirangam',
-    labelSide: 'left', air: AIR.plains, uTarget: .075, sCam: .057,
+    id: 'srirangam', name: 'SRIRANGAM',
+    x: 6, z: 26, scale: 1.0, landmark: 'srirangam', unnamed: true,
+    labelSide: 'left', air: AIR.plains, uTarget: .06, sCam: .057,
   },
   {
-    id: 'kumbakonam', num: '02', name: 'KUMBAKONAM', region: 'TAMIL NADU',
+    id: 'kumbakonam', name: 'KUMBAKONAM',
     x: 10, z: 25, scale: .92, landmark: 'kumbakonam',
-    labelSide: 'right', air: AIR.plains, uTarget: .16, sCam: .150,
+    labelSide: 'right', air: AIR.plains, uTarget: .20, sCam: .150,
   },
   {
-    id: 'madurai', num: '03', name: 'MADURAI', region: 'TAMIL NADU',
+    id: 'madurai', name: 'MADURAI',
     x: 4, z: 34, scale: 1.04, landmark: 'madurai',
-    labelSide: 'left', air: AIR.dry, uTarget: .32, sCam: .285,
+    labelSide: 'left', air: AIR.dry, uTarget: .42, sCam: .285,
   },
   {
-    id: 'udupi', num: '04', name: 'UDUPI', region: 'KARNATAKA',
+    id: 'udupi', name: 'UDUPI',
     x: -14, z: 8, scale: .9, landmark: 'udupi',
-    labelSide: 'right', air: AIR.coast, uTarget: .60, sCam: .679,
+    labelSide: 'right', air: AIR.coast, uTarget: .66, sCam: .679,
   },
   {
-    id: 'manchale', num: '05', name: 'MANCHALE', region: 'ON THE TUNGABHADRA',
+    id: 'manchale', name: 'MANCHALE',
     x: -2, z: -16, scale: .8, landmark: 'manchale',
     labelSide: 'left', air: AIR.inland, final: true, uTarget: .93, sCam: .935,
   },
@@ -90,15 +96,26 @@ export function camCurve() {
    rhythm the brief asks for is written here once: pull away on departure,
    ride high across the great landscape transitions, settle low on approach —
    and at the very end give up the map altogether. */
+/* the peaks were 12–15 with troughs of 3–6, five times: a helicopter
+   reel. The rhythm stays (higher between places, lower at each) inside a
+   band a viewer reads as one steady glide. */
+/* ON THE GROUND. This was a helicopter: 6–10 units up, looking 20° down,
+   and from there a temple is a model and the sea fills the frame. A
+   pilgrim's eye is a unit and a half off the road. Between places the
+   camera lifts a little so the country reads; at each place it comes
+   right down and the building stands over it. */
 const ALT = [
-  [.00, 9.0], [.075, 6.0], [.13, 12.0], [.16, 5.6], [.24, 15.0],
-  [.32, 6.2], [.44, 11.0], [.52, 7.0], [.60, 3.6], [.72, 12.0],
-  [.84, 7.0], [.93, 3.0], [1.0, 1.4],
+  [.00, 2.4], [.075, 1.7], [.13, 2.6], [.16, 1.7], [.24, 2.9],
+  [.32, 1.8], [.44, 3.0], [.52, 2.6], [.60, 1.7], [.72, 3.0],
+  [.84, 2.5], [.93, 1.6], [1.0, 1.4],
 ];
+/* a lower gaze than before: the land passes beneath, but the buildings are
+   seen in elevation at every arrival, never top-down */
+/* and the gaze is nearly level: down the road ahead, up at the gopuram */
 const PITCH = [
-  [.00, 28], [.075, 23], [.13, 32], [.16, 23], [.25, 34],
-  [.32, 23], [.44, 34], [.52, 28], [.60, 22], [.72, 32],
-  [.84, 26], [.93, 19], [1.0, 12],
+  [.00, 8], [.075, 4], [.13, 8], [.16, 4], [.25, 8],
+  [.32, 4], [.44, 8], [.52, 7], [.60, 4], [.72, 8],
+  [.84, 7], [.93, 3], [1.0, 2],
 ];
 
 function curveAt(table, u) {

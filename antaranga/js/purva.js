@@ -1,36 +1,55 @@
 // RAYARA ANTARANGA · Pūrvāśrama editorial layer (scenes 01–03)
-// One HTML/CSS layer over the house world: the chapter cover (label,
-// headline, introduction, biographical strip, scroll cue), then one stable
-// copy column that carries the narrative a single beat at a time. Everything
-// is a function of global t; the masked reveals ride CSS transitions
-// triggered from the same windows, so scrolling back replays them in
-// reverse. Copy is the approved Pūrvāśrama text, verbatim.
+//
+// One HTML/CSS layer over the house world, driven by global t: the chapter
+// cover, then one passage at a time in the site's narrative column: the
+// Akṣarābhyāsa told in four beats (the setting, the syllable itself, the
+// question, and what it meant), then the years of study, the household,
+// Kumbakonam and the Matha. The copy is REAL TEXT, same as every caption on
+// the site, so it can be selected and copied. `#purva` itself is inert
+// (pointer-events: none, so the layer never eats a scroll); each block that
+// is actually on screen takes the cursor back, exactly the way `.cap` does.
+//
+// Everything here is a function of t, so scrolling back replays in reverse.
+// Copy lives in index.html and is its only source; this file has no words.
 import { remap, smooth, win } from './util.js';
 
-/* the narrative beats: [a, b] in global t, one at a time, one column */
-const BEATS = [
-  { a: .1235, b: .1360, id: 'aksara' },
-  { a: .1540, b: .1780, id: 'pranava' },
-  { a: .1800, b: .1920, id: 'astonished' },
-  { a: .1950, b: .2100, id: 'education' },
-  { a: .2100, b: .2220, id: 'marriage' },
-  { a: .2240, b: .2380, id: 'poverty' },
-  { a: .2440, b: .2680, id: 'kumbhakonam' },
+/* the narrative beats: [a, b] in global t, one at a time, one column.
+   Each is long enough to be read on a phone before it leaves: nothing
+   here lives for less than about a viewport of scroll. The Akṣarābhyāsa
+   gets the most room of all, and the camera holds on the written sand
+   for the whole of it (purvashrama.js camIn). */
+export const BEATS = [
+  { a: .1265, b: .1420, id: 'aksara' },       // the setting: father, earth, the syllable written
+  { a: .1435, b: .1560, id: 'om' },           // the syllable itself, noticed
+  { a: .1575, b: .1740, id: 'question' },     // the child's question
+  { a: .1755, b: .1880, id: 'astonished' },   // what it meant
+  { a: .1915, b: .2085, id: 'education' },
+  { a: .2105, b: .2300, id: 'household' },    // marriage, the son, the years of almost nothing: one beat
+  { a: .2330, b: .2560, id: 'kumbhakonam' },
+  { a: .2580, b: .2705, id: 'matha' },        // leaves before the seam: the hall is the next thing seen
 ];
-const Q = { a: .1375, b: .1520 };          // the central question
-const COVER = { a: .0800, b: .1180 };      // the cover arrives once the pull-back has established the courtyard
+export const COVER = { a: .0800, b: .1180 };   // the cover arrives once the yard has resolved out of the light
+export const ZONE = { a: .0625, b: .282 };     // the window the chapter's copy owns
+export const QUIET = { a: .108, b: .275 };     // …and where the global header steps back
 
 export function createPurva({ reduced = false } = {}) {
   const root = document.getElementById('purva');
   const cover = root.querySelector('.pv-cover');
-  const q = root.querySelector('.pv-q');
-  const beats = BEATS.map(b => ({ ...b, el: root.querySelector(`[data-beat="${b.id}"]`), o: -1 }));
+  const beats = BEATS.map(b => ({ ...b, el: root.querySelector(`[data-beat="${b.id}"]`), o: -1 })).filter(b => b.el);
   const body = document.body;
-  let covState = '', qOn = null, quiet = null;
+  let covState = '', quiet = null;
+
+  /* a block is only selectable while it is legible: `visibility: hidden`
+     releases the cursor on the way out, so a faded passage can never be
+     dragged over or copied out of an empty screen */
+  const live = (el, o) => {
+    el.style.visibility = o <= 0 ? 'hidden' : 'visible';
+    el.style.pointerEvents = o > .5 ? 'auto' : 'none';
+  };
 
   return {
     update(t) {
-      const zone = t > .0625 && t < .302;
+      const zone = t > ZONE.a && t < ZONE.b;
       if (root.hidden === zone) root.hidden = !zone;
       if (!zone) {
         if (quiet !== false) { body.classList.remove('purva-quiet'); quiet = false; }
@@ -38,7 +57,7 @@ export function createPurva({ reduced = false } = {}) {
       }
 
       /* the global header steps back once the viewer is inside the house */
-      const wantQuiet = t > .108 && t < .295;
+      const wantQuiet = t > QUIET.a && t < QUIET.b;
       if (wantQuiet !== quiet) { body.classList.toggle('purva-quiet', wantQuiet); quiet = wantQuiet; }
 
       /* ---- the cover: staged entrance, then a staged leave ---- */
@@ -48,18 +67,9 @@ export function createPurva({ reduced = false } = {}) {
         cover.classList.toggle('pv-on', state.includes('pv-on'));
         cover.classList.toggle('pv-leave', state.includes('pv-leave'));
       }
-      const covOp = win(t, COVER.a, COVER.a + .002, .108, COVER.b);
+      const covOp = win(t, COVER.a, COVER.a + .004, .108, COVER.b);
       cover.style.opacity = covOp.toFixed(3);
-      cover.style.pointerEvents = covOp > .5 ? '' : 'none';
-
-      /* ---- the question: the chapter's primary moment ---- */
-      const qOp = reduced
-        ? win(t, Q.a, Q.a + .003, Q.b - .003, Q.b)
-        : win(t, Q.a, Q.a + .004, Q.b - .003, Q.b);
-      const qActive = t > Q.a && t < Q.b;
-      if (qActive !== qOn) { q.classList.toggle('pv-qon', qActive); qOn = qActive; }
-      q.style.opacity = qOp.toFixed(3);
-      q.style.pointerEvents = qOp > .5 ? '' : 'none';
+      live(cover, covOp);
 
       /* ---- the beats: one stable column, one passage at a time ---- */
       for (const b of beats) {
@@ -70,11 +80,10 @@ export function createPurva({ reduced = false } = {}) {
         if (Math.abs(o - b.o) > .004 || (o === 0 && b.o !== 0)) {
           b.o = o;
           b.el.style.opacity = o.toFixed(3);
-          b.el.style.visibility = o <= 0 ? 'hidden' : 'visible';
-          b.el.style.pointerEvents = o > .5 ? '' : 'none';
+          live(b.el, o);
           if (!reduced) {
             const p = (t - b.a) / span;
-            b.el.style.transform = `translateY(${((.5 - p) * 30 + (1 - oIn) * 16).toFixed(1)}px)`;
+            b.el.style.transform = `translateY(${((.5 - p) * 26 + (1 - oIn) * 16).toFixed(1)}px)`;
           }
           b.el.classList.toggle('pv-bon', o > .1);
         }

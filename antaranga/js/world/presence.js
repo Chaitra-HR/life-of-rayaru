@@ -123,7 +123,7 @@ export function createPresenceStage(ctx) {
       pos: V3(
         lerp(.4, 0, v),
         lerp(1.6, 2.05, v),
-        lerp(BRND_POS.z + 4.5, 8, easeOutQ(v))
+        lerp(BRND_POS.z + 7.5, 8, v)
       ),
       look: V3(0, lerp(1.8, 3.1, v), BRND_POS.z),
       fov: lerp(40, 42, v),

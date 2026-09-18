@@ -9,9 +9,10 @@ chapters are movements within one authored camera travel — from the Tungabhadr
 at first light, through Bhuvanagiri, Kumbhakonam, the works and Tattvavāda, the
 pilgrimage across South India, Manchale, and into the Brindavana.
 
-Everything is generated in the browser. There are no 3D asset downloads: the
-terrain, architecture, water, vegetation and in-scene typography are all built
-procedurally at load time.
+Everything is generated in the browser. There are no 3D asset downloads beyond
+the small models in `models/` (the temple arch, the relief, the ruins bundle,
+the lotus): the terrain, architecture, water, vegetation and in-scene
+typography are all built procedurally at load time.
 
 **Continuing this work on another machine: start with
 [HANDOVER.md](HANDOVER.md).**
@@ -37,12 +38,25 @@ antaranga/
     main.js           renderer, chapter routing, one camera, one render loop
     scroll.js         the global timeline: chapters, captions, transition veils
     util.js           shared math, canvas texture helpers, in-scene type
-    works.js          chapter 05 — the horizontal canvas of the five granthas
-    world/            one module per chapter, offset vertically in one scene
-      journey/        chapter 07's terrain system (see below)
+    scroll.js         also carries every caption for chapters 01–08: the
+                      life is read over the same bank through one day
+    works.js          the five granthas as data
+    world/            one module per world, offset vertically in one scene:
+                      the river (the opening, the night, the return) and the
+                      Brindavana (pravesha, antaranga). The house, the hall and
+                      the road modules are retired and no longer imported.
   vendor/             three.js and BufferGeometryUtils
   fonts/  assets/  models/
 ```
+
+### The owner's pictures
+
+The owner's photographs of a veena and of a traditional gateway are the
+references for two things now BUILT in the world: the veena on the house's
+bench (`js/world/veena.js`) and the Bhuvanagiri house's entrance on the bank
+(`js/world/threshold.js`). Nothing photographic is placed as a plane;
+`antaranga/tools/cutout.py` remains for keying a picture on white should one
+ever be wanted.
 
 Each chapter module exports a `create…Stage(ctx)` returning
 `{ group, setVisible, cam(u), update(…) }`. `main.js` decides which stages are
@@ -53,13 +67,15 @@ stage contract, the chapter/`t` map and the design guardrails are in
 ### Chapter 07 · The Journey
 
 The pilgrimage chapter is a stylised 3D landscape of South India rather than a
-map. It is split under `js/world/journey/`, and `field.js` is the single source
-of geographic truth — coastlines, the Western Ghats, the rivers, the worn route
-and the ground height. Terrain, water, the route trace, the five temple
-landmarks, the planting, the atmosphere, the labels and the camera all sample it,
-so nothing can float above the ground or contradict the geography. Notes, dials
-and regression traps: [docs/journey-chapter.md](docs/journey-chapter.md).
-Reference frames: [journey-review/](journey-review/).
+map: the road as a line on the land, and four places named as words standing
+on it. It is split under `js/world/journey/`, and `field.js` is the single
+source of geographic truth — coastlines, the Western Ghats, the rivers, the worn
+route and the ground height. Terrain, water, the route trace, the planting, the
+atmosphere, the words and the camera all sample it, so nothing can float above
+the ground or contradict the geography. Notes, dials and regression traps:
+[docs/journey-chapter.md](docs/journey-chapter.md) (written before the temple
+models were removed). Reference frames from that earlier build:
+[journey-review/](journey-review/).
 
 ## Accessibility and fallbacks
 

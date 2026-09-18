@@ -192,10 +192,13 @@ export function createBhedaStage(ctx) {
     const drift = smooth(u);
     const back = smooth(remap(u, .86, 1));
     return {
+      /* one slow travel in, a hand's width of drift, and a short breath
+         back at the end. The earlier full sine cycle in x returned the
+         camera to where it began and read as decoration. */
       pos: V3(
-        Math.sin(u * Math.PI * 2) * .8,
-        .4 + drift * .8 + back * 1.1,
-        13.4 - drift * 4.8 + back * 3.6
+        u * .3,
+        .4 + drift * .8 + back * .5,
+        13.4 - drift * 4.8 + back * 1.4
       ),
       look: V3(0, 0, 0),
       fov: 44,

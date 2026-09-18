@@ -25,7 +25,6 @@ import { DESTINATIONS, camCurve, routeCurve, altitudeAt, pitchAt, airAt } from '
 import { createTerrain } from './journey/terrain.js';
 import { createWaters } from './journey/rivers.js';
 import { createRoute } from './journey/route.js';
-import { createLandmarks } from './journey/landmarks.js';
 import { createScatter } from './journey/scatter.js';
 import { createAtmosphere } from './journey/atmosphere.js';
 import { createLabels } from './journey/labels.js';
@@ -57,8 +56,11 @@ export function createJourneyStage(ctx) {
   g.position.y = JOURNEY_Y;
   g.visible = false;
 
-  const path = camCurve();
+  /* The camera travels the ROUTE — the worn path itself — not a separate
+     line drawn beside it. A path of its own put Kumbakonam's arrival out
+     over the sea; the road ends at each place, so riding it cannot. */
   const route = routeCurve();
+  const path = route;
 
   /* Each destination's station on the camera path is authored (config.js):
      the glide passes within a few units of every site, so "nearest point"
@@ -76,6 +78,11 @@ export function createJourneyStage(ctx) {
         if (rd < bestRD) { bestRD = rd; bestR = i / 600; }
       }
       d.routeProgress = bestR;
+      /* the camera's station is a few units SHORT of the place, on the road
+         in: at the site itself you stand inside the plinth and see nothing */
+      /* Udupi's road arrives down the seaward face: five units short is still
+         on the slope, looking DOWN onto the temple. It stops nearer, at the shore. */
+      d.sCam = Math.max(.004, bestR - (d.id === 'udupi' ? .042 : .055));
     }
   }
   for (const d of DESTINATIONS) d.u0 = d.uTarget;
@@ -86,11 +93,14 @@ export function createJourneyStage(ctx) {
      label must therefore stand to its right, in the open half of the frame.
      Negative reverses both. The pairing is what keeps type off the
      architecture and inside the picture. */
-  DESTINATIONS[0].frame = .45;  DESTINATIONS[0].labelSide = 'right';
-  DESTINATIONS[1].frame = .26;  DESTINATIONS[1].labelSide = 'right';
-  DESTINATIONS[2].frame = .50;  DESTINATIONS[2].labelSide = 'right';
-  DESTINATIONS[3].frame = -.46; DESTINATIONS[3].labelSide = 'left';
-  DESTINATIONS[4].frame = .25;  DESTINATIONS[4].labelSide = 'right';
+  /* the narrative column is on the LEFT of every frame (scroll.js), so the
+     gaze swings left and the architecture stands right of centre, with its
+     name stacked above it — never beside it, where the copy is. */
+  DESTINATIONS[0].frame = -.42; DESTINATIONS[0].labelSide = 'left';
+  DESTINATIONS[1].frame = -.30; DESTINATIONS[1].labelSide = 'left';
+  DESTINATIONS[2].frame = -.44; DESTINATIONS[2].labelSide = 'left';
+  DESTINATIONS[3].frame = -.40; DESTINATIONS[3].labelSide = 'left';
+  DESTINATIONS[4].frame = -.28; DESTINATIONS[4].labelSide = 'left';
 
   const frameAt = (u) => {
     let i = 0;
@@ -109,8 +119,9 @@ export function createJourneyStage(ctx) {
   g.add(trail.mesh);
   const scatter = createScatter(ctx);
   g.add(scatter.group);
-  const landmarks = createLandmarks(ctx, DESTINATIONS);
-  g.add(landmarks.group);
+  /* no buildings: the five temple models were the tourism-map idiom the
+     brief forbids, and from the road they filled the frame as walls. A
+     place is a word on the land (labels.js) and a beat of copy. */
   const labels = createLabels(DESTINATIONS, ctx);
   g.add(labels.group);
   const air = createAtmosphere(ctx);
@@ -150,7 +161,22 @@ export function createJourneyStage(ctx) {
        Ghats, and an altitude taken from the valley floor left the camera
        below the temple's own plinth. The camera still never sinks into the
        hill it is passing over. */
-    const ownG = height(px, pz);
+    /* The camera stands a step OFF the road — on whichever side is downhill.
+       Along the coast the road runs at the foot of the Ghats: a step to the
+       right put the camera inside the mountain, a step to the left puts it
+       on the shore looking along the road with the range rising beside it.
+       At a place, the step is wider (across the tank from the gopuram). */
+    const off = .9 + aimW * 1.8;
+    const gR = height(px + rgtX * off, pz + rgtZ * off);
+    const gL = height(px - rgtX * off, pz - rgtZ * off);
+    const sideSign = gR <= gL ? 1 : -1;
+    const ox = px + rgtX * off * sideSign, oz = pz + rgtZ * off * sideSign;
+    /* the ground it stands over, a stride ahead and behind on the road, and
+       the ground under the offset itself: it rides the highest, so neither a
+       dip in the road nor the slope beside it can swallow it */
+    const ownG = Math.max(height(px, pz), Math.min(gR, gL),
+      height(px + dirX * 1.6, pz + dirZ * 1.6) - .35,
+      height(px - dirX * 1.6, pz - dirZ * 1.6) - .35);
     const camY = Math.max(ownG + alt * .45, lerp(ownG, aimG, aimW * .85) + alt);
 
     /* How far ahead the gaze falls, solved rather than assumed. Taking
@@ -167,15 +193,28 @@ export function createJourneyStage(ctx) {
       reach = clamp((camY - height(px + dirX * reach, pz + dirZ * reach)) / tanP,
         flat * .75, flat * 2.1);
     }
-    const lat = frameAt(u) * (MOB ? .34 : 1) * reach * .32;
+    /* at eye level a near-level gaze reaches the horizon, and the horizon is
+       the sea: a walker looks down the road, not out to it */
+    reach = Math.min(reach, 15);
+    const lat = frameAt(u) * (MOB ? .34 : 1) * reach * .18;   // a glance aside, not a swing
 
     let ax = px + dirX * reach, az = pz + dirZ * reach;
     if (aimW > .004) { ax = lerp(ax, aimX, aimW); az = lerp(az, aimZ, aimW); }
     const lx = ax + rgtX * lat, lz = az + rgtZ * lat;
 
-    const pos = V3(px, camY, pz);
-    // on approach the gaze rises off the ground and onto the building
-    const look = V3(lx, lerp(height(lx, lz) + alt * .10, aimG + 1.75, aimW), lz);
+    /* a step to the right of the worn line, so the road is beside the feet
+       and visible ahead, not hidden directly beneath the camera — and at a
+       place, a wider step: the road runs through the compound, and from ON
+       it the gopuram is a wall of plinth. Stand across the tank from it. */
+    const pos = V3(ox, camY, oz);
+    /* the gaze: down the road ahead; on approach, onto the building's body.
+       Where the land falls away ahead — every descent off the Ghats — the
+       ground 15 units on is the sea, and a gaze that followed it plunged
+       30° below the authored pitch. It is held to a few degrees under it. */
+    let ly = lerp(height(lx, lz) + alt * .25, aimG + 1.6, aimW);
+    const floorY = camY - reach * Math.tan(pitch + 7 * Math.PI / 180);
+    if (ly < floorY) ly = floorY;
+    const look = V3(lx, ly, lz);
 
     /* the very end of the chapter still settles its gaze on Manchale, as it
        always has — but from low down, inside the landscape */
@@ -224,7 +263,7 @@ export function createJourneyStage(ctx) {
         reveal = a === b || b.u0 <= a.u0 ? 1
           : lerp(a.routeProgress, b.routeProgress, clamp01((u - a.u0) / (b.u0 - a.u0)));
       }
-      trail.setReveal(reveal);
+      trail.setReveal(Math.min(1, reveal + .05));   // a little road ahead of the feet, always
 
       /* the map withdraws on the last leg: the route trace goes, the labels
          go, and what is left is Manchale on the Tungabhadra */
@@ -241,14 +280,16 @@ export function createJourneyStage(ctx) {
            else. The window is narrow enough that two never stand in the
            frame together, and a label the glide has already flown past is
            dropped before proximity can blow it up to fill the screen. */
-        const near = win(dist, 3.5, 6.5, 28, 44);
+        /* the camera arrives at four or five units now, on the road — a
+           window that only opened at 6.5 left every temple OUT of focus at
+           the moment of arriving at it (dim tint, no light, no name) */
+        const near = win(dist, 1.0, 2.6, 22, 34);
         const w = d.final
           ? win(u, .66, .73, .82, .89)
-          : win(u, d.u0 - .075, d.u0 - .025, d.u0 + .025, d.u0 + .075);
+          : win(u, d.u0 - .048, d.u0 - .016, d.u0 + .016, d.u0 + .048);
         weights[i] = w * near;
       }
-      labels.update(camLocal, weights, mapFade);
-      landmarks.update(camera, weights);
+      labels.update(camLocal, weights, mapFade, camera);
 
       terrain.update(time);
       waters.update(time);

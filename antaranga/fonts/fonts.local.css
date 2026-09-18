@@ -1,24 +1,85 @@
-/* ONEST — the site typeface, and the only Latin face on the site.
-   The same variable face mengto.github.io/kage uses (OFL, via Google Fonts),
-   vendored offline as one 300–700 variable file per subset. latin +
-   latin-ext together, so IAST diacritics (ā ī ū ṛ ṣ ḍ ṃ ḥ ś …) resolve
-   inside Onest and never fall back to another font mid-word.
-   Satoshi below stays only as the offline fallback if Onest fails. */
+/* TWO LATIN FACES, and nothing else.
+
+   MARCELLUS (400, its only weight) — a lapidary Roman serif cut from
+   inscriptional capitals. It NAMES: the wordmark, every headline and
+   plate title, the held lines over the world, the giant word.
+
+   KARLA (a 300–500 variable file per subset) — a grotesque with a few
+   quirks in it. It EXPLAINS: reading copy at 300, and every small
+   uppercase label, eyebrow, caption and button at 400.
+
+   There is no bold anywhere on the site. Hierarchy is size and the
+   serif/sans switch, never weight.
+
+   Both are OFL, from Google Fonts, vendored offline as woff2: the site
+   loads no third-party stylesheet and works with no network. latin and
+   latin-ext are both carried, so IAST diacritics (ā ī ū ṛ ṣ ḍ ṃ ḥ ś …)
+   resolve inside the face and never fall back mid-word.
+
+   Onest and Satoshi, which carried the site until 17 Sept 2026, are
+   retired: their files are still in this directory, declared nowhere. */
 @font-face {
-  font-family: 'Onest';
+  font-family: 'Marcellus';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400;
   font-display: swap;
-  src: url(./onest-latin.woff2) format('woff2');
+  src: url(./marcellus-latin.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Onest';
+  font-family: 'Marcellus';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./marcellus-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* one variable file per subset covers 300, 400 and 500 */
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url(./karla-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url(./karla-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* The one stitch. Neither Marcellus nor Karla carries Latin Extended
+   Additional (U+1E00-1E9F): the dot-below letters this site cannot do
+   without — jaḍa, Akṣarābhyāsa, Vyākaraṇa, Mīmāṃsā, Namaḥ, ṭīkā. Rather
+   than drop those eight characters to whatever the browser happens to
+   have, each family borrows them from a face of its OWN KIND, declared
+   under the family's own name and fenced by unicode-range so it is
+   reached for nothing else:
+
+     Marcellus  <- Noto Serif's latin-ext   (a serif ḍ in a serif word)
+     Karla      <- the retired Onest        (a grotesque in a grotesque)
+
+   MEASURED: both cover all of ḍ ḥ ṇ ṛ ṣ ṭ ṃ ḷ. Nothing else in the site
+   reaches either file. */
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./notoserif-latin-ext.woff2) format('woff2');
+  unicode-range: U+1E00-1E9F, U+1EF2-1EFF;
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 300 500;
   font-display: swap;
   src: url(./onest-latin-ext.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  unicode-range: U+1E00-1E9F, U+1EF2-1EFF;
 }
 
 /* cyrillic-ext */
@@ -82,32 +143,3 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Satoshi — editorial system font (Fontshare / ITF Free Font License) */
-@font-face {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url(./satoshi-300.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(./satoshi-500.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(./satoshi-700.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src: url(./satoshi-900.woff2) format('woff2');
-}

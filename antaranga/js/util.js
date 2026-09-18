@@ -1,47 +1,12 @@
 // ANTARANGA · shared utilities
 import * as THREE from 'three';
 
-/* ---------------- math ---------------- */
-export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-export const clamp01 = v => clamp(v, 0, 1);
-export const lerp = (a, b, t) => a + (b - a) * t;
-export const remap = (v, a, b) => clamp01((v - a) / (b - a));
-export const smooth = t => t * t * (3 - 2 * t);
-const smoother = t => t * t * t * (t * (t * 6 - 15) + 10);
-// window: 0 outside [a,d], 1 inside [b,c], smooth ramps between
-export const win = (v, a, b, c, d) => smooth(remap(v, a, b)) * (1 - smooth(remap(v, c, d)));
-// frame-rate independent damping
-export const damp = (cur, target, lambda, dt) => lerp(cur, target, 1 - Math.exp(-lambda * dt));
-
-export function mulberry(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-/* value noise + fbm (for terrain, stone) */
-const _r = mulberry(1337);
-const PERM = new Uint8Array(512);
-{ const p = []; for (let i = 0; i < 256; i++) p[i] = i;
-  for (let i = 255; i > 0; i--) { const j = Math.floor(_r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
-  for (let i = 0; i < 512; i++) PERM[i] = p[i & 255]; }
-function grad2(h, x, y) { switch (h & 3) { case 0: return x + y; case 1: return -x + y; case 2: return x - y; default: return -x - y; } }
-export function noise2(x, y) {
-  const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
-  x -= Math.floor(x); y -= Math.floor(y);
-  const u = smoother(x), v = smoother(y);
-  const a = PERM[X + PERM[Y]], b = PERM[X + 1 + PERM[Y]], c = PERM[X + PERM[Y + 1]], d = PERM[X + 1 + PERM[Y + 1]];
-  return lerp(lerp(grad2(a, x, y), grad2(b, x - 1, y), u), lerp(grad2(c, x, y - 1), grad2(d, x - 1, y - 1), u), v) * .7;
-}
-export function fbm(x, y, oct = 4, lac = 2, gain = .5) {
-  let s = 0, amp = .5, f = 1;
-  for (let i = 0; i < oct; i++) { s += amp * noise2(x * f, y * f); f *= lac; amp *= gain; }
-  return s;
-}
+/* ---------------- math ----------------
+   The pure half lives in math.js so the stone Worker can import it without
+   THREE; it is re-exported here so every existing `from './util.js'` import
+   keeps working unchanged. */
+export * from './math.js';
+import { clamp, lerp, smooth, remap, mulberry, noise2, fbm } from './math.js';
 
 /* ---------------- canvas helpers ---------------- */
 export function canvas(w, h) {
@@ -207,19 +172,19 @@ export function nichePanelCanvas(w = 512, h = 256) {
 
 /* ---------------- 3D text ---------------- */
 /* Type painted into the world obeys the same system as the DOM layer:
-   ONE face (Onest), and only the two weights the CSS ladder allows —
-   500 for titles and labels, 300 for the monumental/dim register.
+   TWO faces and no third — Marcellus 400 for anything that NAMES, Karla
+   400 for the small labels — and no bold anywhere.
    These stacks are deliberately SHORTER than the CSS ones: a family named
    in a canvas font stack is downloaded even when the first family covers
-   every glyph, so listing Satoshi here fetched it on every load for
-   nothing. The DOM keeps Satoshi as its offline fallback; canvas floors
-   out on the system sans, which only matters if Onest itself fails. */
+   every glyph, so a long stack here fetched faces on every load for
+   nothing. Canvas floors out on the system serif/sans, which only matters
+   if the vendored faces themselves fail. */
 const FONTS = {
-  serif: '500 %spx "Onest", sans-serif',        // in-scene titles, names
-  serifItalic: '300 %spx "Onest", sans-serif',  // dim echoes
+  serif: '400 %spx "Marcellus", serif',         // in-scene titles, names
+  serifItalic: '400 %spx "Marcellus", serif',   // dim echoes
   kn: '300 %spx "Noto Sans Kannada", sans-serif',
   dn: '400 %spx "Noto Serif Devanagari", serif',
-  sans: '500 %spx "Onest", sans-serif',         // in-scene labels
+  sans: '400 %spx "Karla", sans-serif',         // in-scene labels
 };
 
 export function textMesh(str, {
@@ -293,7 +258,138 @@ export function flame(scale = 1) {
   return g;
 }
 
+
+/* ---------------- the deepa ----------------
+   ONE oil lamp for the whole site: a small standing brass deepa — bell foot,
+   knopped stem, a shallow oil dish with a wick spout, one flame. Every
+   interior lamp (the household, the Matha, the sanctum) is this object at
+   some scale, so ritual light speaks one language from the river to the
+   Brindavana. Aged brass, dim under point lights (bright brass reads as
+   glowing orange boxes). Call .userData.flicker(time) each frame. */
+let _brass = null, _brassDeep = null, _oil = null, _clay = null;
+export function deepaLamp({ scale = 1, light = true, intensity = 4, distance = 6, wicks = 1, flameScale = .5 } = {}) {
+  /* the same aged brass as the opening's two tall deepas (hero.js): one alloy across the site */
+  _brass = _brass || new THREE.MeshStandardMaterial({ color: 0x8a6226, roughness: .5, metalness: .45 });
+  _brassDeep = _brassDeep || new THREE.MeshStandardMaterial({ color: 0x4a350f, roughness: .55, metalness: .5 });
+  _oil = _oil || new THREE.MeshStandardMaterial({ color: 0x2a1c0a, roughness: .35, metalness: .1 });
+  const g = new THREE.Group();
+  const lathe = (pts, mat = _brass, seg = 36) => new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg), mat);
+  /* a kuthuvilakku in small: a tiered bell foot, a knopped baluster, the
+     bowl with a rolled lip, a bud finial rising from its centre. Drawn round
+     (36 segments): the 18-sided version read as a turned goblet in close-up */
+  g.add(lathe([[0, 0], [.150, 0], [.153, .018], [.126, .032], [.132, .052], [.104, .068], [.110, .086], [.080, .106], [.060, .130], [.046, .150]]));   // bell foot
+  g.add(lathe([[.046, .150], [.026, .180], [.048, .212], [.026, .238], [.024, .292], [.050, .322], [.024, .352], [.023, .395], [.040, .415]]));        // knopped stem
+  g.add(lathe([[0, .410], [.046, .412], [.108, .424], [.148, .448], [.160, .478], [.150, .494], [.132, .484], [.118, .470], [.048, .458], [0, .456]]));  // the bowl, its lip rolled
+  const oil = new THREE.Mesh(new THREE.CircleGeometry(.118, 36), _oil);
+  oil.rotation.x = -Math.PI / 2; oil.position.y = .4665;
+  g.add(oil);
+  g.add(lathe([[0, .456], [.016, .456], [.018, .500], [.034, .526], [.014, .552], [.018, .568], [0, .590]]));   // the bud finial
+  const fls = [];
+  /* the spout: a beak pinched out of the lip, not a block set on it */
+  const spoutGeo = new THREE.CylinderGeometry(.010, .026, .062, 10);
+  for (let i = 0; i < wicks; i++) {
+    const a = i * Math.PI * 2 / wicks + Math.PI / 4;
+    const sp = new THREE.Mesh(spoutGeo, _brass);
+    sp.position.set(Math.cos(a) * .168, .480, Math.sin(a) * .168);
+    sp.rotation.z = Math.PI / 2; sp.rotation.order = 'YZX'; sp.rotation.y = -a;
+    g.add(sp);
+    const fl = flame(flameScale);
+    fl.position.set(Math.cos(a) * .196, .525, Math.sin(a) * .196);
+    g.add(fl); fls.push(fl);
+  }
+  const pl = light ? new THREE.PointLight(0xffa850, intensity, distance, 2) : null;
+  if (pl) { pl.position.y = .62; g.add(pl); }
+  g.traverse(o => { if (o.isMesh && o.material === _brass) { o.castShadow = true; o.receiveShadow = true; } });
+  g.scale.setScalar(scale);
+  g.userData.on = 1;
+  g.userData.flames = fls;
+  g.userData.light = pl;
+  /* on: 0..1 — the flame shrinks to nothing and the light goes with it */
+  g.userData.setOn = (v) => {
+    g.userData.on = v;
+    for (const fl of fls) fl.scale.setScalar(Math.max(.001, v));
+    if (pl && v <= .01) pl.intensity = 0;   // never toggle .visible: a light-count change recompiles every lit program in view
+  };
+  g.userData.flicker = (t) => {
+    let f = 1;
+    for (let i = 0; i < fls.length; i++) f = fls[i].userData.flicker(t + i * 1.7);
+    if (pl) pl.intensity = intensity * (.84 + f * .2) * g.userData.on;
+    return f;
+  };
+  return g;
+}
+export function clayLamp({ scale = 1, light = true, intensity = 2.4, distance = 5, flameScale = .3 } = {}) {
+  _clay = _clay || new THREE.MeshStandardMaterial({ color: 0x4a2c1f, roughness: 1 });   // fired clay, Kobicha darkened: under a flame it reads as earthenware, not an orange dish
+  _oil = _oil || new THREE.MeshStandardMaterial({ color: 0x2a1c0a, roughness: .35, metalness: .1 });
+  const g = new THREE.Group();
+  const pts = [[0, 0], [.07, 0], [.09, .012], [.1, .03], [.096, .046], [.072, .042], [0, .042]].map(([r, y]) => new THREE.Vector2(r, y));
+  const dish = new THREE.Mesh(new THREE.LatheGeometry(pts, 36), _clay);   // round enough for the lamp world's close-ups
+  dish.castShadow = true; g.add(dish);
+  const spout = new THREE.Mesh(new THREE.BoxGeometry(.05, .018, .032), _clay);
+  spout.position.set(.1, .038, 0); g.add(spout);
+  const oil = new THREE.Mesh(new THREE.CircleGeometry(.066, 36), _oil);
+  oil.rotation.x = -Math.PI / 2; oil.position.y = .038; g.add(oil);
+  const fl = flame(flameScale);
+  fl.position.set(.11, .062, 0); g.add(fl);
+  const pl = light ? new THREE.PointLight(0xffb070, intensity, distance, 2) : null;
+  if (pl) { pl.position.set(.06, .26, 0); g.add(pl); }
+  g.scale.setScalar(scale);
+  g.userData.on = 1; g.userData.flames = [fl]; g.userData.light = pl;
+  g.userData.setOn = (v) => { g.userData.on = v; fl.scale.setScalar(Math.max(.001, v)); if (pl && v <= .01) pl.intensity = 0; };
+  g.userData.flicker = (t) => { const f = fl.userData.flicker(t); if (pl) pl.intensity = intensity * (.84 + f * .2) * g.userData.on; return f; };
+  return g;
+}
+/* a lamp on a wall bracket: a small stone shelf let into the plaster, a
+   clay lamp on it, and the soot it has left on the wall above. The group
+   faces +z (the lamp out into the room); rotate it to its wall. */
+export function bracketLamp({ scale = 1, intensity = 2.6, distance = 6, flameScale = .3, light = true } = {}) {
+  const g = new THREE.Group();
+  const stone = new THREE.MeshStandardMaterial({ color: 0x847a6c, roughness: 1 });
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(.36, .05, .22), stone);
+  shelf.position.set(0, 0, .11); shelf.castShadow = true; g.add(shelf);
+  const brace = new THREE.Mesh(new THREE.BoxGeometry(.12, .15, .15), stone);
+  brace.position.set(0, -.1, .075); g.add(brace);
+  const lamp = clayLamp({ scale: .95, intensity, distance, flameScale, light });
+  lamp.position.set(-.03, .025, .1); lamp.rotation.y = -Math.PI / 2;
+  g.add(lamp);
+  /* The smoke stain above the flame. Two things made it read as a LIT BOX
+     on the wall rather than soot: an unlit material draws its texture at
+     full strength, so a warm-brown stain sat BRIGHTER than a wall in
+     lamplight; and the gradient's outer radius (64) reached past the
+     canvas's half-width (32), so it was still opaque where the texture
+     ran out — a hard vertical edge down each side. Now it is black, so it
+     can only darken, and the falloff closes inside the canvas on every
+     side, so it has no edge at all. */
+  const [sc, sg] = canvas(64, 128);
+  const grd = sg.createRadialGradient(32, 104, 3, 32, 86, 31);
+  grd.addColorStop(0, 'rgba(0,0,0,.30)'); grd.addColorStop(.55, 'rgba(0,0,0,.10)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  sg.fillStyle = grd; sg.fillRect(0, 0, 64, 128);
+  const soot = new THREE.Mesh(new THREE.PlaneGeometry(.4, .8), new THREE.MeshBasicMaterial({ map: tex(sc), transparent: true, depthWrite: false }));
+  soot.position.set(0, .42, .008); g.add(soot);
+  g.scale.setScalar(scale);
+  g.userData.light = lamp.userData.light;
+  g.userData.setOn = (v) => lamp.userData.setOn(v);
+  g.userData.flicker = (t) => lamp.userData.flicker(t);
+  return g;
+}
+
 export const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+
+/* Move a lamp's PointLight out of a group that will be shown and hidden,
+   into one that stays visible, keeping its world position. Three.js keys
+   every lit program on the number of visible lights, so a light inside a
+   toggled group recompiles every material in view each time the group
+   flips: a hitch of 100–300 ms in the middle of a scroll gesture. The
+   flicker and setOn closures keep their reference to the light. */
+export function hoistLight(lamp, into) {
+  const pl = lamp.userData.light;
+  if (!pl) return;
+  into.updateMatrixWorld(true);
+  const wp = pl.getWorldPosition(new THREE.Vector3());
+  pl.removeFromParent();
+  into.add(pl);
+  pl.position.copy(into.worldToLocal(wp));
+}
 
 /* camera path helper: keys of {u,pos,look,fov} — smoothstep-blended per segment */
 export function camTrack(keys) {

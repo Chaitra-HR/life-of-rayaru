@@ -4,109 +4,131 @@
 // Everything here is gated by scroll so the morning chapters are untouched.
 import * as THREE from 'three';
 import { mulberry, fbm, clamp01 } from '../util.js';
+import { stoneMaps, stoneKey } from './stone-maps.js';
 import { GLTFLoader } from '../../vendor/GLTFLoader.js';
+import { MeshoptDecoder } from '../../vendor/meshopt_decoder.module.js';
 
 /* ======================================================================
    Stone PBR — one seed drives four maps so they agree pixel for pixel:
    albedo (per-block colour variation, weathering), normal (derived from a
    height field of courses, joints, chisel and pitting), roughness and AO.
+
+   THE MAPS ARE DRAWN OFF THE MAIN THREAD. Each 768² set is roughly a second
+   and a half of solid arithmetic, and the opening needs four of them: built
+   inline, that is some six seconds during which nothing can paint — which
+   the visitor meets as a preloader that freezes and jumps. So stoneSet()
+   still returns its four textures IMMEDIATELY, carrying a neutral 1×1 image,
+   and a pool of workers fills them in. The material is complete from the
+   first instant: same maps, same slots, so the program three compiles for it
+   never changes and the swap costs one upload, not a recompile.
+
+   Nothing may be shown before the stone has landed — stoneMapsReady() is the
+   gate, and boot awaits it. Awaiting is free: the thread stays open, and the
+   drawing keeps its frames the whole time.
    ====================================================================== */
 const _stoneCache = new Map();
-export function stoneSet(seed, {
-  size = 768, courses = 7, cols = 4, jointPx = 7,
-  base = [92, 94, 96], vary = .22, cool = .05, warm = .03, normalScale = 1, chisel = .5,
-} = {}) {
-  const key = `${seed}/${size}/${courses}/${cols}/${base.join()}`;
-  if (_stoneCache.has(key)) return _stoneCache.get(key);
-  const W = size, H = size;
-  const rr = mulberry(seed);
-  const hash = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7 + seed * 7.3) * 43758.5453; return s - Math.floor(s); };
+const _stonePending = new Set();
 
-  const height = new Float32Array(W * H);
-  const alb = new Uint8ClampedArray(W * H * 4);
-  const rough = new Uint8ClampedArray(W * H * 4);
-  const ao = new Uint8ClampedArray(W * H * 4);
-
-  const rowH = H / courses;
-  // per-row block widths with alternating offsets
-  const rowOff = []; for (let r = 0; r < courses; r++) rowOff.push((r % 2) * .5 + rr() * .18);
-  const sstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
-
-  for (let y = 0; y < H; y++) {
-    const r = Math.floor(y / rowH);
-    const ly = y - r * rowH;
-    for (let x = 0; x < W; x++) {
-      const colW = W / cols;
-      const fx = x / colW + rowOff[r];
-      const c = Math.floor(fx);
-      const lx = (fx - c) * colW;
-      // distance to the nearest joint (in px)
-      const dEdge = Math.min(lx, colW - lx, ly, rowH - ly);
-      const joint = 1 - sstep(jointPx * .35, jointPx, dEdge);          // 1 in the joint
-      const bevel = 1 - sstep(jointPx, jointPx * 3.2, dEdge);           // rounded block edge
-      const bh = hash(c + 13, r + 5), bt = hash(c + 31, r + 17), bc = hash(c + 57, r + 29);
-      // height field
-      const lowF = fbm(x / 140, y / 140, 3) - .5;
-      const midF = fbm(x / 26 + c, y / 26 + r, 3) - .5;
-      let h = 1 - joint * .75 - bevel * .22 + lowF * .16 + midF * .10;
-      // chisel: fine parallel grooves at a per-block angle
-      const ang = bh * Math.PI;
-      const g = Math.sin((x * Math.cos(ang) + y * Math.sin(ang)) * .55 + bt * 9);
-      h -= (g > .62 ? (g - .62) * .5 : 0) * (1 - joint) * chisel;
-      // pitting
-      const p = hash(x * .37 + bt, y * .41 + bc);
-      if (p > .992) h -= (p - .992) * 40 * (1 - joint);
-      height[y * W + x] = h;
-
-      // albedo: block colour variation, cool or warm tint, weathering
-      const i = (y * W + x) * 4;
-      let L = 1 + (bh - .5) * 2 * vary + midF * .22 + lowF * .12;
-      const tintCool = (bt - .5) * 2 * cool, tintWarm = (bc - .5) * 2 * warm;
-      const streak = Math.max(0, fbm(x / 9, y / 400, 2) - .62) * 1.4;      // vertical water streaks
-      L *= 1 - streak * .3;
-      L *= 1 - joint * .55;
-      L *= 1 - (h < .3 ? (.3 - h) * .6 : 0);
-      alb[i]     = base[0] * L * (1 + tintWarm - tintCool * .5);
-      alb[i + 1] = base[1] * L * (1 + tintWarm * .35);
-      alb[i + 2] = base[2] * L * (1 + tintCool - tintWarm * .6);
-      alb[i + 3] = 255;
-      // roughness: joints and pits rough, smoothed block faces a little less
-      const ro = .72 + joint * .22 + (bh - .5) * .12 + (midF) * .16 + streak * .1;
-      rough[i] = rough[i + 1] = rough[i + 2] = Math.max(0, Math.min(1, ro)) * 255; rough[i + 3] = 255;
-      ao[i + 3] = 255;
+/* the pool: as many threads as the machine will honestly give, capped at the
+   number of sets the opening actually asks for */
+const STONE_THREADS = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 4) - 1));
+let _pool = null, _next = 0, _job = 0;
+const _jobs = new Map();
+function pool() {
+  if (_pool) return _pool;
+  try {
+    _pool = [];
+    for (let i = 0; i < STONE_THREADS; i++) {
+      const w = new Worker(new URL('./stone-worker.js', import.meta.url), { type: 'module' });
+      w.onmessage = (e) => {
+        const job = _jobs.get(e.data.id);
+        if (!job) return;
+        _jobs.delete(e.data.id);
+        job(e.data);
+      };
+      /* a thread that dies must not take the boot down with it: every job
+         still out is failed here, and each one redraws itself inline */
+      w.onerror = () => {
+        _pool = null;
+        for (const [id, job] of [..._jobs]) { _jobs.delete(id); job({ error: 'stone worker failed' }); }
+      };
+      _pool.push(w);
     }
-  }
-  // normal from height (Sobel)
-  const nrm = new Uint8ClampedArray(W * H * 4);
-  const hAt = (x, y) => height[((y + H) % H) * W + ((x + W) % W)];
-  const k = 2.2 * normalScale;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const dx = (hAt(x + 1, y) - hAt(x - 1, y)) * k;
-    const dy = (hAt(x, y + 1) - hAt(x, y - 1)) * k;
-    const len = Math.hypot(dx, dy, 1);
-    const i = (y * W + x) * 4;
-    nrm[i] = (-dx / len * .5 + .5) * 255;
-    nrm[i + 1] = (dy / len * .5 + .5) * 255;
-    nrm[i + 2] = (1 / len * .5 + .5) * 255;
-    nrm[i + 3] = 255;
-    // AO: a wide blur of the joint valleys, cheap two-sample approximation
-    const o = (hAt(x + 3, y) + hAt(x - 3, y) + hAt(x, y + 3) + hAt(x, y - 3)) * .25 - hAt(x, y);
-    const a = Math.max(0, Math.min(1, 1 - o * 1.2));
-    ao[i] = ao[i + 1] = ao[i + 2] = (.55 + a * .45) * 255;
-  }
-  const toTex = (arr, srgb) => {
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    cv.getContext('2d').putImageData(new ImageData(arr, W, H), 0, 0);
-    const t = new THREE.CanvasTexture(cv);
-    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.anisotropy = 8;
-    return t;
+  } catch (e) { _pool = null; }                      // no workers here: draw inline
+  return _pool;
+}
+
+/* a texture that is valid on the first frame and repainted when the bytes
+   arrive: one canvas, resized in place, so the texture object never changes */
+function blankTex(fill, srgb) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 1;
+  const c2 = cv.getContext('2d');
+  c2.fillStyle = fill; c2.fillRect(0, 0, 1, 1);
+  const t = new THREE.CanvasTexture(cv);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+function paint(tex, arr, size) {
+  const cv = tex.image;
+  cv.width = cv.height = size;
+  cv.getContext('2d').putImageData(new ImageData(arr, size, size), 0, 0);
+  tex.needsUpdate = true;
+}
+
+export function stoneSet(seed, opts = {}) {
+  const key = stoneKey(seed, opts);
+  if (_stoneCache.has(key)) return _stoneCache.get(key);
+
+  /* neutral until the real bytes land: white albedo, flat normal, full
+     roughness, no occlusion — the stone reads pale for an instant it is
+     never on screen for, and never wrong */
+  const set = {
+    map: blankTex('#ffffff', true),
+    normalMap: blankTex('rgb(128,128,255)', false),
+    roughnessMap: blankTex('#ffffff', false),
+    aoMap: blankTex('#ffffff', false),
   };
-  const set = { map: toTex(alb, true), normalMap: toTex(nrm, false), roughnessMap: toTex(rough, false), aoMap: toTex(ao, false) };
   _stoneCache.set(key, set);
+
+  const fill = (m) => {
+    paint(set.map, m.alb, m.size);
+    paint(set.normalMap, m.nrm, m.size);
+    paint(set.roughnessMap, m.rough, m.size);
+    paint(set.aoMap, m.ao, m.size);
+  };
+
+  const p = pool();
+  if (!p) { fill(stoneMaps(seed, opts)); return set; }   // no worker: inline, as before
+
+  const id = ++_job;
+  const done = new Promise((res) => {
+    const land = (data) => {
+      clearTimeout(timer);
+      if (data && data.error) fill(stoneMaps(seed, opts));   // the thread failed: draw it here
+      else fill(data);
+      res();
+    };
+    /* and if a thread simply never answers, the sheet is not held hostage:
+       the set is drawn on this thread instead and the loader carries on */
+    const timer = setTimeout(() => {
+      if (!_jobs.has(id)) return;
+      _jobs.delete(id);
+      land({ error: 'stone worker timed out' });
+    }, 15000);
+    _jobs.set(id, land);
+  });
+  p[_next++ % p.length].postMessage({ id, seed, opts });
+  _stonePending.add(done);
+  done.then(() => _stonePending.delete(done));
   return set;
 }
+
+/* every stone set asked for so far, landed. The loader waits on this before
+   the first frame is shown; it costs no thread time to wait. */
+export function stoneMapsReady() { return Promise.all([..._stonePending]); }
 
 export function stoneMaterial(seed, opts = {}, { normal = .9, ao = .85, roughness = 1, metalness = 0, color = 0xffffff } = {}) {
   const s = stoneSet(seed, opts);
@@ -162,7 +184,9 @@ function projectUV(geo, matrixWorld, unit = TEX_UNIT) {
    the site's stone: granite body with a slightly warmer carved crown. */
 const ARCH_HEIGHT = 8.3;
 export async function loadArch(into, ctx, height = ARCH_HEIGHT) {
-  const gltf = await new GLTFLoader().loadAsync('./models/temple_arch.glb');
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);   // models ship EXT_meshopt_compression (22MB → 4.2MB house)
+  const gltf = await loader.loadAsync('./models/temple_arch.glb');
   const root = gltf.scene;
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
@@ -189,6 +213,75 @@ export async function loadArch(into, ctx, height = ARCH_HEIGHT) {
     o.castShadow = o.receiveShadow = true;
     o.frustumCulled = false;
   });
+  into.add(holder);
+  return holder;
+}
+
+/* ----------------------------------------------------------------------
+   RAYARU · the shrine form.
+
+   Wherever Rayaru is present in this world he is THIS object, at this
+   scale, in this stone: seated in padmāsana, the right hand raised in
+   abhaya, the japamālā at his neck, the prabhāvalī and its canopy behind
+   him. One model, loaded once and shared — scene 04 and scene 07 hold
+   clones of the same geometry, so the second scene costs nothing.
+
+   Scanned at 1.13M triangles; welded, simplified and meshopt-compressed to
+   211k / 1.4MB (weld + simplify --ratio .15 --error .0005 + quantize +
+   meshopt, the same recipe as the arch and the house). The scan carries
+   vertex colours, but they are near-white and say nothing — the stone is
+   ours, so the lamps in each scene can actually land on his face.
+   ---------------------------------------------------------------------- */
+export const RAYARU_HEIGHT = 1.62;      // the shrine form, floor to canopy
+let _rayaru = null;                     // the loaded original, cloned per scene
+const _rayaruPending = new Set();
+
+/* every Rayaru asked for so far, in its scene. A chapter waits on this
+   before it compiles: a 211k-triangle mesh that arrives AFTER the compile
+   would compile itself on the visitor's first frame in the room, which is
+   exactly the hitch the warm pass exists to prevent. */
+export function rayaruReady() { return Promise.all([..._rayaruPending]); }
+
+export function loadRayaru(into, opts) {
+  const p = _loadRayaru(into, opts);
+  _rayaruPending.add(p);
+  p.then(() => _rayaruPending.delete(p), () => _rayaruPending.delete(p));
+  return p;
+}
+
+async function _loadRayaru(into, { height = RAYARU_HEIGHT } = {}) {
+  if (!_rayaru) {
+    const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+    _rayaru = (await loader.loadAsync('./models/rayaru.glb')).scene;
+  }
+  const root = _rayaru.clone(true);
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const sc = height / size.y;
+  /* stand him on the ground at the origin, facing +z — the direction every
+     camera that looks at him comes from */
+  const holder = new THREE.Group();
+  root.position.set(-(box.min.x + box.max.x) / 2 * sc, -box.min.y * sc, -(box.min.z + box.max.z) / 2 * sc);
+  root.scale.setScalar(sc);
+  holder.add(root);
+  holder.updateMatrixWorld(true);
+
+  /* carved stone, warm — dark enough to sit in a night scene, light enough
+     that a lamp two feet away reads on the cheek and on the raised hand */
+  const stone = new THREE.MeshStandardMaterial({
+    color: 0x6b5843, roughness: .82, metalness: 0,
+    vertexColors: false, side: THREE.FrontSide,
+  });
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+    o.material = stone;
+    o.castShadow = o.receiveShadow = true;
+    o.frustumCulled = false;
+  });
+  holder.userData.material = stone;      // the scene may re-tint him to its own light
   into.add(holder);
   return holder;
 }
@@ -406,7 +499,7 @@ function wordPlane() {
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
   x.clearRect(0, 0, W, H);
-  x.font = '500 470px "Onest", sans-serif';
+  x.font = '400 470px "Marcellus", serif';
   x.fillStyle = '#fff';
   x.textBaseline = 'middle';
   const word = 'ANTARANGA', LS = 30;
@@ -432,8 +525,12 @@ function wordPlane() {
    at different depths, swayed in the vertex shader, are what read as a
    living bank; instanced geometry never did.
    ====================================================================== */
+/* 36 of these exist across the river and the yard; at 2048×1024 RGBA with
+   mipmaps that was ~400 MB of texture on a phone, and the silhouette is
+   the same at half size on a phone's screen */
+const SMALL = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window && window.innerWidth < 900);
 export function grassCutout(seed, opt = {}) {
-  const W = opt.w || 2048, H = opt.h || 1024;
+  const W = opt.w || (SMALL ? 1024 : 2048), H = opt.h || (SMALL ? 512 : 1024);
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
   const rr = mulberry(seed);

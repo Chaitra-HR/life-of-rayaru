@@ -87,12 +87,16 @@ export function createAtmosphere(ctx) {
   const sun = new THREE.DirectionalLight(0xd6c3aa, 3.0);
   sun.position.copy(SUN);
   group.add(sun);
-  const hemi = new THREE.HemisphereLight(0x8a8574, 0x4a463c, 1.0);
+  /* The traveller now stands on the road and looks AT each temple, and the
+     first legs run east into this sun: from the ground the gopurams were
+     black cut-outs against a bright sea. The sky and the fill carry the
+     shaded face now — enough that carved stone reads as stone, never so
+     much that the sun stops being the light. */
+  const hemi = new THREE.HemisphereLight(0x9a9585, 0x4a463c, 2.1);
   group.add(hemi);
-  const amb = new THREE.AmbientLight(0x2b2a24, .34);
+  const amb = new THREE.AmbientLight(0x3a3730, .55);
   group.add(amb);
-  // a cool fill from the opposite side so shadowed slopes keep their form
-  const fill = new THREE.DirectionalLight(0x74808e, .38);
+  const fill = new THREE.DirectionalLight(0x9a9e96, 1.7);
   fill.position.set(-44, 16, -40);
   group.add(fill);
 
@@ -106,7 +110,7 @@ export function createAtmosphere(ctx) {
   });
   const mist = new THREE.Group();
   const mistCards = [];
-  const nMist = ctx.isMobile ? 20 : 44;
+  const nMist = ctx.isMobile ? 12 : 44;
   for (let i = 0; i < nMist; i++) {
     // strung along the seaward slope, from the far south to the northern hills
     const z = lerp(40, -30, i / (nMist - 1)) + (rnd() - .5) * 5;
@@ -170,9 +174,14 @@ export function createAtmosphere(ctx) {
       sun.intensity = lerp(2.9, 3.4, air.warm) * dim;
       hemi.color.copy(air.sky);
       hemi.groundColor.copy(air.ground).lerp(_WARM, .38);
-      hemi.intensity = lerp(1.05, .82, air.warm) * dim;
-      fill.intensity = .38 * dim;
-      amb.intensity = .34 * dim;
+      /* These are the values that hold — set every frame, they overrode
+         whatever the lights were built with. From the road the traveller
+         looks at each temple's SHADED face (the sun stands behind the first
+         legs), and at the aerial levels that face went near-black. The sky
+         and the fill carry it now; the sun is still the light. */
+      hemi.intensity = lerp(2.0, 1.7, air.warm) * dim;
+      fill.intensity = 1.6 * dim;
+      amb.intensity = .55 * dim;
       mistMat.opacity = air.mist * .22 * dim;
       haze.material.opacity = lerp(.28, .16, air.mist) * dim;
     },

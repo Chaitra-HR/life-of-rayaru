@@ -5,12 +5,14 @@
 // Environment systems live in their own modules (clouds, birds, vegetation).
 // THE BRINDAVANA IS A LOCKED ASSET — only its staging is touched here.
 import * as THREE from 'three';
-import { mulberry, fbm, flame, smooth } from '../util.js';
+import { mulberry, fbm, flame, glowSprite, smooth } from '../util.js';
 import { stoneMaterial, boxUV, shadowed, loadArch, grassCutout, grassSheet } from './opening.js';
 import { createClouds } from './clouds.js';
 import { createBirds } from './birds.js';
-import { cardMaterial, bananaTexture, farBankTexture, card, riverTreeTexture, bushTexture, reedTexture } from './vegetation.js';
+import { cardMaterial, farBankTexture, card, reedTexture } from './vegetation.js';
 import { loadRuins, placeRuins } from './ruins.js';
+import { makeTree, makePalm, makeShrub, makeBanana, setTreeTime, billboard, faceCamera } from './trees.js';
+import { buildThreshold } from './threshold.js';
 
 export const APPROACH_ROT = 0;
 export const BRND = { x: 11.4, z: 2, scale: 1.15 };
@@ -33,7 +35,7 @@ export function rightShore(z) {                            // x of the right ban
     + .8 * (fbm(z * .34 + 6.4, 2, 2) - .5)                 // small-scale nibbling at the waterline
     + 2.2 * Math.exp(-Math.pow((z - 30) / 14, 2));         // the bank eases back toward the camera
 }
-function groundHeight(px, pz, seed) {
+export function groundHeight(px, pz, seed = 7) {
   let h = WATER;
   const dR = px - rightShore(pz);                          // the right bank
   const riseR = THREE.MathUtils.smoothstep(dR, -.4, 3.6);
@@ -172,6 +174,46 @@ function terrain(seed) {
   return m;
 }
 
+/* a band of river mist lying on the water: dense low, torn along its top
+   by the wind, fading to nothing at both ends, so it never reads as a
+   strip laid across the frame (the straight gradient strips it replaces
+   were the "horizontal bands" of 18 Sept 2026) */
+function mistBandTexture(seed) {
+  const W = 1024, H = 128, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'), img = x.createImageData(W, H), d = img.data;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const u = i / W, v = j / H;
+    const top = .22 + .34 * (fbm(u * 5.5 + seed * 3.1, seed, 3) + .5) + .10 * (fbm(u * 19 + seed, 2.5, 2) + .5);
+    const body = THREE.MathUtils.smoothstep(v, top, top + .28) * (1 - THREE.MathUtils.smoothstep(v, .80, 1.0));
+    const along = THREE.MathUtils.smoothstep(u, 0, .14) * (1 - THREE.MathUtils.smoothstep(u, .86, 1)) * (.55 + .45 * (fbm(u * 3.3 + seed * 7, 1, 2) + .5));
+    const grain = .72 + .28 * (fbm(u * 26 + seed, v * 9, 3) + .5);
+    const al = THREE.MathUtils.clamp(body * along * grain, 0, 1);
+    const k = (j * W + i) * 4;
+    d[k] = 255; d[k + 1] = 255; d[k + 2] = 255; d[k + 3] = al * 255;
+  }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+/* a torn, soft mist sheet for the foreground sprites */
+function mistTexture(seed) {
+  const W = 256, H = 128, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'), img = x.createImageData(W, H), d = img.data;
+  const rr = mulberry(400 + seed), ox = rr() * 50, oy = rr() * 50;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const u = i / W, v = j / H;
+    const ell = 1 - Math.pow((u - .5) * 2.05, 2) - Math.pow((v - .5) * 2.2, 2);
+    const n = fbm(u * 4 + ox, v * 5 + oy, 4) + .5;
+    let al = THREE.MathUtils.clamp(ell * 1.1 + (n - .55) * 1.3, 0, 1);
+    al = Math.pow(al, 1.7);
+    const k = (j * W + i) * 4;
+    d[k] = 224; d[k + 1] = 214; d[k + 2] = 198; d[k + 3] = al * 255;
+  }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export function createOpening(ctx, { brndPos, brnd, fogColor }) {
   const g = new THREE.Group();
   g.visible = false;
@@ -187,7 +229,7 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
   const sun = new THREE.DirectionalLight(0xffc890, 0);
   sun.position.set(-48, 12, -44);                            // low, from the left / rear-left
   sun.target.position.set(10, 1, 0);
-  sun.castShadow = true;
+  sun.castShadow = !ctx.isMobile;   // shadow maps are off on phones; the flag alone still cost a scene traversal
   sun.shadow.mapSize.set(ctx.isMobile ? 1024 : 2048, ctx.isMobile ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -36, right: 36, top: 30, bottom: -24, near: 10, far: 180 });
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 3;
@@ -413,7 +455,22 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
       if (h < .08) continue;
       tufts.push([G(), x, h - .05, z, rr() * 6.3, .028 + rr() * .022]);
     }
-    const tuftGroup = placeRuins(ruins, tufts, { shadows: false, tint: new THREE.Color(0x93a072) });
+    // grass about the foot of the house's pad, where the swept yard meets the bank
+    {
+      const T = threshold.group.position;
+      for (let i = 0; i < 46; i++) {
+        const a = rr() * 6.3, r = 10.6 + rr() * 3.2;
+        const x = T.x + .8 + Math.cos(a) * r, z = T.z - 1.6 + Math.sin(a) * r;
+        const h = groundHeight(x, z, 7);
+        if (h < .05) continue;
+        tufts.push([G(), x, h - .05, z, rr() * 6.3, .035 + rr() * .04]);
+      }
+    }
+    /* nothing grows under the platform: a tuft rooted on the terrain inside
+       its footprint was buried in the stone, and showed the moment the bank
+       was cut open for the chamber (pravesha.js) */
+    const clear = tufts.filter(([, x, , z]) => Math.hypot(x - BRND.x, z - BRND.z) > 8);
+    const tuftGroup = placeRuins(ruins, clear, { shadows: false, tint: new THREE.Color(0x93a072) });
     H.add(tuftGroup);
     // two low shrubs by the bank — the same tufts, larger and darker
     H.add(placeRuins(ruins, [
@@ -425,55 +482,98 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
   /* ---- ground ---- */
   H.add(terrain(7));
 
+  /* ---- THE THRESHOLD (threshold.js): the Bhuvanagiri house's compound
+          wall and gate, on the right bank's sweep south-east of the flight,
+          its door turned toward the walk along the near strip. The first
+          chapter is read approaching it (main.js STATIONS mv-01); the
+          veena on its bench is the household (mv-02m). It stands on a
+          levelled pad set at the bank's own height under its footprint. */
+  const threshold = buildThreshold(ctx);
+  {
+    const TX = 27, TZ = 33;
+    let pad = -9;
+    for (let dx = -7; dx <= 7; dx += 2) for (let dz = -5; dz <= 5; dz += 2) pad = Math.max(pad, groundHeight(TX + dx, TZ + dz, 7));
+    threshold.group.position.set(TX, pad + .04, TZ);
+    threshold.group.rotation.y = -1.06;                       // its front toward (12, 40): the walk's approach
+    H.add(threshold.group);
+  }
+
   /* ---- vegetation: palms and banana plants frame the right edge; reeds
           and grass at the waterline; a low hazy tree line on the far bank ---- */
   // must track ATMOS[0] or distant cards go pale; during the arrival the
   // same colour is pulled down toward night so the cards darken with the sky
-  const fogDay = new THREE.Color(0x9c9fb4), fogNight = new THREE.Color(0x121722);
+  const fogDay = new THREE.Color(0x9c93b8), fogNight = new THREE.Color(0x2b2848), fogGlow = new THREE.Color(0xd9cdb8);
   /* the sun's colour ride: deep orange at the horizon, warm gold once risen */
   const SUN_LOW = new THREE.Color(0xff7a30), SUN_HIGH = new THREE.Color(0xffc890), EDGE_HIGH = new THREE.Color(0xffcf9a);
   const fogC = fogDay.clone();
   const veg = [];
   // par: mouse-parallax factor per layer — negative pulls near layers against
   // the camera drift, positive lets far layers ride with it (see update)
-  const add = (m, par = 0) => { m.userData.par = par; m.userData.bx = m.position.x; veg.push(m); H.add(m); return m; };
+  const add = (m, par = 0) => { m.userData.par = par; m.userData.bx = m.position.x; m.userData.tint0 = m.material.uniforms.uTint.value; veg.push(m); H.add(m); return m; };
   /* the riverside grove: a coconut palm still reads, and banana plants
      still read, but they stand inside a layered cluster — canopy over
      mid foliage over shrubs over undergrowth, the trunk feet swallowed */
-  const banana = cardMaterial(bananaTexture(41), fogC, { tint: .46, sway: .7 });
-  const banana2 = cardMaterial(bananaTexture(43), fogC, { tint: .36, sway: .6 });
-  const rTree = cardMaterial(riverTreeTexture(83), fogC, { tint: .78, sway: .3 });
-  const bushLit = cardMaterial(bushTexture(91), fogC, { tint: .62, sway: .35 });
-  const bushDark = cardMaterial(bushTexture(97, { dark: 1 }), fogC, { tint: .48, sway: .3 });
-  // reeds sat brighter than anything else in the dawn palette and read as
-  // plastic; at .44 they belong to the same light as the bank behind them
-  const reedM = cardMaterial(reedTexture(87), fogC, { tint: .44, sway: .9 });
-  const rTreeB = cardMaterial(riverTreeTexture(89), fogC, { tint: .68, sway: .25 });
-  const rTreeC = cardMaterial(riverTreeTexture(101), fogC, { tint: .58, sway: .2 });
-  const rTreeTall = cardMaterial(riverTreeTexture(107), fogC, { tint: .72, sway: .3 });
-  add(card(rTreeTall, 16, 16, 21.5, 7.2, 13, .2), -.06);   // the tall broadleaf holding the right edge
-  add(card(rTree, 12, 12, 17.2, 5.4, 18, .1), -.06);       // a second knitting into it
-  add(card(rTreeB, 10, 10, 27, 4.6, 6, .2), -.02);         // the bank stays wooded as it recedes…
-  add(card(rTreeC, 9, 9, 33, 4.2, -4, .15), .04);          // …dissolving toward the far tree line
-  add(card(banana, 6.2, 6.2, 13.9, 2.9, 27, .15), -.08);   // the banana plant, low on the bank
-  add(card(banana2, 4.8, 4.8, 17.6, 2.6, 23.5, .25), -.05);
-  add(card(bushLit, 7.5, 3.75, 19.8, 1.9, 20.5, .1), -.06);   // shrubs at the palm's foot
-  add(card(bushLit, 6, 3, 23.2, 2.3, 15.5, -.1), -.05);
-  add(card(bushLit, 5, 2.5, 12.8, 1.2, 28.8, .1), -.09);   // low foliage at the banana's foot
-  add(card(bushDark, 9, 4.5, 15.0, 1.5, 28.5, .05), -.09); // undergrowth swallowing the trunk feet
-  add(card(bushDark, 5, 2.5, 12.4, 1.1, 30, 0), -.10);
-  /* the understory band: ground cover → shrub → canopy builds continuously
-     along the grove so every trunk foot is buried in vegetation */
-  add(card(bushDark, 8, 4, 21.5, 1.5, 12.5, .1), -.04);
-  add(card(bushLit, 6.5, 3.2, 25.8, 1.7, 8.5, -.05), -.03);
-  add(card(bushDark, 7, 3.5, 29, 1.6, 2.5, .1), -.02);
-  add(card(bushLit, 5.5, 2.8, 16.5, 1.2, 24.5, .1), -.06);
+  /* ---- THE TREES ARE VOLUMES (trees.js, 18 Sept 2026). The painted tree
+     cards that stood here read as flat cutouts the moment the chapters'
+     camera walked round them (a sliver seen edge-on, a lollipop seen
+     square). The grove is now built: trunks and limbs, crowns of leaf
+     clusters with the crown's own normals, lit by the scene's sun and sky,
+     casting shadows, taking the fog. Tamarind (the pinnate 'fine' crown)
+     and neem / mango ('broad'); coconut palms leaning over the water
+     upriver; shrubs of the same make where the trunk feet meet the bank.
+     Placed on the terrain by groundHeight, sunk a hand into it. ---- */
+  const trees = [];
+  const cardsN = ctx.isMobile ? 170 : 320;
+  const plant = (o, x, z, ry = 0, sink = .18) => { o.position.set(x, groundHeight(x, z, 7) - sink, z); o.rotation.y = ry; H.add(o); trees.push(o); return o; };
+  const tree = (seed, x, z, height, spread, kind, ry = 0, extra = {}) => plant(makeTree({ seed, height, spread, kind, cards: cardsN, shadows: !ctx.isMobile, tint: kind === 'fine' ? 0xaeb8a2 : 0xc2c0ae, ...extra }), x, z, ry);
+  const palm = (seed, x, z, height, lean, ry) => plant(makePalm({ seed, height, lean, shadows: !ctx.isMobile, fronds: ctx.isMobile ? 11 : 15 }), x, z, ry, .25);
+  const shrub = (seed, x, z, radius, height, ry = 0) => plant(makeShrub({ seed, radius, height, cards: ctx.isMobile ? 60 : 90, shadows: !ctx.isMobile }), x, z, ry, .1);
+  // the grove that holds the right edge of the composition, behind the platform
+  tree(11, 21.5, 13, 13.5, 9.5, 'fine', .3, { trunkR: .42 });     // the tall tamarind
+  tree(12, 17.4, 18.6, 9.5, 6.4, 'broad', 1.1);                     // a neem knitting into it
+  tree(13, 27.5, 6, 10.5, 7.5, 'broad', 2.2);
+  tree(14, 33, -4, 9.5, 6.8, 'fine', .7);
+  // the bank stays wooded as it recedes toward the far line
+  tree(15, 30, -14, 8.5, 6, 'broad', 1.6);
+  tree(16, 38, -22, 9.5, 7, 'fine', .2);
+  tree(17, 52, -30, 7.5, 5.5, 'broad', 2.8);
+  tree(18, 44, -38, 8.5, 6.5, 'fine', 1.2);
+  tree(19, 56, -46, 7.5, 5.5, 'broad', .4);
+  tree(20, 60, -58, 6.5, 5, 'fine', 2.0);
+  tree(21, 66, -54, 8, 6, 'broad', .9);
+  // coconut palms leaning out over the water from the right bank
+  /* MEASURED (project the crowns from the hold camera, desktop and phone):
+     the gateway's opening spans screen x 43–72% on a wide frame, and a
+     tree or palm upriver whose bearing from (−1.5, 46) is under 24° right
+     of −z stands in it beside the Brindavana. Everything upriver keeps
+     beyond that bearing (x ≳ 29 at z −10, ≳ 58 at z −56): the line of
+     palms and the receding trees are right of the gateway on a wide frame
+     and out of frame on a phone; the opening holds the far bank's haze
+     alone, as the composition always had it. */
+  palm(31, 29, -10, 9.5, -1.4, .2);
+  palm(32, 38, -22, 10.5, -1.7, .5);
+  palm(33, 46, -36, 8.5, -1.3, .1);
+  palm(34, 52, -44, 9.5, -1.6, .8);
+  palm(35, 58, -56, 8, -1.2, .3);
+  // shrubs where the trunk feet meet the bank, the understory the old cards painted
+  shrub(41, 19.8, 20.5, 2.2, 1.5); shrub(42, 23.2, 15.5, 1.8, 1.3); shrub(43, 15.0, 28.5, 2.6, 1.6);
+  shrub(44, 12.6, 30.2, 1.6, 1.1); shrub(45, 21.5, 12.5, 2.0, 1.4); shrub(46, 25.8, 8.5, 1.9, 1.3);
+  shrub(47, 29, 2.5, 2.1, 1.4); shrub(48, 16.5, 24.5, 1.7, 1.2); shrub(49, 20.4, 26.2, 2.4, 1.5);
+  shrub(50, 31, -10, 2.0, 1.3); shrub(51, 26, -25, 1.8, 1.2); shrub(52, 18, -12, 2.2, 1.4);
+  /* the banana clumps at the grove's foot, built (trees.js makeBanana): the
+     walk from the household to the Matha passes right through them, and a
+     painted card there lay flat across the lens */
+  const banana = (seed, x, z, h, ry) => plant(makeBanana({ seed, height: h, shadows: !ctx.isMobile }), x, z, ry, .12);
+  banana(61, 13.9, 27, 3.4, .3);      // the plantain low on the bank, at the composition's right edge
+  banana(62, 17.6, 23.5, 2.8, 2.1);
+  banana(63, 20.4, 25.4, 3.6, 4.0);
+  const reedM = cardMaterial(reedTexture(87), fogC, { tint: .44, sway: .9 });   // reeds at .44 belong to the bank's own light, not brighter than it
   /* reed beds only where a river would grow them: the sheltered corner where
      the platform meets the right bank, and the shallows off the near strip —
      clustered, rooted below the surface, never lone tufts in open water */
-  add(card(reedM, 2.6, 2.0, 14.4, .35, 22.6, .2), -.07);
-  add(card(reedM, 2.2, 1.7, 15.4, .30, 21.2, -.15), -.07);
-  add(card(reedM, 1.8, 1.5, 13.8, .28, 23.8, .05), -.06);
+  add(billboard(card(reedM, 2.6, 2.0, 14.4, .35, 22.6, .2)), -.07);
+  add(billboard(card(reedM.clone(), 2.2, 1.7, 15.4, .30, 21.2, -.15)), -.07);
+  add(billboard(card(reedM.clone(), 1.8, 1.5, 13.8, .28, 23.8, .05)), -.06);
   // The two beds that stood at local x 1.6–3.2 / z 35.8–36.6 were REMOVED:
   // measured, they projected to screen x 58% and 68% — dead centre of the
   // hold frame, reading as reeds growing out of open river. Reeds belong
@@ -559,57 +659,108 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     f.userData.par = -.08; f.userData.bx = f.position.x; f.userData.by = f.position.y;   // nearest parallax layer
     H.add(f); grass.push(f);
   });
+  /* the far lines are hazes by day (paler than the near bank) and
+     silhouettes by night (darker than the sky): userData.far pulls their
+     tint down with the night in update, where the near plants keep the
+     lamps' colour */
   const farA = cardMaterial(farBankTexture(61, { palms: 1, trees: 30 }), fogC, { tint: .62, sway: .2 });
   const farB = cardMaterial(farBankTexture(67, { palms: 1, trees: 24 }), fogC, { tint: .62, sway: .2 });
-  add(card(farA, 300, 7.2, -20, 2.5, -73, 0, 4), .15);
-  add(card(farB, 260, 6.4, 40, 2.2, -95, 0, 3.5), .18);
-  add(card(farB, 110, 4.2, -78, 1.4, -66, .3, 2.6), .12);  // the promontory far left
+  add(card(farA, 300, 7.2, -20, 2.5, -73, 0, 4), .15).userData.far = true;
+  add(card(farB, 260, 6.4, 40, 2.2, -95, 0, 3.5), .18).userData.far = true;
+  add(card(farB, 110, 4.2, -78, 1.4, -66, .3, 2.6), .12).userData.far = true;  // the promontory far left
   /* atmospheric layering: a farther, paler line dissolving behind the first —
      the horizon reads as receding country, not a single clean edge */
   const farC = cardMaterial(farBankTexture(73, { palms: 0, trees: 20 }), fogC, { tint: .78, sway: .15 });
-  add(card(farC, 340, 8.5, 10, 3.0, -112, 0, 4.5), .20);
-  const midTreeMat = cardMaterial(farBankTexture(71, { palms: 0, trees: 9 }), fogC, { tint: .55, sway: .25 });
-  add(card(midTreeMat, 60, 5.6, 34, 2.6, -30, -.15, 1.2), .08);   // a few trees on the right bank behind the platform
+  add(card(farC, 340, 8.5, 10, 3.0, -112, 0, 4.5), .20).userData.far = true;
+  /* the country east of the house: a far tree line closing the view up
+     the bank, so no edge of the world shows past the threshold */
+  const farE = cardMaterial(farBankTexture(79, { palms: 2, trees: 26 }), fogC, { tint: .66, sway: .2 });
+  add(card(farE, 150, 6.0, 82, 2.2, 28, -Math.PI / 2, 2.2), .05).userData.far = true;
 
-  /* ---- thin river mist lying on the water in the distance ---- */
-  const mist = (() => {
-    const W = 512, Hc = 64, cv = document.createElement('canvas'); cv.width = W; cv.height = Hc;
-    const cx = cv.getContext('2d');
-    const grd = cx.createLinearGradient(0, 0, 0, Hc);
-    grd.addColorStop(0, 'rgba(210,220,232,0)'); grd.addColorStop(.55, 'rgba(210,220,232,.55)'); grd.addColorStop(1, 'rgba(210,220,232,0)');
-    cx.fillStyle = grd; cx.fillRect(0, 0, W, Hc);
-    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(260, 3.4),
-      new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false, fog: false }));
-    m.position.set(-10, .9, -58);
-    m.renderOrder = 2;
-    H.add(m);
-    const m2 = m.clone(); m2.material = m.material; m2.position.set(30, .7, -40); m2.scale.set(.6, .7, 1); H.add(m2);
-    // a wide low haze band lying along the far waterline — the atmospheric
-    // seam between river and horizon
-    const m3 = m.clone(); m3.material = m.material; m3.position.set(-30, 1.5, -88); m3.scale.set(1.6, 1.7, 1); H.add(m3);
-    return m;
-  })();
+  /* ---- river mist lying on the water in the distance: three torn bands,
+          each fading out along its length and up its top, coloured from the
+          air itself (the fog) so they read as haze, never as a panel ---- */
+  const mistBands = [];
+  const mistMat = new THREE.MeshBasicMaterial({ map: mistBandTexture(1), transparent: true, opacity: 0, depthWrite: false, fog: false, color: 0xd6d2cc });
+  [[1, 130, 2.0, -6, .55, -42], [2, 210, 2.8, 24, .75, -62], [3, 300, 3.8, -30, 1.1, -86]].forEach(([seed, w, h, x, y, z]) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), seed === 1 ? mistMat : mistMat.clone());
+    if (seed !== 1) m.material.map = mistBandTexture(seed);
+    m.position.set(x, y, z); m.renderOrder = 2;
+    H.add(m); mistBands.push(m);
+  });
+  const mist = { material: { set opacity(v) { for (const m of mistBands) m.material.opacity = v; }, get opacity() { return mistBands[0].material.opacity; } } };
 
   /* ---- the sky's slow systems ---- */
-  const clouds = createClouds({ count: ctx.isMobile ? 3 : 5, mobile: ctx.isMobile });
+  const clouds = createClouds({ count: ctx.isMobile ? 4 : 6, mobile: ctx.isMobile });
   H.add(clouds.group);
   const birds = createBirds({ mobile: ctx.isMobile });
   H.add(birds.group);
 
+  /* the river mist that fills the frame as chapter 00 lets go: three soft
+     sheets carried in front of the camera, low over the water */
+  const mistFore = [];
+  for (let i = 0; i < 3; i++) {
+    const s = glowSprite(0xdccfbc, 9 + i * 3, 0);
+    s.material.map = mistTexture(i);
+    s.material.blending = THREE.NormalBlending;
+    s.material.fog = false;
+    s.renderOrder = 7;
+    H.add(s); mistFore.push(s);
+  }
+  for (const gr of grass) gr.userData.tint0 = gr.material.uniforms.uTint.value;
+  const _fwd = new THREE.Vector3(), _rgt = new THREE.Vector3(), _wp = new THREE.Vector3(), _camL = new THREE.Vector3();
+
+  /* the same bank, before anything stood on it (Manchale, scene 08): the
+     gateway, platform, deepas and the Brindavana withdraw as MESHES — the
+     lamps' point lights stay in the scene at zero intensity, because a
+     light toggled on and off recompiles every material in view */
+  let sacredOn = 1, dreamAmt = 0, tailAmt = 0;
+  const GOLD = new THREE.Color(0xe6c48c), BLUE = new THREE.Color(0xcedcee);
+  const setSacred = (v) => {
+    if (v === sacredOn) return;
+    sacredOn = v;
+    S.traverse(o => { if (o.isMesh || o.isSprite) o.visible = !!v; });
+    brnd.group.traverse(o => { if (o.isMesh || o.isSprite) o.visible = !!v; });
+  };
+  const fogAfternoon = new THREE.Color(0xcfc3a4), fogNightDeep = new THREE.Color(0x161225);
+  const HEMI_DAY = new THREE.Color(0xd8d2c0), HEMI_NIGHT = new THREE.Color(0x4e5870), SUN_DAY = new THREE.Color(0xf2e2c4);
+
   const api = {
-    group: g, gate, deepas, veg, grass, hemi, sun, fill, clouds, birds,
+    group: g, gate, deepas, veg, grass, trees, threshold, hemi, sun, fill, clouds, birds, setSacred,
+    setDream(v) { dreamAmt = v; }, setTail(v) { tailAmt = v; },
     setVisible(v) { g.visible = v; },
+    /* a point of the threshold (its `points` keys) in the approach frame
+       the cameras are authored in, optionally stepped out along the house's
+       front (f) and its right (r), for main.js STATIONS */
+    thresholdPoint(key, f = 0, r = 0, y = null) {
+      const T = threshold.group;
+      T.updateMatrixWorld(true);
+      const v = threshold.points[key].clone().addScaledVector(threshold.front, f).addScaledVector(threshold.right, r);
+      T.localToWorld(v); H.worldToLocal(v);
+      if (y !== null) v.y = T.position.y + y;   // heights are over the yard's pad, wherever the bank put it
+      return [v.x, v.y, v.z];
+    },
     placeWord() {},
-    update(time, openT, reduced, fogDensity = .006, camera = null, dt = .016) {
+    /* openT: 0 pre-dawn → 1 morning; glow: the leave-taking's light (0→1);
+       hour: { day, night } — the same place in afternoon light (Manchale,
+       before the Brindavana) and at night with the deepas lit (the
+       Brindavana on its bank, before the second dawn). Both 0 = the opening. */
+    update(time, openT, reduced, fogDensity = .006, camera = null, dt = .016, glow = 0, hour = null) {
       const a = openT;
-      /* a true sunrise, not a fade: the sky's own light comes up first
-         (civil twilight), then the sun crests the horizon and its direct
-         light sweeps in — deep orange and near-horizontal at first, warming
-         and climbing as the disc lifts */
-      const twilight = smooth(THREE.MathUtils.clamp(a * 1.5, 0, 1));
-      const crest = smooth(THREE.MathUtils.clamp((a - .5) / .45, 0, 1));   // as the disc breaches the horizon
-      fogC.copy(fogNight).lerp(fogDay, a);
+      const day = hour ? hour.day : 0, night = hour ? hour.night : 0;
+      /* a true sunrise, not a fade. The land is already there before the
+         sun: at a = 0 the sky's own pre-dawn light is on the scene — trees
+         as dark forms, grass visible, the stone visible — and what changes
+         is colour temperature, contrast and the direction of light. Then
+         the sun crests the horizon and its direct light sweeps in, deep
+         orange and near-horizontal at first, warming as the disc lifts. */
+      const PRE = .38;                                                   // the pre-dawn floor
+      const twilight = PRE + (1 - PRE) * smooth(THREE.MathUtils.clamp(a * 1.35, 0, 1));
+      const crest = smooth(THREE.MathUtils.clamp((a - .32) / .55, 0, 1));   // as the disc breaches the horizon
+      fogC.copy(fogNight).lerp(fogDay, .34 + .66 * a);
+      /* the leave-taking: light floods the frame — haze warms and pales,
+         the far banks dissolve, the near mist stands up */
+      fogC.lerp(fogGlow, glow * .8);
       /* layered mouse parallax: the camera already drifts; each depth band
          slides a touch more (near, against) or less (far, with) so the
          landscape opens up quietly under the cursor — KAGE's feel */
@@ -621,9 +772,12 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
           if (s.userData.by !== undefined) s.position.y = s.userData.by + ms.y * .03;
         }
       }
-      hemi.intensity = 1.15 * twilight;
-      fill.intensity = 1.0 * twilight;
-      amb.intensity = .34 * twilight;
+      /* pre-dawn is cool: the sky light starts blue-grey and warms as the
+         morning fills it */
+      hemi.color.setHex(0x8290ab).lerp(new THREE.Color(0xbfd0e2), crest);
+      hemi.intensity = 1.15 * twilight + 1.4 * glow;
+      fill.intensity = 1.0 * twilight + .6 * glow;
+      amb.intensity = .34 * twilight + .5 * glow;
       /* the sun itself: below the horizon until it crests, then rising —
          its light long and deep orange at first, whitening as it climbs */
       sun.intensity = 2.9 * crest;
@@ -631,9 +785,68 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
       sun.position.set(-48, THREE.MathUtils.lerp(.5, 12, crest), -44);
       edge.intensity = 1.0 * crest;
       edge.color.copy(SUN_LOW).lerp(EDGE_HIGH, crest);
-      brndKey.intensity = .9 * (twilight * .3 + crest * .7);
-      brndGlow.material.opacity = .10 * twilight;          // a breath of air, not a spotlight
-      mist.material.opacity = .16 * twilight;
+      brndKey.intensity = (.9 * (twilight * .3 + crest * .7) + .8 * glow) * sacredOn;
+      brndGlow.material.opacity = (.10 * twilight + .30 * glow) * sacredOn;   // a breath of air, not a spotlight
+      brndGlow.material.color.copy(BLUE).lerp(GOLD, Math.max(dreamAmt, tailAmt * .6));
+      mist.material.opacity = .16 * twilight + .5 * glow;
+      /* ---- the other hours of the same place ----
+         afternoon: the sun high and warm-white, the sky light pale, the
+         haze Bone; night: the sky light nearly gone, blue-grey, the two
+         deepas the only warmth. Both are MIXED over the dawn values so
+         the scroll can move between them without a step. */
+      if (day > 0) {
+        hemi.color.lerp(HEMI_DAY, day);
+        hemi.intensity = THREE.MathUtils.lerp(hemi.intensity, 1.7, day);
+        fill.intensity = THREE.MathUtils.lerp(fill.intensity, .9, day);
+        amb.intensity = THREE.MathUtils.lerp(amb.intensity, .55, day);
+        sun.intensity = THREE.MathUtils.lerp(sun.intensity, 2.6, day);
+        sun.color.lerp(SUN_DAY, day);
+        sun.position.lerp(new THREE.Vector3(-22, 42, -12), day);
+        edge.intensity *= 1 - day;
+        mist.material.opacity *= 1 - day * .8;
+        fogC.lerp(fogAfternoon, day * .85);
+      }
+      if (night > 0) {
+        hemi.color.lerp(HEMI_NIGHT, night);
+        /* lifted 18 Sept 2026: the chapters are read on this bank at night,
+           and the bank, the grove and the far shore must stay legible under
+           the words. Moonlight, not lamplight: cool and even. */
+        hemi.intensity = THREE.MathUtils.lerp(hemi.intensity, .92, night);
+        fill.intensity = THREE.MathUtils.lerp(fill.intensity, .42, night);
+        amb.intensity = THREE.MathUtils.lerp(amb.intensity, .42, night);
+        sun.intensity *= 1 - night;
+        edge.intensity *= 1 - night;
+        /* the cards' air goes dark with the sky. This lived in the tail's
+           block until 18 Sept 2026, so through the night chapters the far
+           tree lines kept the dawn's lavender haze and stood on the dark
+           bank as pale cotton */
+        fogC.lerp(fogNightDeep, night * .9);
+        /* at night the stone is lit by its own lamps: enough to read its
+           carving from close, never a spotlight */
+        brndKey.intensity = THREE.MathUtils.lerp(brndKey.intensity, .84 * sacredOn, night);
+        brndGlow.material.opacity = THREE.MathUtils.lerp(brndGlow.material.opacity, .22 * sacredOn, night);
+      }
+      /* the dream's light behind the stone; the warmth of the deepas as the walk reaches the face */
+      brndGlow.material.opacity = Math.max(brndGlow.material.opacity, (.92 * dreamAmt + .34 * tailAmt) * sacredOn);
+      if (tailAmt > 0) {
+        hemi.intensity *= 1 - tailAmt * .45; fill.intensity *= 1 - tailAmt * .5; amb.intensity *= 1 - tailAmt * .3;
+        brndKey.intensity *= 1 + tailAmt * .6;
+        mist.material.opacity *= 1 - night * .6;
+      }
+      /* the foreground mist: carried ahead of the camera, rising with the glow */
+      if (camera) {
+        camera.getWorldDirection(_fwd);
+        _rgt.crossVectors(_fwd, new THREE.Vector3(0, 1, 0)).normalize();
+        for (let i = 0; i < mistFore.length; i++) {
+          const s = mistFore[i];
+          const ph = time * .05 + i * 2.1;
+          _wp.copy(camera.position).addScaledVector(_fwd, 6 + i * 3.5)
+            .addScaledVector(_rgt, Math.sin(ph) * (2.5 + i) - 1 + i * 1.5);
+          _wp.y = 1.0 + i * .6 + Math.sin(ph * 1.3) * .3 + glow * 1.2;
+          H.worldToLocal(s.position.copy(_wp));
+          s.material.opacity = glow * (.42 - i * .08);
+        }
+      }
       for (const k in brnd.materials) {
         // only the map-based stone materials, whose base color is white — a
         // scalar on the colored ones (oxide seams, the mala) would bleach them
@@ -648,18 +861,41 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
         for (let i = 0; i < d.userData.fls.length; i++) {
           f = d.userData.fls[i].userData.flicker(time + d.position.x * 2.7 + i * 1.9);
         }
-        d.userData.pl.intensity = Math.min(1, a * 4) * (.5 + f * .22);
+        // at night they are the only light on the bank; in the afternoon, and
+        // while the bank stands empty, they are unlit
+        d.userData.pl.intensity = Math.max(Math.min(1, a * 4) * (1 - day), night * 1.8, dreamAmt * .9) * (.5 + f * .22) * sacredOn * (1 + tailAmt * 1.6);
+        for (const fl of d.userData.fls) fl.scale.setScalar(Math.max(.001, Math.max(a * (1 - day), night, dreamAmt * .8)));
       }
+      /* the vegetation never fades in: it stands as dark forms before dawn
+         and takes colour as the light comes — the tint carries the sunrise,
+         the alpha stays full */
+      let veil = .30 + .70 * smooth(THREE.MathUtils.clamp(a * 1.25, 0, 1));
+      veil = THREE.MathUtils.lerp(veil, 1.0, day);
+      veil = THREE.MathUtils.lerp(veil, .50, night);
+      if (camera) H.worldToLocal(_camL.copy(camera.position));
       for (const s of veg) {
         const u = s.material.uniforms;
-        u.uTime.value = time; u.uFade.value = twilight; u.uFogD.value = fogDensity;
+        u.uTime.value = time; u.uFade.value = 1; u.uFogD.value = fogDensity * (1 + glow * 1.6);
+        u.uTint.value = s.userData.tint0 * veil * (s.userData.far ? 1 - night * .35 : 1);
         if (reduced) u.uSway.value = Math.min(u.uSway.value, .15);
+        /* a plant the walk passes through dissolves as it reaches the lens,
+           instead of laying its painted leaves flat across the frame */
+        if (s.userData.billboard && camera) u.uFade.value = smooth(THREE.MathUtils.clamp((s.position.distanceTo(_camL) - 2.4) / 3.4, 0, 1));
       }
+      /* the trees: their leaves' wind clock; the round plants turn to face the camera */
+      setTreeTime(reduced ? 0 : time);
+      if (camera) faceCamera(veg, camera.position, H);
+      /* the mist takes the air's colour, a shade lighter, so it is haze and not paint */
+      mistMat.color.copy(fogC).lerp(new THREE.Color(0xf7f1e1), .22);
+      for (const m of mistBands) m.material.color.copy(mistMat.color);
+      threshold.update(time, { night, day, fogD: fogDensity });
       for (const s of grass) {
         const u = s.material.uniforms;
-        u.uTime.value = time; u.uSway.value = reduced ? .2 : 1; u.uFade.value = twilight; u.uLinear.value = 0; u.uFogD.value = fogDensity;
+        u.uTime.value = time; u.uSway.value = reduced ? .2 : 1; u.uFade.value = 1; u.uLinear.value = 0; u.uFogD.value = fogDensity * (1 + glow * 1.6);
+        u.uTint.value = s.userData.tint0 * veil;
       }
       clouds.update(time, reduced ? 0 : dt);
+      clouds.setHour({ dawn: a, day, night });
       birds.update(time, reduced ? 0 : dt, camera);
     },
   };

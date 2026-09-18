@@ -351,7 +351,7 @@ export function bananaTexture(seed, { haze = 0 } = {}) {
 export function farBankTexture(seed, { palms = 3, trees = 24 } = {}) {
   const W = 2048, H = 256, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d'); const t = mulberry(seed);
-  const deep = [62, 71, 84], mid = [73, 83, 95], light = [85, 95, 107];
+  const deep = [62, 71, 84], mid = [72, 82, 94], light = [80, 90, 102];   // three CLOSE tones: at this distance the line is one mass, and a crown lighter than its band floats as a dot
   const tone = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   x.lineCap = 'round';
   const bandAt = i => H - 12 - 30 * (fbm(i / W * 3.2 + seed, 0, 3) + .5) - 10 * (fbm(i / W * 16 + seed * 2, 1, 2) + .5);
@@ -375,9 +375,11 @@ export function farBankTexture(seed, { palms = 3, trees = 24 } = {}) {
   x.beginPath(); x.moveTo(0, H);
   for (let i = 0; i <= W; i += 8) x.lineTo(i, bandAt(i) - 8 - 24 * (fbm(i / W * 7 + seed * 3, 2, 3) + .5) * Math.max(.4, Math.min(1, density(i))));
   x.lineTo(W, H); x.closePath(); x.fill();
+  /* its crowns sit ON the scrub line and overlap it, wide and low: a crown
+     lifted clear of its band reads as a detached blob (cotton at night) */
   for (let i = 0; i < trees * .6; i++) {
     const px = place(), base = bandAt(px);
-    canopy(px, base - 14 - t() * 22, 8 + t() * 11, t() < .5 ? light : mid, .9 + t() * .5);
+    canopy(px, base - 6 - t() * 10, 11 + t() * 12, t() < .5 ? light : mid, 1.1 + t() * .6);
   }
   /* mid layer: the body of the line */
   x.fillStyle = tone(mid);

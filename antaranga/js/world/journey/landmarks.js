@@ -308,6 +308,34 @@ function buildUdupi(detail) {
     tile.push(...tiledRoof(.72, .72, .26, T.x, .38, T.z, .16));
     granite.push(...kalasha(.03, T.x, .66, T.z));
   }
+  if (detail >= 1) {
+    /* the Ratha Beedi: the car street that rings the Matha, and the two
+       wooden rathas standing on it — the one thing the eye knows Udupi by
+       before any label. Tiered timber, restrained, no painted cloth. */
+    const R = 2.45, ring = [];
+    granite.push(B(2 * R + .3, .02, .34, 0, -.005, R + .05));
+    granite.push(B(2 * R + .3, .02, .34, 0, -.005, -R - .05));
+    granite.push(B(.34, .02, 2 * R + .3, R + .05, -.005, 0));
+    granite.push(B(.34, .02, 2 * R + .3, -R - .05, -.005, 0));
+    const ratha = (x, z, s) => {
+      const parts = [];
+      parts.push(B(.5 * s, .16 * s, .5 * s, x, .18 * s, z));
+      for (let i = 0; i < 4; i++) {
+        const k = 1 - i * .2;
+        parts.push(B(.44 * s * k, .12 * s, .44 * s * k, x, (.32 + i * .12) * s, z));
+      }
+      parts.push(PYR(.22 * s, .22 * s, x, .9 * s, z));
+      parts.push(...kalasha(.035 * s, x, 1.0 * s, z));
+      for (const [wx, wz] of [[-.2, -.2], [.2, -.2], [-.2, .2], [.2, .2]]) {
+        const wheel = new THREE.CylinderGeometry(.08 * s, .08 * s, .05 * s, 8);
+        wheel.rotateZ(Math.PI / 2); wheel.translate(x + wx * s, .08 * s, z + wz * s);
+        parts.push(wheel);
+      }
+      return parts;
+    };
+    tile.push(...ratha(R + .05, -.8, 1.0));
+    tile.push(...ratha(R + .05, .6, .8));
+  }
   if (detail >= 2) {
     // the pillared walk of the inner court
     for (let i = 0; i < 9; i++) {
@@ -440,16 +468,20 @@ export function createLandmarks(ctx, destinations) {
       }
       if (best >= 0 && bestW > .04) {
         const b = built[best];
-        focusLight.visible = true;
         focusLight.position.set(b.d.x + 1.7, b.y + 2.8, b.d.z + 1.9);
         focusLight.intensity = bestW * 8;
       } else {
-        focusLight.visible = false;
+        focusLight.intensity = 0;   // never .visible: a light-count change recompiles every lit program
       }
       /* the place we are at keeps its full colour; the others are drawn
          back toward the haze until they read as silhouettes in the country */
+      /* Drawn back toward the haze — but a tint lerped toward grey MULTIPLIES
+         the stone darker; real haze is the fog, which is additive and already
+         there with distance. So the pull is kept shallow: enough that the
+         place we have left goes quiet, never enough to crush a shaded face
+         seen from the road into near-black. */
       for (let i = 0; i < built.length; i++) {
-        const k = .28 + .72 * focus[i];
+        const k = .66 + .34 * focus[i];
         const m = built[i].mats;
         for (const key in m) m[key].color.copy(m[key].userData.base).lerp(_HAZE, 1 - k);
         built[i].shadow.material.opacity = .30 + .32 * focus[i];

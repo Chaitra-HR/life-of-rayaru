@@ -167,11 +167,12 @@ function siteSettle(x, z) {
    pales the earth along it, so the line is IN the terrain and not drawn on
    top of it. The route mesh reads the same points. */
 export const TRAIL = [
+  [2.4, 19.6], [3.4, 22.6], [4.6, 24.8],      // down the Kaveri country: the approach to Srirangam
   [6, 26], [7.6, 25.4], [8.9, 25.0], [10, 25],
   [9.2, 26.8], [7.7, 29.2], [5.9, 31.6], [4, 34],
   [2.2, 32.6], [.2, 30.2], [-2.4, 27.0], [-5.0, 23.4],
-  [-7.6, 19.6], [-10.0, 15.6], [-12.2, 11.8], [-14, 8],
-  [-14.2, 4.4], [-13.2, .6], [-11.2, -3.4], [-8.6, -7.2],
+  [-7.6, 19.6], [-10.0, 15.6], [-12.4, 11.8], [-14.9, 8.2],   // the coast road runs on the shore,
+  [-15.0, 4.6], [-14.0, .8], [-11.4, -3.2], [-8.6, -7.2],      // a stride clear of the Ghat's foot
   [-6.0, -10.6], [-3.8, -13.6], [-2, -16],
 ];
 const TRAIL_BB = (() => {
@@ -223,11 +224,20 @@ export function height(x, z, rf) {
   const coarse = fbm(x * .055 + 11, z * .055, 4);
   const mid = fbm(x * .12 + 3, z * .12, 3);
   const fine = fbm(x * .13, z * .13 + 5, 3);
-  let h = 1.9 + plateau + ridge + north + (coarse * 2.7 + mid * 1.3 + fine * .55) * (1 - flat) * siteSettle(x, z);
+  /* The road is a PASS. A traveller now walks this line at eye height, and
+     a line drawn over sculpted relief pierces every slope it meets: the
+     camera sat inside clefts on the Ghats and on cliff edges above the
+     coast. Roads do not do that — they find the saddle and the contour.
+     So the relief is damped within a few units of the trail: the ridge and
+     the broken ground ease down toward it, and the crest crossing becomes
+     a col. The country beyond the road's margin is untouched. */
+  const td = trailNear(x, z);
+  const road = 1 - smooth(clamp01((td - 1.0) / 5.2));         // 1 on the road, 0 past ~6 units
+  const relief = (ridge + (coarse * 2.7 + mid * 1.3 + fine * .55) * (1 - flat) * siteSettle(x, z)) * (1 - road * .8);
+  let h = 1.9 + plateau + relief + north;
   h = lerp(sea, h, shore);
   h -= (rf || riverField(x, z)).carve * shore;
   // the path has been walked into the ground
-  const td = trailNear(x, z);
   if (td < 2) h -= .075 * Math.exp(-Math.pow(td / .62, 2)) * shore;
   return h;
 }

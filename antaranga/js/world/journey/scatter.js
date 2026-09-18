@@ -120,7 +120,7 @@ export function createScatter(ctx) {
   const uniforms = { uWind: { value: ctx.reduced ? 0 : 1 }, uWindT: { value: 0 } };
 
   const N = ctx.isMobile
-    ? { tree: 1500, palm: 220, scrub: 600, rock: 90, reed: 240 }
+    ? { tree: 950, palm: 160, scrub: 380, rock: 90, reed: 150 }
     : { tree: 4200, palm: 520, scrub: 1400, rock: 190, reed: 560 };
 
   const bank = [];   // candidate sites, sampled once and shared

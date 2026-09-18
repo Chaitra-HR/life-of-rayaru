@@ -1,3 +1,12 @@
+> **Refinement pass, 11 Sept 2026.** The chapter now spans `t 0.560 – 0.655`
+> (`t = 0.560 + u·0.095`). The five temple models (`landmarks.js`) and the
+> numbered, regioned labels are gone: a place is one word standing on the land
+> (`labels.js`, name only) and a beat of copy in the column; Srirangam is passed
+> without a name (`unnamed` in `config.js`) and the stations (`uTarget`) were
+> re-spaced. Everything below about the land, the rivers, the route, the
+> scatter, the air and the camera still holds; the landmark and label sections
+> describe the earlier build, as do the frames in `journey-review/`.
+
 # Chapter 07 · The Journey
 
 `t 0.570 – 0.655` · code in `antaranga/js/world/journey.js` and

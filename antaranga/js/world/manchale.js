@@ -34,11 +34,11 @@ export function createManchaleStage(ctx) {
         void main(){
           float h = normalize(vP).y;
           vec3 zen = vec3(0.10,0.11,0.13);
-          vec3 hor = vec3(0.56,0.38,0.20);
+          vec3 hor = vec3(0.46,0.36,0.24);   // the dusk was the one saturated sky on the site; it sits nearer the journey's haze now
           float f = pow(clamp(1.0-h,0.,1.), 2.2);
           vec3 col = mix(zen, hor, f);
           float pocket = exp(-pow((atan(vP.x,-vP.z)-0.35)*1.8,2.0)) * pow(clamp(1.0-h,0.,1.),2.4);
-          col += vec3(0.5,0.26,0.09)*pocket;
+          col += vec3(0.34,0.21,0.09)*pocket;
           gl_FragColor = vec4(col,1.0);
         }`,
     })
@@ -145,7 +145,7 @@ export function createManchaleStage(ctx) {
   g.add(tufts);
 
   /* light: late warm sun (frontal-left, long light) + dusty hemisphere */
-  const sun = new THREE.DirectionalLight(0xdd9c58, 2.1);
+  const sun = new THREE.DirectionalLight(0xd6a066, 2.0);
   sun.position.set(45, 38, 35);
   g.add(sun);
   const backGlow = new THREE.DirectionalLight(0xb56a2e, .55);
@@ -274,30 +274,32 @@ export function createManchaleStage(ctx) {
   /* cameras */
   // arrival out of the map: the abstract space has just resolved into real
   // terrain — begin high and wide, then descend into the landscape
-  const arrive = { pos: V3(-4, BR.y + 12, 58), look: V3(0, 1.2, -40), fov: 54 };
+  /* it opened 58 units out at fov 54 and covered 78 units in the chapter,
+     four times the site's median; it opens nearer and lower now */
+  const arrive = { pos: V3(-4, BR.y + 8.5, 40), look: V3(0, 1.2, -40), fov: 46 };
   // scene 08 travel: descend into the land, sweep it, approach the site
   const cam06 = (u) => {
     if (u < .34) {
       const v = smooth(remap(u, 0, .34));
       return {
-        pos: V3(lerp(arrive.pos.x, 2, v), lerp(arrive.pos.y, BR.y + 7.5, v), lerp(arrive.pos.z, 44, v)),
+        pos: V3(lerp(arrive.pos.x, 2, v), lerp(arrive.pos.y, BR.y + 6.5, v), lerp(arrive.pos.z, 34, v)),
         look: V3(lerp(arrive.look.x, 0, v), lerp(arrive.look.y, 2, v), lerp(arrive.look.z, -50, v)),
-        fov: lerp(arrive.fov, 52, v),
+        fov: lerp(arrive.fov, 45, v),
       };
     }
     if (u < .72) {
       const v = smooth(remap(u, .34, .72));
       return {
-        pos: V3(lerp(2, ROCK_POS.x - 7, v), lerp(BR.y + 7.5, ROCK_POS.y + 1.6, v), lerp(44, ROCK_POS.z + 12, v)),
+        pos: V3(lerp(2, ROCK_POS.x - 7, v), lerp(BR.y + 6.5, ROCK_POS.y + 1.6, v), lerp(34, ROCK_POS.z + 12, v)),
         look: V3(lerp(0, ROCK_POS.x - 1, v), lerp(2, ROCK_POS.y + .6, v), lerp(-50, ROCK_POS.z + 2, v)),
-        fov: lerp(52, 44, v),
+        fov: lerp(45, 43, v),
       };
     }
     const v = smooth(remap(u, .72, 1));
     return {
       pos: V3(lerp(ROCK_POS.x - 7, ROCK_POS.x - 2.2, v), lerp(ROCK_POS.y + 1.6, ROCK_POS.y + .4, v), lerp(ROCK_POS.z + 12, ROCK_POS.z + 3.2, v)),
       look: V3(ROCK_POS.x + lerp(-1, .4, v), ROCK_POS.y + lerp(.6, 0, v), ROCK_POS.z + lerp(2, .5, v)),
-      fov: lerp(44, 38, v),
+      fov: lerp(43, 38, v),
     };
   };
 

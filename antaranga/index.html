@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Rayara Antaranga — The Life and Works of Sri Raghavendra Tirtha</title>
-<meta name="description" content="A scroll-driven cinematic biography of Sri Raghavendra Tirtha — from Bhuvanagiri to Kumbhakonam, his works and Tattvavāda, to the Brindavana at Mantralaya. 355th Aradhana · Mantralaya · 2026.">
-<meta name="theme-color" content="#060809">
+<title>Rayara Antaranga · The Life and Works of Sri Raghavendra Tirtha</title>
+<meta name="description" content="A scroll-driven cinematic biography of Sri Raghavendra Tirtha: from Bhuvanagiri to Kumbakonam, his works and Tattvavāda, to the Brindavana at Mantralaya. 355th Aradhana · Mantralaya · 2026.">
+<meta name="theme-color" content="#0d0d09">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Rayara Antaranga — The Life and Works of Sri Raghavendra Tirtha">
-<meta property="og:description" content="An editorial biography that unfolds around you: Bhuvanagiri, Kumbhakonam, the works, Tattvavāda, the journey, Manchale, and the Brindavana at Mantralaya.">
+<meta property="og:title" content="Rayara Antaranga · The Life and Works of Sri Raghavendra Tirtha">
+<meta property="og:description" content="An editorial biography that unfolds around you: Bhuvanagiri, Kumbakonam, the works, Tattvavāda, the journey, Manchale, and the Brindavana at Mantralaya.">
 <meta property="og:image" content="assets/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050505'/%3E%3Cpath d='M10 26h12M11 23h10M12 20h8M12 12h8v8h-8zM10 9h12M13 6h6' stroke='%23c8a66a' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
-<link rel="preload" as="font" type="font/woff2" href="fonts/onest-latin.woff2" crossorigin>
-<link rel="preload" as="font" type="font/woff2" href="fonts/onest-latin-ext.woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d0d09'/%3E%3Cpath transform='translate(3.2 3.4) scale(.8)' fill='%23c9a468' fill-rule='evenodd' d='M16 .9a1.1 1.1 0 1 1 0 2.2a1.1 1.1 0 1 1 0-2.2Z M8.5 9.0Q8.6 8.0 10 6.4Q11.4 8.0 11.5 9.0Z M11.5 9.0Q11.6 7.0 13 5.4Q14.4 7.0 14.5 9.0Z M14.5 9.0Q14.6 5.8 16 4.2Q17.4 5.8 17.5 9.0Z M17.5 9.0Q17.6 7.0 19 5.4Q20.4 7.0 20.5 9.0Z M20.5 9.0Q20.6 8.0 22 6.4Q23.4 8.0 23.5 9.0Z M7 9.8H25V11.4H7Z M8.4 12.2H23.6V20.4H8.4Z M13.8 20.4V16.4A2.2 2.2 0 0 1 18.2 16.4V20.4Z M10.2 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M19.8 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M6.6 21.4H25.4V23.4H6.6Z M4.8 24.4H27.2V26.6H4.8Z M3 27.6H29V30.2H3Z'/%3E%3C/svg%3E">
+<link rel="preload" as="font" type="font/woff2" href="fonts/marcellus-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/karla-latin.woff2" crossorigin>
 <link rel="stylesheet" href="fonts/fonts.local.css">
 <link rel="stylesheet" href="css/style.css">
 <script>
@@ -21,166 +21,311 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
 </script>
+<!-- the score begins downloading with the page itself, quietly, so the first tap hears it at once (js/audio.js) -->
+<link rel="preload" as="audio" href="assets/audio/boopul-deep-he.m4a" type="audio/mp4" fetchpriority="low">
 <link rel="modulepreload" href="vendor/three.module.js">
+<link rel="modulepreload" href="js/math.js">
 <link rel="modulepreload" href="js/util.js">
+<link rel="modulepreload" href="js/world/stone-maps.js">
 <link rel="modulepreload" href="js/scroll.js">
 <link rel="modulepreload" href="js/world/brindavana.js">
-<link rel="modulepreload" href="js/world/purvashrama.js">
 <link rel="modulepreload" href="js/world/river.js">
-<link rel="modulepreload" href="js/world/interior.js">
-<link rel="modulepreload" href="js/world/parimala.js">
-<link rel="modulepreload" href="js/world/bheda.js">
-<link rel="modulepreload" href="js/world/journey.js">
-<link rel="modulepreload" href="js/world/manchale.js">
-<link rel="modulepreload" href="js/world/pravesha.js">
-<link rel="modulepreload" href="js/world/antaranga.js">
-<link rel="modulepreload" href="js/world/presence.js">
+<link rel="modulepreload" href="js/world/foreground.js">
+<link rel="modulepreload" href="js/world/stations.js">
+<link rel="modulepreload" href="js/world/hero.js">
+<link rel="modulepreload" href="js/world/vegetation.js">
 <link rel="modulepreload" href="js/world/opening.js">
+<link rel="modulepreload" href="js/audio.js">
 <link rel="modulepreload" href="js/post.js">
+<link rel="modulepreload" href="js/movements.js">
 <link rel="modulepreload" href="js/main.js">
 </head>
 <body>
-  <!-- scroll length driver -->
-  <div id="scroll-space" aria-hidden="true"></div>
+  <!-- scroll length driver. Three parts: a spacer under the opening (3D), the
+       chapters (the page itself, 01–08), a spacer under the Brindavana and the
+       return (3D). ScrollTimeline (js/scroll.js) sizes the spacers and maps
+       scroll px to global t across all three. -->
+  <div id="scroll-space">
+    <div class="sp" id="sp00" aria-hidden="true"></div>
+
+    <!-- THE CHAPTERS · one night on the river. The life read on the night
+         bank of the opening's own world, in one walk of the camera
+         (main.js camNight). Behaviour: js/movements.js. -->
+    <article id="movements" aria-label="The life, the works and the siddhānta">
+
+      <!-- a breath after the opening before the first word -->
+      <div class="mv-lead" aria-hidden="true"></div>
+
+      <!-- THE CHAPTERS · one day on the river. The life is read on the bank
+           of the opening's own world while its day goes by (river.js: the
+           morning holds through Bhuvanagiri, dusk falls at the sannyāsa, the
+           works and the siddhānta are night), in one walk of the camera
+           from beat to beat (main.js STATIONS). Every beat is one screen in
+           ONE column (the site's reading position): an eyebrow of place and
+           date with the name in Kannada, a title in the lapidary serif, one
+           paragraph. What there is to look at is never a card: it stands in
+           the world (js/world/stations.js), right of the column on a wide
+           frame and above it on a phone: the ॐ in real sand on the step,
+           the printed volumes on the landing, the moon and its reflections
+           for the five differences, the towns' lamps on the far bank for the
+           road. `.sub` beats belong to the chapter before them. -->
+
+      <section class="sec pale" id="mv-01" aria-label="Venkatanatha">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Bhuvanagiri · 1595</span><span class="k kn" lang="kn">ವೆಂಕಟನಾಥ</span></div>
+          <h2 class="title" data-rv="words">Before sannyāsa, Rayaru was known as Venkatanatha.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">Born into a family of scholars and musicians, Venkatanatha grew through study, music, teaching and a household life marked by severe hardship.</p>
+          </div>
+          <div class="dates" data-rv="up">
+            <div><b>1595</b><span>Born, Bhuvanagiri</span></div>
+            <div><b>1621</b><span>Sannyāsa, Tanjore</span></div>
+            <div><b>45</b><span>Granthas, around</span></div>
+            <div><b>1671</b><span>The Brindavana, Manchale</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec pale" id="mv-02" aria-label="The first lesson">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Bhuvanagiri · the first lesson</span><span class="k kn" lang="kn">ಅಕ್ಷರಾಭ್ಯಾಸ</span></div>
+          <h2 class="title" data-rv="words">His schooling began, as every child’s does, with the Praṇava.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">During Venkanna’s Aksharabhyasa, his father Thimmanna Bhatta wrote Omkara and explained that it represented the Supreme Lord. The young Venkatanatha looked at the syllable and asked how something so small could express Lord Narayana, whose auspicious attributes are infinite.</p>
+            <p class="body">Those gathered were astonished to hear such a question from a child.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec pale quiet" id="mv-02m" aria-label="Madurai">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Madurai · the household</span><span class="k kn" lang="kn">ಮಧುರೈ</span></div>
+          <div class="copy" data-rv="up">
+            <p class="lead">After his father’s passing, Venkatanatha continued his studies under Lakshminarasimhacharya. He later married Saraswati Bai, and they had a son, Lakshminarayana.</p>
+            <p class="body">Life, however, was not easy. Venkatanatha devoted himself to teaching and learning, without asking for anything in return. The family often had very little to live on.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="mv-02b" aria-label="Kumbakonam">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Kumbakonam · the Matha</span><span class="k kn" lang="kn">ಕುಂಭಕೋಣ</span></div>
+          <h2 class="title" data-rv="words">The search for deeper learning led him to Kumbakonam.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">Under Sri Sudhindra Tirtha, Venkatanatha immersed himself in deeper study. His command of Vyākaraṇa earned him the title Mahābhāṣyācārya, marking a new stage in the scholar he was becoming.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec quiet" id="mv-02d" aria-label="The dream">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Kumbakonam · the dream</span></div>
+          <div class="copy" data-rv="up">
+            <p class="lead">Sri Sudheendra Tirtha was searching for a successor.</p>
+            <p class="body">In a dream, Moola Rama gave him a name: Venkatanatha. But Venkatanatha was still a grihastha, with duties he could not simply leave behind.</p>
+            <p class="body">Then came a dream of his own. Vidya Lakshmi appeared to him and directed him towards sannyāsa. By morning, the path ahead was clear.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- the name: the one centred beat, at the ghat's two deepas, lit as dusk falls -->
+      <section class="sec fin" id="mv-03" aria-label="The name">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Tanjore · 1621 · the sannyāsa</span></div>
+          <p class="lead" data-rv="up">After his son’s upanayana, Venkatanatha came to Tanjore. There, under Sri Sudheendra Tirtha, he entered sannyāsa.</p>
+          <div class="was" data-rv="up"><span class="k">Venkatanatha</span></div>
+          <h2 class="title name" data-rv="words">Sri Raghavendra Tirtha</h2>
+          <p class="body-lg" data-rv="up">The name had already been indicated by Moola Rama. The scholar and teacher remained. But his life now continued in sannyāsa, devoted to śāstra, teaching and the worship of Moola Rama.</p>
+        </div>
+      </section>
+
+      <!-- the works: the five volumes lie on the landing by lamplight; one beat each -->
+      <section class="sec" id="mv-04" aria-label="The works">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">The writing years</span><span class="k kn" lang="kn">ಪರಿಮಳಾಚಾರ್ಯ</span></div>
+          <h2 class="title" data-rv="words">Around 45 works, written with remarkable clarity.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">Rayaru wrote extensively on the works of Madhvacharya, Jayatirtha and the wider Tattvavāda tradition, clarifying difficult passages and carrying their arguments forward.</p>
+            <p class="body">Here are five of those granthas, as they are known today.</p>
+          </div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-04a" aria-label="Nyāya Sudhā Parimaḷa">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">On Jayatirtha’s Nyāya Sudhā</span></div>
+          <h3 class="title sm" data-rv="words">Nyāya Sudhā Parimaḷa</h3>
+          <div class="copy" data-rv="up"><p class="body">Nyāya Sudhā is one of the most demanding works in Tattvavāda. Rayaru opens up its arguments step by step, showing not only what Jayatirtha says, but how the reasoning holds together. This work earned him the name Parimaḷācārya.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-04b" aria-label="Tantra Dīpikā">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">On the Brahma Sūtras</span></div>
+          <h3 class="title sm" data-rv="words">Tantra Dīpikā</h3>
+          <div class="copy" data-rv="up"><p class="body">A guide to the Brahma Sūtras through the Madhwa tradition. Rayaru brings together the sūtras, their arguments and their connections, helping the reader see the larger structure behind them.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-04c" aria-label="Bhaṭṭa Saṅgraha">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Mīmāṃsā</span></div>
+          <h3 class="title sm" data-rv="words">Bhaṭṭa Saṅgraha</h3>
+          <div class="copy" data-rv="up"><p class="body">Before scripture can be explained, one question comes first: how do we know what a Vedic sentence means? Rayaru examines the rules of interpretation, injunction and meaning that shape how the Veda is read.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-04d" aria-label="Mantrārtha Mañjarī">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">The Ṛgveda</span></div>
+          <h3 class="title sm" data-rv="words">Mantrārtha Mañjarī</h3>
+          <div class="copy" data-rv="up"><p class="body">Rayaru explains the first forty sūktas of the Ṛgveda, following the path laid by Madhvacharya. He draws out the meaning of the mantras and shows how they are understood within the larger vision of Tattvavāda.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-04e" aria-label="Tattva Prakāśikā Bhāvadīpa">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">On Jayatirtha’s Tattva Prakāśikā</span></div>
+          <h3 class="title sm" data-rv="words">Tattva Prakāśikā Bhāvadīpa</h3>
+          <div class="copy" data-rv="up"><p class="body">Jayatirtha explains Madhvacharya’s Brahma Sūtra Bhāṣya. Rayaru takes that explanation further, unpacking difficult arguments and making the reasoning behind Madhva’s interpretation easier to follow.</p></div>
+        </div>
+      </section>
+
+      <!-- Tattvavāda: the five differences, told on the river. The moon is
+           one; its light on the water is its reflection (Madhva's own image,
+           bimba and pratibimba); the stone of the ghat is matter. -->
+      <section class="sec mid" id="mv-05" aria-label="Tattvavāda">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Tattvavāda · the siddhānta</span><span class="k kn" lang="kn">ತತ್ತ್ವವಾದ</span></div>
+          <h2 class="title" data-rv="words">To understand Rayaru’s work, we have to enter the world he was explaining.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">Look again at the river. The water is not the stone. The stone is not the tree. One jīva is not another. And none of them is Sri Hari. Yet none exists independently of Him. This is one of the foundations of Tattvavāda: difference is not something to be overcome. It is real. Madhvacharya described five such differences as pañca-bheda.</p>
+            <p class="body">The river gives us a way to see them.</p>
+          </div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-05a" aria-label="Sri Hari and the jīva">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Sri Hari · jīva</span><span class="k kn" lang="kn">ಪಂಚಭೇದ</span></div>
+          <h3 class="title sm" data-rv="words">The moon, and its reflection.</h3>
+          <div class="copy" data-rv="up"><p class="body">The reflection depends on the moon, but it never becomes the moon. In the same way, the jīva depends on Sri Hari and remains eternally distinct from Him.</p></div>
+        </div>
+      </section>
+      <section class="sec sub right" id="mv-05b" aria-label="Sri Hari and jaḍa">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Sri Hari · jaḍa</span></div>
+          <h3 class="title sm" data-rv="words">The moon is not the stone it lights.</h3>
+          <div class="copy" data-rv="up"><p class="body">The stone is real, but it does not know or act for itself. It is jaḍa: matter without consciousness. Sri Hari is distinct from matter, and matter remains dependent on Him.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-05c" aria-label="Jīva and jīva">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">jīva · jīva</span></div>
+          <h3 class="title sm" data-rv="words">One reflection is not another.</h3>
+          <div class="copy" data-rv="up"><p class="body">Every jīva is a distinct self. One soul never becomes another. Even in mokṣa, its individuality remains.</p></div>
+        </div>
+      </section>
+      <section class="sec sub right" id="mv-05d" aria-label="Jīva and jaḍa">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">jīva · jaḍa</span></div>
+          <h3 class="title sm" data-rv="words">The self is not the body.</h3>
+          <div class="copy" data-rv="up"><p class="body">The jīva is the one who knows and experiences. The body it lives through is matter. They belong together in this life, but they are not the same.</p></div>
+        </div>
+      </section>
+      <section class="sec sub" id="mv-05e" aria-label="Jaḍa and jaḍa">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">jaḍa · jaḍa</span></div>
+          <h3 class="title sm" data-rv="words">The stone is not the water.</h3>
+          <div class="copy" data-rv="up"><p class="body">Both are matter. Yet one thing does not become another simply because both are jaḍa. Difference exists even within the material world.</p></div>
+        </div>
+      </section>
+      <section class="sec quiet sub mid" id="mv-05f" aria-label="Hari Sarvottama">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Hari Sarvottama</span></div>
+          <h3 class="title sm" data-rv="words">Everything here is real. But only one is independent.</h3>
+          <div class="copy" data-rv="up">
+            <p class="lead">The jīva is real. The world is real. The difference between them is real. Yet neither stands on its own.</p>
+            <p class="body">Sri Hari alone is svatantra. All else exists in dependence on Him.</p>
+            <p class="body">And this was not a siddhānta Rayaru kept within books.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- the road: the towns come out as lamps and names on the far bank -->
+      <section class="sec" id="mv-06" aria-label="The road">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">The road · 1621 to 1671</span><span class="k kn" lang="kn">ದಾರಿ</span></div>
+          <h2 class="title" data-rv="words">He travelled for fifty years, teaching and writing.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">At Madurai, his command of Mīmāṃsā was recognised through Bhaṭṭa Saṅgraha. At Udupi, he stayed before Sri Krishna, teaching and completing important granthas.</p>
+            <p class="body">Along the way came stories of grace too. At Kiratagiri, tradition remembers Rayaru reviving a child who had died by apamṛtyu.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="mv-07" aria-label="Manchale">
+        <div class="sec-in">
+          <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Manchale · 1671</span><span class="k kn" lang="kn">ಮಂಚಾಲೆ</span></div>
+          <h2 class="title" data-rv="words">At Manchale, the journey came to rest.</h2>
+          <div class="copy" data-rv="up">
+            <p class="lead">When the Nawab of Adoni offered Rayaru land, he asked for Manchale. Venkanna urged him to choose a more fertile village, but Rayaru would have no other. He said this ground had already been sanctified by Prahlada’s yajña, and Manchalamma was his kula-devata. This was the place he chose for his Brindavana.</p>
+            <p class="body">In 1671, on the banks of the Tungabhadra, Rayaru prepared to enter it.</p>
+            <button type="button" class="arrowlink" data-ch="9"><span>Enter the Brindavana</span><i class="ar"><svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2 10L10 2M4 2h6v6" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- the tail: the camera walks through the gateway to the stone until
+           it fills the frame; the sanctum resolves out of that dark -->
+      <div class="mv-tail" aria-hidden="true"></div>
+    </article>
+
+    <div class="sp" id="sp09" aria-hidden="true"></div>
+  </div>
+
+  <!-- the night ground: rises over the river as the last light goes at the
+       head of the chapters, and over the last lamp at their tail (main.js) -->
+  <div id="ground" aria-hidden="true"></div>
 
   <!-- WebGL -->
   <canvas id="gl" aria-hidden="true"></canvas>
+
+  <!-- the pool: the one shade the chapters are read in, carried onto the
+       copy by movements.js (style.css "THE POOL") -->
+  <div id="pool" aria-hidden="true"><i></i></div>
 
   <!-- soft transition veil -->
   <div id="veil" aria-hidden="true"></div>
   <div id="grain" aria-hidden="true"></div>
   <div id="vignette" aria-hidden="true"></div>
 
-  <!-- editorial layer (accessible narrative text) -->
-  <main id="captions" aria-label="Rayara Antaranga — the narrative"></main>
+  <!-- editorial layer (accessible narrative text): the Brindavana and the return -->
+  <main id="captions" aria-label="Rayara Antaranga: the narrative"></main>
 
-  <!-- Pañcabheda — tap any two, learn one distinction -->
-  <section id="panchabheda" aria-label="Pañcabheda — the five distinctions" hidden>
-    <p class="pb-hint">TAP ANY TWO</p>
-    <div class="pb-field">
-      <button type="button" class="pb-e pb-isvara" data-kind="isvara">Vishnu</button>
-      <button type="button" class="pb-e pb-jiva" data-kind="jiva">jīva</button>
-      <button type="button" class="pb-e pb-jiva" data-kind="jiva">jīva</button>
-      <button type="button" class="pb-e pb-jada" data-kind="jada">jaḍa</button>
-      <button type="button" class="pb-e pb-jada" data-kind="jada">jaḍa</button>
-    </div>
-    <p class="pb-result" role="status" aria-live="polite"></p>
-    <div class="pb-foot">
-      <span class="pb-count">0 of 5 distinctions found</span>
-      <button type="button" class="pb-reset">Reset</button>
-    </div>
-    <ul class="visually-hidden">
-      <li>Īśvara–Jīva — God and the individual soul are distinct.</li>
-      <li>Īśvara–Jaḍa — God and matter are distinct.</li>
-      <li>Jīva–Jīva — No two souls are identical.</li>
-      <li>Jīva–Jaḍa — The conscious self is distinct from matter.</li>
-      <li>Jaḍa–Jaḍa — One material thing is distinct from another.</li>
-    </ul>
-  </section>
-
-  <!-- 05 · The Works — one continuous horizontal editorial canvas.
-       Vertical scroll translates the canvas sideways through the five
-       granthas; on touch it is a native scroll-snap reading track.
-       Content (data) and DOM live in js/works.js; layout in css. -->
-  <section id="works" aria-label="05 — The Works" hidden></section>
-
-  <!-- 01 · Pūrvāśrama — the editorial layer over the house world.
-       A chapter cover (label · headline · introduction · biographical strip ·
-       cue), then ONE stable copy column carrying the narrative a beat at a
-       time. State lives in js/purva.js; layout in css. Copy is approved
-       biographical text and is not to be rewritten. -->
-  <section id="purva" aria-label="01 — Pūrvāśrama" hidden>
-    <div class="pv-cover">
-      <div class="pv-label">01 — PŪRVĀŚRAMA</div>
-      <h2 class="pv-head">
-        <span class="pv-hl"><span>VENKATANATHA.</span></span>
-        <span class="pv-hl"><span>SCHOLAR.</span></span>
-        <span class="pv-hl"><span>TEACHER.</span></span>
-        <span class="pv-hl"><span>GṚHASTHA.</span></span>
-      </h2>
-      <div class="pv-intro">
-        <p>Before accepting Sannyasa, Rayaru was known as Venkatanatha. He was born into a family of scholars and musicians and was trained in grammar, logic, Mimamsa and Vedanta.</p>
-        <p>He studied under Lakshminarasimhacharya and later Sri Sudhindra Tirtha. His ability in Vyakarana earned him the title Mahabhashyacharya.</p>
-        <p>Venkatanatha lived through severe poverty, but continued his adhyayana and adhyapana. He taught students without treating knowledge as a means of personal gain.</p>
-        <div class="pv-cue">ENTER PŪRVĀŚRAMA <i aria-hidden="true">↓</i></div>
-      </div>
-      <div class="pv-strip" aria-label="Pūrvāśrama — places and titles">
-        <div><b>BHUVANAGIRI</b><span>Birth and childhood</span></div>
-        <div><b>MADURAI</b><span>Education</span></div>
-        <div><b>KUMBHAKONAM</b><span>Advanced study</span></div>
-        <div><b>MAHABHASHYACHARYA</b><span>Scholarship and teaching</span></div>
-      </div>
-    </div>
-    <div class="pv-beat" data-beat="aksara">
-      <p>During Venkatanatha’s Aksharabhyasa, Thimmanna Bhatta wrote Om and explained that it represented the Supreme Lord.</p>
-    </div>
-    <div class="pv-q">
-      <span class="pv-ql"><span>HOW COULD SO SMALL</span></span>
-      <span class="pv-ql"><span>A SYMBOL EXPRESS</span></span>
-      <span class="pv-ql"><span>THE INFINITE GREATNESS</span></span>
-      <span class="pv-ql"><span>OF LORD HARI?</span></span>
-    </div>
-    <div class="pv-beat" data-beat="pranava">
-      <p>When his father asked him to explain, the young Venkatanatha described the eight components of Pranava:</p>
-      <p class="pv-eight" aria-label="A, U, M, Nada, Bindu, Ghosha, Shanta, Atishanta">
-        <span>A</span><i>·</i><span>U</span><i>·</i><span>M</span><i>·</i><span>Nada</span><i>·</i><span>Bindu</span><i>·</i><span>Ghosha</span><i>·</i><span>Shanta</span><i>·</i><span>Atishanta</span>
-      </p>
-      <p>He related them to eight forms of the Supreme and continued through the Vyahritis, the Vedas and Purusha Sukta, explaining Om through the infinite auspicious attributes of Lord Hari.</p>
-    </div>
-    <div class="pv-beat" data-beat="astonished">
-      <p>The assembled scholars were astonished by the depth of the child’s explanation.</p>
-    </div>
-    <div class="pv-beat" data-beat="education">
-      <p>Following his father’s passing, Venkatanatha continued his education under Lakshminarasimhacharya at Madurai.</p>
-    </div>
-    <div class="pv-beat" data-beat="marriage">
-      <p>Venkatanatha married Saraswati Bai. Their son, Lakshminarayana, was born during his grihasthashrama.</p>
-    </div>
-    <div class="pv-beat" data-beat="poverty">
-      <p>Venkatanatha lived through severe poverty, but continued his adhyayana and adhyapana. He taught students without treating knowledge as a means of personal gain.</p>
-    </div>
-    <div class="pv-beat" data-beat="kumbhakonam">
-      <p>He studied under Lakshminarasimhacharya and later Sri Sudhindra Tirtha. His ability in Vyakarana earned him the title Mahabhashyacharya.</p>
-    </div>
-  </section>
 
   <!-- persistent UI -->
   <div id="ui" aria-hidden="false">
     <div id="wordmark">
-      <!-- the mark: a drafted Brindavana — kalasha, leaf-merlon crown, niche,
-           flaring adhisthana steps, kolam dots — one line-weight, one hue -->
-      <svg class="mark" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
-        <g stroke="currentColor" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 1.4v1.8"/>
-          <circle cx="18" cy="4.7" r="1.35"/>
-          <path d="M14.6 8h6.8"/>
-          <path d="M15.6 8v-1.1M20.4 8v-1.1"/>
-          <path d="M14.6 8 12.8 12M21.4 8 23.2 12"/>
-          <path d="M11.4 12h13.2"/>
-          <path d="M13.2 12v10.6M22.8 12v10.6"/>
-          <path d="M13.2 15.2h9.6"/>
-          <path d="M16.6 22.6v-3.2a1.4 1.4 0 0 1 2.8 0v3.2"/>
-          <path d="M11.8 22.6h12.4"/>
-          <path d="M10 25.8h16"/>
-          <path d="M8 29h20"/>
-        </g>
-        <g fill="currentColor" stroke="none">
-          <circle cx="4.6" cy="29" r=".9"/>
-          <circle cx="31.4" cy="29" r=".9"/>
-        </g>
+      <!-- the mark: the Brindavana as one solid silhouette, cut on a 32 grid:
+           kalasha, a crown of five lotus petals, the cornice, the body with
+           its arched niche and two rosettes, three steps. Solid, not hairline,
+           so it stays whole at 26px; every gap is at least one unit. -->
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <path fill="currentColor" fill-rule="evenodd" d="M16 .9a1.1 1.1 0 1 1 0 2.2a1.1 1.1 0 1 1 0-2.2Z M8.5 9.0Q8.6 8.0 10 6.4Q11.4 8.0 11.5 9.0Z M11.5 9.0Q11.6 7.0 13 5.4Q14.4 7.0 14.5 9.0Z M14.5 9.0Q14.6 5.8 16 4.2Q17.4 5.8 17.5 9.0Z M17.5 9.0Q17.6 7.0 19 5.4Q20.4 7.0 20.5 9.0Z M20.5 9.0Q20.6 8.0 22 6.4Q23.4 8.0 23.5 9.0Z M7 9.8H25V11.4H7Z M8.4 12.2H23.6V20.4H8.4Z M13.8 20.4V16.4A2.2 2.2 0 0 1 18.2 16.4V20.4Z M10.2 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M19.8 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M6.6 21.4H25.4V23.4H6.6Z M4.8 24.4H27.2V26.6H4.8Z M3 27.6H29V30.2H3Z"/>
       </svg>
-      <span class="wm-text"><b>RAYARA ANTARANGA</b><small>SRI RAGHAVENDRA TIRTHA</small></span>
+      <span class="wm-text"><b>Rayara Antaranga</b><small>JIVANA &middot; KRITI &middot; SIDDHANTA</small></span>
     </div>
+    <!-- the rail: one mark per chapter at the right edge, while the chapters
+         are read (body.in-doc, main.js); movements.js fills it -->
+    <nav id="rail" aria-label="Chapters"></nav>
     <!-- sections: inline links on desktop; on a phone they live behind the
          menu button, in a small panel below the header -->
+    <!-- the phone's sound control, beside the menu (the full one is in the menu) -->
+    <button id="sound-btn-m" type="button" data-compact aria-pressed="false" aria-label="Sound"></button>
     <button id="menu-btn" type="button" aria-expanded="false" aria-controls="topnav" aria-label="Open menu">
       <span></span><span></span>
     </button>
     <nav id="topnav" aria-label="Sections">
-      <button type="button" data-ch="1">LIFE</button>
-      <button type="button" data-ch="5">WORKS</button>
-      <button type="button" data-ch="6">TATTVAVĀDA</button>
+      <button type="button" data-sec="mv-01">LIFE</button>
+      <button type="button" data-sec="mv-04">WORKS</button>
+      <button type="button" data-sec="mv-05">TATTVAVĀDA</button>
       <button type="button" data-ch="9">BRINDAVANA</button>
+      <button type="button" id="sound-btn" aria-pressed="false" aria-label="Sound: ambient music">SOUND</button>
     </nav>
     <a id="aaradhane-link" href="https://www.raghavendramutt.org/" target="_blank" rel="noopener">Aradhana · Mantralaya · 2026</a>
   </div>
@@ -190,42 +335,39 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
        raise the line word by word (css: "opening hero" + "hero entrance"). -->
   <section id="hero" aria-label="Introduction">
     <div class="hero-eyebrow">MANTRALAYA &middot; ON THE TUNGABHADRA</div>
-    <h1 class="hero-heading"><span class="hw"><span>THE</span></span> <span class="hw"><span>LIFE</span></span> <span class="hw"><span>AND</span></span> <span class="hw"><span>WORKS</span></span> <span class="hw"><span>OF</span></span><br><span class="hw"><span>SRI</span></span> <span class="hw"><span>RAGHAVENDRA</span></span> <span class="hw"><span>TIRTHA</span></span></h1>
-    <p class="hero-body">Explore the life and writings of Sri Raghavendra Tirtha, and the precision he brought to the understanding of Tattvavāda.</p>
+    <h1 class="hero-heading"><span class="hw"><span>The</span></span> <span class="hw"><span>life</span></span> <span class="hw"><span>and</span></span> <span class="hw"><span>works</span></span> <span class="hw"><span>of</span></span><br><span class="hw"><span>Sri</span></span> <span class="hw"><span>Raghavendra</span></span> <span class="hw"><span>Tirtha</span></span></h1>
+    <p class="hero-body">Before Rayaru, there was Venkatanatha. Follow his journey from Bhuvanagiri to the banks of the Tungabhadra.</p>
   </section>
+
+  <!-- the scroll cue: arrives with the heading, leaves with the first scroll -->
+  <div id="scroll-cue" aria-hidden="true"><span>Scroll</span><i></i></div>
 
   <!-- the word: flat editorial type across the lower area -->
   <div id="word" aria-hidden="true"><span>MANTRALAYA</span></div>
 
-  <!-- the last page of the editorial: a colophon, not another scene -->
+  <!-- the last page: stillness, then a very simple footer. Not another scene. -->
+  <!-- the last page: the river holds under it. As the footer comes up the
+       camera settles to the water, where the lotus stands out of the bay
+       (river.js, main.js cam10 tilt); two lines sit on the last frame.
+       Not a section: the landscape continuing past the story. -->
   <footer id="footer">
+    <!-- the last metres of the same journey: the river stays under these
+         lines and the night ground comes up through it (style.css #footer);
+         the footer is in the page's own flow, one scroll from first to last -->
     <div class="f-in">
-      <div class="f-top">
-        <div class="f-brand">
-          <div class="f-mark">Rayara Antaranga</div>
-          <div class="f-sub">The Life and Works of<br>Sri Raghavendra Tirtha</div>
-          <div class="f-note">
-            <p>Prepared for the 355th Sri Raghavendra Tirtha Aradhana · Mantralaya · 2026.</p>
-            <p>Where an account belongs to Sri Matha tradition, it is described as such in the narrative.</p>
-          </div>
-        </div>
-        <nav class="f-chapters" aria-label="Chapter index">
-          <button type="button" data-ch="0"><b>00</b>Mantralaya</button>
-          <button type="button" data-ch="1"><b>01</b>Venkatanatha</button>
-          <button type="button" data-ch="2"><b>02</b>Gṛhastha</button>
-          <button type="button" data-ch="3"><b>03</b>Kumbhakonam</button>
-          <button type="button" data-ch="4"><b>04</b>Raghavendra</button>
-          <button type="button" data-ch="5"><b>05</b>The Works</button>
-          <button type="button" data-ch="6"><b>06</b>Tattvavāda</button>
-          <button type="button" data-ch="7"><b>07</b>The Journey</button>
-          <button type="button" data-ch="8"><b>08</b>Manchale</button>
-          <button type="button" data-ch="9"><b>09</b>The Brindavana</button>
-          <button type="button" data-ch="10"><b>00</b>Return</button>
+      <div class="f-line">
+        <div class="f-mark"><svg viewBox="0 0 34 34" aria-hidden="true" focusable="false"><g stroke="currentColor" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 29.4V15C4.5 9.5 8.8 5 14 4 15.2 3.75 16.3 3 17 1.8 17.7 3 18.8 3.75 20 4 25.2 5 29.5 9.5 29.5 15V29.4"/><path d="M2.5 29.4H31.5"/><path d="M4 32H30"/><path d="M9 28.8V26.2H11V17.6H9.6V13.4H24.4V17.6H23V26.2H25V28.8Z"/><path d="M14.8 26.2V21.6C14.8 20.2 15.8 19.4 17 19.4 18.2 19.4 19.2 20.2 19.2 21.6V26.2"/><path d="M17 13.4V11.2"/><circle cx="17" cy="10.15" r="1.05"/></g><g fill="currentColor" stroke="none"><circle cx="1.4" cy="32" r=".95"/><circle cx="32.6" cy="32" r=".95"/></g></svg><span>Rayara Antaranga</span></div>
+        <nav class="f-links" aria-label="Footer">
+          <button type="button" data-sec="mv-01">The life</button>
+          <button type="button" data-sec="mv-04">The granthas</button>
+          <button type="button" data-sec="mv-05">Tattvavāda</button>
+          <button type="button" data-ch="9">The Brindavana</button>
         </nav>
       </div>
-      <div class="f-meta">
-        <p class="f-credit">Temple gateway: “Temple arch” by Er.&nbsp;B.&nbsp;Nijithkumar (CC-BY-4.0) · Stone details: Temple Ruins asset pack by Bl4ckGh0st (CC-BY-4.0). All other environments and typography are original and procedural.</p>
-        <div class="f-namah">Śrī Rāghavendrāya Namaḥ</div>
+      <div class="f-base">
+        <span>A small seva by Chaitra Rao</span>
+        <span class="f-seal"><span lang="sa">श्री मूल रामो विजयते</span><small>Śrī Mūla Rāmo Vijayate</small></span>
+        <span>An independent, non-commercial educational tribute &middot; &copy; 2026</span>
       </div>
     </div>
   </footer>
@@ -363,6 +505,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
         </g>
       </svg>
     </div>
+    <p class="pre-cap" aria-hidden="true">Rayara Antaranga<small>Mantralaya &middot; 355th Aradhana</small></p>
     </div>
   </div>
   <!-- The drafting starts the moment its own module lands. Left inside
@@ -373,35 +516,27 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
     /* ?domonly — review aid: interface layer only, no world, no preloader */
     const DOM_ONLY = location.search.includes('domonly');
     if (DOM_ONLY) { document.body.classList.add('domonly'); document.getElementById('preloader').remove(); }
-    /* ?domonly&plate=N — review aid: hold the Works canvas still at work N */
-    const PLATE = /plate=(\d)/.exec(location.search);
-    if (DOM_ONLY && PLATE) {
-      // a clean view: in domonly the footer flows to the top and covers it
-      for (const id of ['footer', 'hero', 'word']) document.getElementById(id).style.display = 'none';
-      import('./js/works.js').then(({ createWorks }) => {
-        // reduced: false — the plate must show the real choreography's pose
-        createWorks({ reduced: false }).showStatic(+PLATE[1]);
-      });
-    }
     const P = DOM_ONLY ? null : new BrindavanaPreloader();
     window.__preloader = P;
     /* fonts fetch over the network while the drawing is made — pure I/O, no
        thread time — so the world never sits waiting on them afterwards */
     try {
-      ['300 100px "Onest"', '500 100px "Onest"',
+      ['400 100px "Marcellus"', '300 100px "Karla"', '400 100px "Karla"',
        '300 100px "Noto Sans Kannada"', '400 100px "Noto Serif Devanagari"']
         .forEach(f => document.fonts.load(f));
+      /* the dot-below IAST letters live in a stitched face (fonts.local.css):
+         ask for them by TEXT, or that subset is never fetched */
+      ['400 100px "Marcellus"', '300 100px "Karla"'].forEach(f => document.fonts.load(f, 'jaḍa Namaḥ Akṣarābhyāsa Vyākaraṇa Mīmāṃsā ṭīkā'));
     } catch (e) {}
-    /* The world is FETCHED while the drawing is made (the modulepreload links
-       above) but EVALUATED only after it. Module evaluation and stage
-       construction block the main thread, and a blocked thread cannot paint —
-       run during the drawing, those blocks froze the pen mid-stroke. On the
-       finished, still drawing the same blocks are invisible. */
+    /* The drawing IS the load. The world's modules are fetched and evaluated
+       now, one at a time with a breath between them so the sheet can paint,
+       and each one that lands advances the hand (0 → .56); main.js reports
+       the fonts, the two opening stages and the first render (.58 → 1).
+       Only the modules the FIRST scene needs are on this list; the later
+       chapters are imported by main.js behind the live site. */
     const mods = ['./vendor/three.module.js', './js/util.js', './js/scroll.js',
-      './js/world/brindavana.js', './js/world/river.js', './js/world/purvashrama.js',
-      './js/world/interior.js', './js/world/parimala.js', './js/world/bheda.js',
-      './js/world/journey.js', './js/world/manchale.js', './js/world/pravesha.js',
-      './js/world/antaranga.js', './js/world/presence.js'];
+      './js/world/vegetation.js', './js/world/opening.js', './js/world/brindavana.js',
+      './js/world/hero.js', './js/world/river.js', './js/world/birds.js', './js/post.js'];
     const breathe = () => new Promise(r => {
       let done = false; const go = () => { if (!done) { done = true; r(); } };
       requestAnimationFrame(() => setTimeout(go, 0));
@@ -411,9 +546,11 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
     const world = async () => {
       if (started) return;
       started = true;
-      /* the drawing first; 9s guard so nothing can hold the world hostage */
-      await Promise.race([P.drawn, new Promise(r => setTimeout(r, 9000))]);
-      for (const m of mods) { try { await import(m); } catch (e) {} await breathe(); }
+      for (let i = 0; i < mods.length; i++) {
+        try { await import(mods[i]); } catch (e) {}
+        P.setTarget(.04 + (i + 1) / mods.length * .52);
+        await breathe();
+      }
       import('./js/main.js');
     };
     requestAnimationFrame(() => requestAnimationFrame(world));
