@@ -1,0 +1,4 @@
+# Netlify: build with npm, publish the built site. No environment variables are needed.
+[build]
+  command = "npm run build"
+  publish = "dist"

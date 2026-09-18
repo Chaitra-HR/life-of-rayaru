@@ -1,0 +1,17 @@
+{
+  "name": "rayara-antaranga",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rayara Antaranga: a scroll-driven cinematic biography of Sri Raghavendra Tirtha. A static site (vanilla ES modules, vendored three.js); the build copies antaranga/ to dist/ and checks every reference resolves.",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "dev": "serve antaranga",
+    "build": "node scripts/build.mjs",
+    "preview": "serve dist"
+  },
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}

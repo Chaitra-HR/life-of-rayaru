@@ -57,7 +57,7 @@ function sandCanvas(size = 512) {
   return c;
 }
 /* shaligrama: near-black stone with faint chakra rings */
-function shaligramaCanvas(size = 512) {
+export function shaligramaCanvas(size = 512) {   // also drawn by the review aid's still of the objects (objects.js)
   const [c, g] = canvas(size, size);
   g.fillStyle = '#151312'; g.fillRect(0, 0, size, size);
   const rnd = mulberry(1200);

@@ -19,14 +19,37 @@ typography are all built procedurally at load time.
 
 ## Running it
 
-Any static file server will do — there is no build step.
+The site is static: vanilla ES modules and a vendored three.js, nothing to
+compile. `antaranga/` is the source folder and is served as-is in
+development.
 
 ```bash
-npx serve antaranga
+npm install
+npm run dev        # serves antaranga/ locally
 ```
 
 Then open the printed URL. (`.claude/launch.json` carries the same command for
 editor-integrated preview.)
+
+## Deploying it
+
+```bash
+npm run build      # copies antaranga/ to dist/ and checks every reference resolves
+npm run preview    # serves dist/ locally, as a host would
+```
+
+| setting | value |
+| --- | --- |
+| build command | `npm run build` |
+| output (publish) directory | `dist` |
+| Node | 18.17 or later |
+| environment variables | none |
+
+`netlify.toml` and `vercel.json` carry these for Netlify and Vercel; on any
+other static host (Cloudflare Pages, Render, GitHub Pages via an action) enter
+the same two settings. Every path in the site is relative, so it also works
+from a sub-path. The build fails, naming the file, if anything `index.html`
+or the stylesheets reference is missing from the output.
 
 ## Layout
 

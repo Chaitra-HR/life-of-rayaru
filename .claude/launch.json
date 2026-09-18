@@ -11,6 +11,12 @@
         "antaranga"
       ],
       "port": 4188
+    },
+    {
+      "name": "dist",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview"],
+      "port": 3000
     }
   ]
 }

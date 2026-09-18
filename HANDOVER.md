@@ -8,13 +8,18 @@ chapter 07.
 
 ## 1. Getting running
 
-Requires only Node (for a static file server) and a browser with WebGL. **There
-is no build step, no bundler, no `npm install`.** Three.js is vendored.
+Requires only Node (for a static file server) and a browser with WebGL. There
+is no bundler; three.js is vendored. Since 19 Sept 2026 the repository carries a
+`package.json`: `npm run dev` serves `antaranga/`, `npm run build` copies it
+to `dist/` (leaving `serve.json` and `tools/` behind) and fails if any
+reference in the page is missing; hosts build with `npm run build` and publish
+`dist` (README "Deploying it"; `netlify.toml`, `vercel.json`).
 
 ```bash
 git clone https://github.com/Chaitra-HR/life-of-rayaru.git
 cd life-of-rayaru
-npx serve antaranga
+npm install
+npm run dev
 ```
 
 Open the printed URL. First load draws the preloader while the world builds; the

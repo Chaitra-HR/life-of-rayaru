@@ -9,7 +9,7 @@ import { buildBrindavana } from './brindavana.js';
 import { tallDeepa } from './deepa.js';
 import { buildRehal } from './parimala.js';
 import { sandTray } from './props.js';
-import { shaligramaCanvas } from './antaranga.js';
+import { shaligramaCanvas } from './pravesha.js';
 import { createTerrain } from './journey/terrain.js';
 import { createWaters } from './journey/rivers.js';
 import { createRoute } from './journey/route.js';

@@ -9,5 +9,11 @@ Desktop.ini
 # dependencies (the site vendors what it needs under antaranga/vendor)
 node_modules/
 
-# local build output
+# the build output (npm run build → dist/)
+dist/
+
+# local build output and environment
 *.log
+npm-debug.log*
+.env
+.env.*
