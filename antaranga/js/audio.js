@@ -188,10 +188,11 @@ export function createAmbience({ button = null } = {}) {
       if (ctx.state === 'running' && media && !media.paused) disarm();
     },
     /* t: global scroll */
-    update(t) {
+    update(t, dt, rise, marks = null) {
       if (!ctx || !on || !nodes) return;
-      const chamber = smooth(remap(t, .76, .80)) * (1 - smooth(remap(t, .86, .90)));   // under the bank, the water is far
-      const reading = smooth(remap(t, .07, .12)) * (1 - smooth(remap(t, .70, .74)));   // the chapters
+      const M = marks || { docA: .07, docB: .725, chamber: [.76, .80, .86, .90] };
+      const chamber = smooth(remap(t, M.chamber[0], M.chamber[1])) * (1 - smooth(remap(t, M.chamber[2], M.chamber[3])));   // under the bank, the water is far
+      const reading = smooth(remap(t, M.docA, M.docA + .05)) * (1 - smooth(remap(t, M.docB - .03, M.docB)));   // the chapters
       const m = MUSIC * (1 - .14 * reading) * (1 - .18 * chamber);
       const now = ctx.currentTime;
       if (Math.abs(m - lastM) > .004) { lastM = m; nodes.music.gain.setTargetAtTime(m, now, 1.6); }

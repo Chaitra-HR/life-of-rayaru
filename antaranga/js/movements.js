@@ -3,27 +3,30 @@
 // Between the opening on the Tungabhadra and the Brindavana at Manchale the
 // life is read on the bank of the opening's own world, in one walk of the
 // camera (main.js STATIONS). The chapters are sections in the page's flow
-// (index.html #movements) and that flow is only the SCROLL LENGTH: it sets
-// where each beat lives in the scroll, and main.js measures the walk and
-// the stations' windows from it (centerP, rangeP). The words themselves
-// never scroll. Every beat's copy (.sec-in) is fixed in the frame, at the
-// site's one reading position, and this module gives it a life in scroll:
-// it rises into place and fades up as its section reaches the frame,
-// holds while the section is read, and dissolves as the section leaves,
-// the next arriving as the camera goes on moving (the Seijaku register).
+// (index.html #movements) and that flow is only the SCROLL LENGTH: each
+// section is sized from THE SCORE (score.js), never the other way round,
+// so the scrollbar and the keyboard's page agree with the score. The words
+// themselves never scroll. Every beat's copy (.sec-in) is fixed in the
+// frame, at the site's one reading position, and its life is the beat's
+// copy window in the score: it rises into place and fades up as the window
+// opens (the camera arriving), holds while the beat is read (the camera
+// drifting), and dissolves as the window closes, the next arriving as the
+// camera goes on moving (the Seijaku register).
 //
 // This module owns the chapters' behaviour and nothing else: the beats'
 // lives, the headings arriving a word at a time, the pool of shade under
 // the copy, the rail at the right edge and the nav's sense of where the
 // visitor is, and the section links. main.js calls update() every frame
-// with the raw scroll position.
+// with the story's t and the score's layout.
 import { clamp01, remap, smooth, lerp } from './util.js';
+import { COPY_IN, COPY_OUT } from './score.js';
 
-export function createMovements({ reduced = false, standalone = false, scrollToY = null } = {}) {
+export function createMovements({ reduced = false, standalone = false, scrollToBeat = null } = {}) {
   const el = document.getElementById('movements');
-  const none = { el: null, measure() {}, topOf() { return 0; }, firstTop() { return 0; }, lastBottom() { return 0; }, update() { return { i: 0, n: 8, band: null, covered: false }; }, setNav() {}, setLive() {} };
+  const none = { el: null, size() {}, measure() {}, update() { return { i: 0, n: 8 }; }, setNav() {}, setLive() {} };
   if (!el) return none;
   const sections = [...el.querySelectorAll('.sec')];
+  const spans = [...el.querySelectorAll('.sec, .mv-way, .mv-lead, .mv-tail')];   // everything in the flow that has a beat
   const rail = document.getElementById('rail');
   const navBtns = [...document.querySelectorAll('#topnav button[data-sec]')];
 
@@ -43,23 +46,19 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
      simply there */
   if (standalone) el.querySelectorAll('.sec').forEach(s => s.classList.add('on'));
 
-  /* ---- geometry, cached ---- */
-  const rect = (e) => { const r = e.getBoundingClientRect(); return { top: r.top + window.scrollY, h: r.height }; };
-  /* one record per beat: its section's place in the scroll (top, h) and its
-     copy block's place in the frame (rx: the union of the block's children,
-     in viewport px; fixed, so measured once and again on resize) */
+  /* one record per beat: its copy block's place in the frame (rx: the
+     union of the block's children, in viewport px; fixed, so measured once
+     and again on resize) */
   const beats = sections.map(s => ({
+    id: s.id,
     el: s, inner: s.querySelector('.sec-in') || s,
     pale: s.classList.contains('pale'),
     mid: s.classList.contains('mid'),      // one of the two centred beats (style.css .sec.mid)
-    top: 0, h: 0, rx: { left: 0, top: 0, w: 0, h: 0 },
-    o: -1, oS: '', tf: '', on: false, pe: '',
+    rx: { left: 0, top: 0, w: 0, h: 0 },
+    o: -1, oS: '', tf: '', on: false, pe: '', p: 0,
   }));
-  let tops = [];
   function measure() {
-    tops = sections.map(s => rect(s).top);
     for (const b of beats) {
-      const r = rect(b.el); b.top = r.top; b.h = r.h;
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       for (const c of b.inner.children) {
         const g = c.getBoundingClientRect();
@@ -71,27 +70,35 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
       b.rx = { left: x0, top: y0, w: x1 - x0, h: y1 - y0 };
     }
   }
+  /* ---- the flow is the score's: every section, lead, way and tail is
+     given its beat's own height, so the page is exactly as long as the
+     score and nothing about the scroll is measured from the DOM ---- */
+  let lay = null;
+  function size(L) {
+    lay = L;
+    if (standalone) return;
+    for (const s of spans) {
+      const b = L.byId[s.id];
+      s.style.height = b ? `${Math.round(b.span)}px` : '0px';
+    }
+  }
 
   /* ---- the beats' lives ----
-     s is the frame's centre in scroll px. A beat rises and fades up as the
-     frame's centre comes down onto its section (a little before its top),
-     holds while the centre crosses the section, and dissolves as the
-     centre leaves its foot. The fades are a fraction of the viewport, the
-     same at every beat, so every passage arrives and leaves at one pace;
-     the hold is the rest of the section, which is sized for its reading
-     (style.css: a chapter a viewport, a sub-beat and a quiet beat less). */
-  /* in from the section's own top (nothing before the walk has begun to
-     arrive), full by .30 vh, the camera landing at the centre; out over the
-     last .30 vh, reaching .10 vh past the foot */
-  const IN = .30, OUT = .30, PRE = .10;
-  function lives(y, h) {
-    const s = y + h * .5;
+     A beat's copy window [cA, cB] is in the score. The block rises and
+     fades up over COPY_IN viewports from cA, holds, and dissolves over
+     COPY_OUT viewports to cB. The fades are the same at every beat, so
+     every passage arrives and leaves at one pace; the hold is the rest of
+     the window, which the score sizes for its reading. */
+  function lives(t) {
+    const fi = COPY_IN * lay.h / lay.max, fo = COPY_OUT * lay.h / lay.max;
     for (const b of beats) {
-      const a0 = b.top, a1 = b.top + b.h + PRE * h;
-      const oIn = smooth(remap(s, a0, a0 + IN * h));
-      const oOut = 1 - smooth(remap(s, a1 - OUT * h, a1));
+      const B = lay.byId[b.id];
+      if (!B || !B.copy) continue;
+      const a0 = B.cA, a1 = B.cB;
+      const oIn = smooth(remap(t, a0, a0 + fi));
+      const oOut = 1 - smooth(remap(t, a1 - fo, a1));
       const o = oIn * oOut;
-      const p = clamp01((s - a0) / Math.max(1, a1 - a0));
+      const p = clamp01((t - a0) / Math.max(1e-9, a1 - a0));
       b.p = p;
       const oS = o.toFixed(3);
       if (oS !== b.oS) {
@@ -160,48 +167,24 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
     if (o !== poolS.o) { poolS.o = o; pool.style.opacity = o; }
   }
 
-  const topOf = (id) => { const s = document.getElementById(id); return s ? rect(s).top : 0; };
-  /* the page in the chapters' own progress (docP, 0..1 over the article):
-     centerP is the progress at which a beat sits centred in the frame,
-     rangeP the progress at which it enters the bottom of the frame and
-     leaves the top. main.js authors the camera walk and the stations'
-     windows against these, so they land wherever the words are. */
-  const docP = (y) => { const h0 = rect(el).top, hh = Math.max(1, el.offsetHeight); return Math.max(0, Math.min(1, (y - h0) / hh)); };
-  const centerP = (id, vh = document.documentElement.clientHeight || window.innerHeight) => {
-    const s = document.getElementById(id); if (!s) return 0;
-    const g = rect(s); return docP(g.top + g.h / 2 - vh / 2);
-  };
-  /* the stop of a beat, in scroll px: the frame's centre on the section's centre (the director, scroll.js) */
-  const centerY = (id, vh = document.documentElement.clientHeight || window.innerHeight) => {
-    const s = document.getElementById(id); if (!s) return 0;
-    const g = rect(s); return g.top + g.h / 2 - vh / 2;
-  };
-  const rangeP = (id, vh = document.documentElement.clientHeight || window.innerHeight) => {
-    const s = document.getElementById(id); if (!s) return [0, 0];
-    const g = rect(s); return [docP(g.top - vh), docP(g.top + g.h)];
-  };
-  const firstTop = () => tops[0] || 0;
-  const lastBottom = () => { const b = beats[beats.length - 1]; return b ? b.top + b.h : 0; };
-
   /* ---- the rail and the nav ---- */
   /* one mark per chapter: the sub-beats (a work, a difference) belong to theirs */
   const chapters = sections.filter(s => !s.classList.contains('sub'));
   if (rail) {
     rail.innerHTML = chapters.map((s, i) => `<button type="button" data-sec="${s.id}" aria-label="Chapter ${i + 1}"><i></i></button>`).join('');
   }
-  /* a link lands the frame's centre on the beat (its copy full), never on
-     the section's edge where it has not yet arrived */
+  /* a link lands the frame on the beat with its copy up, never on the
+     beat's edge where it has not yet arrived */
   const go = (id) => {
+    if (scrollToBeat) { scrollToBeat(id); return; }
     const s = document.getElementById(id); if (!s) return;
-    const g = rect(s), vh = document.documentElement.clientHeight || window.innerHeight;
-    const y = g.top + Math.min(g.h, vh) * .5 - vh * .5 + vh * .22;
-    if (scrollToY) scrollToY(y); else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
+    window.scrollTo({ top: s.getBoundingClientRect().top + window.scrollY, behavior: reduced ? 'auto' : 'smooth' });
   };
   document.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => go(b.dataset.sec)));
   const railBtns = rail ? [...rail.querySelectorAll('button')] : [];
   let cur = -2;
   function setNav(i) {
-    /* i: the chapter index (0–7), -1 before the chapters, 8 after them */
+    /* i: the beat index among the sections (0–n), -1 before the chapters, n after them */
     if (i === cur) return;
     cur = i;
     const secId = i >= 0 && i < sections.length ? sections[i].id : '';
@@ -212,33 +195,25 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
     navBtns.forEach(b => b.classList.toggle('on', b.dataset.sec === navId));
     document.querySelectorAll('#topnav button[data-ch]').forEach(b => b.classList.toggle('on', i >= sections.length && b.dataset.ch === '9'));
   }
-  function whereAmI(y, h) {
-    if (!tops.length) return -1;
+  /* which section's beat the story is in (or the last one passed) */
+  function whereAmI(t) {
+    if (!lay) return -1;
     let i = -1;
-    for (let k = 0; k < tops.length; k++) if (tops[k] - y < h * .45) i = k;
+    for (let k = 0; k < sections.length; k++) { const B = lay.byId[sections[k].id]; if (B && t >= B.t0 - (B.t1 - B.t0) * .1) i = k; }
     return i;
   }
 
-  /* ---- measure now, and again whenever the document or the frame moves ---- */
+  /* ---- measure the blocks now, and again whenever the frame moves ---- */
   measure();
   window.addEventListener('resize', measure);
-  if ('ResizeObserver' in window) new ResizeObserver(measure).observe(el);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
 
-  function update(y = window.scrollY, h = document.documentElement.clientHeight || window.innerHeight, after = false) {
-    const i = after ? sections.length : whereAmI(y, h);
+  function update(t, h, after = false) {
+    const i = after ? sections.length : whereAmI(t);
     setNav(i);
-    if (!standalone) { lives(y, h); carryPool(h); }
-    return { i, n: sections.length, band: null, covered: false };
+    if (!standalone && lay) { lives(t); carryPool(h); }
+    return { i, n: sections.length };
   }
 
-  /* without the world (no WebGL) the chapters drive themselves */
-  if (standalone) {
-    const tick = () => update();
-    window.addEventListener('scroll', tick, { passive: true });
-    window.addEventListener('resize', tick);
-    tick();
-  }
-
-  return { el, measure, topOf, firstTop, lastBottom, centerP, centerY, rangeP, update, setNav, setLive() {} };
+  return { el, size, measure, update, setNav, setLive() {}, beats };
 }

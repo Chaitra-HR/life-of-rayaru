@@ -138,14 +138,6 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: auto; }
-/* THE PAGE DOES NOT SCROLL (20 Sept 2026, scroll.js the director): the
-   story is moved stop by stop by gestures; the sections below still lay
-   out its length, the body simply never moves. The no-WebGL document
-   scrolls as a document. */
-html, body { height: 100%; overflow: hidden; }
-body { position: fixed; inset: 0; width: 100%; touch-action: pinch-zoom; overscroll-behavior: none; }   /* a fixed body cannot scroll or rubber-band; the pinch stays for the visitor who needs to zoom */
-body.nowebgl { position: static; height: auto; overflow: auto; touch-action: auto; overscroll-behavior: auto; }
-html:has(body.nowebgl) { height: auto; overflow: auto; }
 body {
   background: var(--ground);
   color: var(--ink);
@@ -696,8 +688,11 @@ body.nowebgl .t-giant {
 #scroll-space .sp { display: block; }
 #movements { position: relative; color: var(--ink); font-family: var(--font-body); }
 /* the lead: the dusk falls in view, the moon comes up, before a word */
-#movements .mv-lead { height: 150vh; }   /* the walk from the composition to the house's gate, with nothing to read: a slow walk, the first words arriving as the camera does */
-#movements .mv-tail { height: 170vh; }
+/* the lead (the walk to the house), the ways (travel between places) and
+   the tail (the walk to the stone) are beats of THE SCORE with no copy:
+   their heights, like every section's, are set from score.js by
+   movements.js. Nothing in the flow has a height of its own. */
+#movements .mv-lead, #movements .mv-way, #movements .mv-tail { display: block; height: 0; }
 #movements p, #movements h2, #movements h3, #movements ol, #movements figure { margin: 0; padding: 0; }
 #movements button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
@@ -706,13 +701,10 @@ body.nowebgl .t-giant {
    the frame at the site's reading position, and movements.js gives it its
    life: rising and fading up as the section arrives, held while it is read,
    dissolving as it leaves. Nothing scrolls. ---- */
-#movements .sec { position: relative; min-height: 100svh; }
-#movements .sec + .sec { margin-top: 14vh; }
-/* a sub-beat (one work, one difference) and a quiet beat (one paragraph)
-   are read faster: less scroll each */
-#movements .sec.sub, #movements .sec + .sec.sub { min-height: 88svh; margin-top: 6vh; }
-#movements .sec.quiet { min-height: 84svh; }
-#movements .sec.quiet + .sec, #movements .sec + .sec.quiet { margin-top: 10vh; }
+/* a section's height is its beat's span in the score (movements.js size);
+   no margins: the beats are contiguous, the travel between them is a beat
+   of its own where the camera has far to go */
+#movements .sec { position: relative; height: 0; margin: 0; }
 /* the copy block: the lower part of the frame on a phone, the world above
    the words; on a wide frame the left column, the world to the right */
 #movements .sec-in {
@@ -829,11 +821,6 @@ body.nowebgl #vignette, body.nowebgl #rail { display: none; }
    left (.sec.right), the copy still set left-aligned in its column, the
    subject of each placed on the other side by its station (main.js) ---- */
 @media (min-width: 769px) {
-  #movements .sec { min-height: 100vh; }
-  #movements .sec + .sec { margin-top: 18vh; }
-  #movements .sec.sub, #movements .sec + .sec.sub { min-height: 90vh; margin-top: 6vh; }
-  #movements .sec.quiet { min-height: 82vh; }
-  #movements .sec.quiet + .sec, #movements .sec + .sec.quiet { margin-top: 10vh; }
   /* the column sits LOW in the frame, as the hero's does and as Seijaku's: the sky and the subject above and right of it, the ground under it */
   #movements .sec-in { left: var(--pad); right: auto; bottom: 12vh; width: min(560px, 42vw); }
   #movements .sec.right .sec-in { left: auto; right: var(--pad); }
@@ -863,7 +850,6 @@ body.nowebgl #vignette, body.nowebgl #rail { display: none; }
   #movements .sec.mid .copy .body { max-width: 48ch; }
 }
 @media (max-width: 768px) {
-  #movements .mv-lead { height: 130vh; }
   #rail { display: none; }
   /* the phone's two compositions: the column low and left; for the
      alternate differences it stands to the right, a shorter measure */
@@ -882,9 +868,9 @@ body.nowebgl #vignette, body.nowebgl #rail { display: none; }
 
 /* without WebGL the chapters flow as a document (main.js lifts them out of
    the scroll driver): the night ground is the page, nothing else changes */
-body.nowebgl #movements .mv-lead, body.nowebgl #movements .mv-tail { display: none; }
+body.nowebgl #movements .mv-lead, body.nowebgl #movements .mv-way, body.nowebgl #movements .mv-tail { display: none; }
 body.nowebgl #pool { display: none; }
-body.nowebgl #movements .sec { min-height: 0; padding: 0 var(--pad) 12vh; }
+body.nowebgl #movements .sec { height: auto; min-height: 0; padding: 0 var(--pad) 12vh; }
 body.nowebgl #movements .sec-in, body.nowebgl #movements .fin .sec-in { position: static; opacity: 1 !important; visibility: visible !important; transform: none !important; pointer-events: auto; width: auto; max-width: 46rem; margin: 0 auto; }
 
 /* ---------------- BrindavanaPreloader — architectural drafting ------------

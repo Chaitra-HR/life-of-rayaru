@@ -719,7 +719,7 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
      gateway, platform, deepas and the Brindavana withdraw as MESHES — the
      lamps' point lights stay in the scene at zero intensity, because a
      light toggled on and off recompiles every material in view */
-  let sacredOn = 1, dreamAmt = 0, tailAmt = 0;
+  let sacredOn = 1, dreamAmt = 0, tailAmt = 0, foreAmt = 0;
   const GOLD = new THREE.Color(0xe6c48c), BLUE = new THREE.Color(0xcedcee);
   const setSacred = (v) => {
     if (v === sacredOn) return;
@@ -732,7 +732,7 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
 
   const api = {
     group: g, gate, deepas, veg, grass, trees, threshold, hemi, sun, fill, clouds, birds, setSacred,
-    setDream(v) { dreamAmt = v; }, setTail(v) { tailAmt = v; },
+    setDream(v) { dreamAmt = v; }, setTail(v) { tailAmt = v; }, setFore(v) { foreAmt = v; },
     setVisible(v) { g.visible = v; },
     /* a point of the threshold (its `points` keys) in the approach frame
        the cameras are authored in, optionally stepped out along the house's
@@ -849,7 +849,8 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
             .addScaledVector(_rgt, Math.sin(ph) * (2.5 + i) - 1 + i * 1.5);
           _wp.y = 1.0 + i * .6 + Math.sin(ph * 1.3) * .3 + glow * 1.2;
           H.worldToLocal(s.position.copy(_wp));
-          s.material.opacity = glow * (.42 - i * .08);
+          /* faint while the camera travels over the water (river.js travel): a sheet of the river's own mist crossing the lens, depth in front of the far things */
+          s.material.opacity = Math.max(glow, foreAmt * .30) * (.42 - i * .08);
         }
       }
       for (const k in brnd.materials) {

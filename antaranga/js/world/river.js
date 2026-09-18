@@ -782,6 +782,8 @@ export function createRiverStage(ctx) {
     pravesha,
     /* the chapters' progress 0..1 while they are read (main.js): the day's arc and the stations key off it */
     docP: 0,
+    marks: null,    // the score's seams in t (main.js)
+    travel: 0,      // 0..1: the camera is travelling over the water (main.js); the mist is carried ahead of it
     /* windows in docP for the stations' things, measured from the page by main.js */
     winds: null,
     /* the hour this frame, for main.js (the fog, the ink) */
@@ -841,7 +843,9 @@ export function createRiverStage(ctx) {
       /* the dawn dial holds at full until the chapter boundary itself: the
          foliage cards fade with this dial, so winding it down early made
          the very leaves of the occlusion go transparent */
-      const openRaw = globalT < .5 ? 1 - smooth(remap(globalT, .06995, .0703)) : 0;
+      /* every seam here is a mark of THE SCORE (score.js, main.js sets this.marks): the chapters' head and foot, the second dawn */
+      const M = this.marks || { docA: .0703, docB: .725, dawn2: [.733, .775] };
+      const openRaw = globalT < .5 ? 1 - smooth(remap(globalT, M.docA - .00035, M.docA)) : 0;
       /* ONE PLACE, ONE DAY. After the dawn the same bank is seen again
          EMPTY, the place before he came, and the light moves through a
          whole day while his life is read (01–08): morning, afternoon,
@@ -852,7 +856,7 @@ export function createRiverStage(ctx) {
          Brindavana and its deepas standing, stars out: the way kage keeps
          its temple under every section. The switch from the morning
          happens under the pale ground at the chapters' head (main.js). */
-      const docNight = globalT >= .0703 && globalT < .742 ? 1 : 0;
+      const docNight = globalT >= M.docA && globalT < M.dawn2[0] + .2 * (M.dawn2[1] - M.dawn2[0]) ? 1 : 0;
       /* ONE DAY, THE WHOLE LIFE. The chapters are read on this bank while
          its day goes by: the opening's morning holds through Bhuvanagiri
          and the schooling, the light warms and turns through Madurai and
@@ -868,8 +872,8 @@ export function createRiverStage(ctx) {
       const dusk = docNight ? smooth(remap(dpNow, DAYARC.duskA, DAYARC.duskB)) : 0;
       const life = 0, lifeDay = 0, lifeNight = 0;
       const manchale = 0;
-      const late = globalT >= .725 ? 1 : 0;   // Brindavana Pravesha and the return: the same bank, the day breaking over it (main.js T9A)
-      const dawn2 = late ? smooth(remap(globalT, .733, .775)) : 0;   // the day of Brindavana Pravesha breaks over Manchale as the environment settles
+      const late = globalT >= M.docB ? 1 : 0;   // Brindavana Pravesha and the return: the same bank, the day breaking over it
+      const dawn2 = late ? smooth(remap(globalT, M.dawn2[0], M.dawn2[1])) : 0;   // the day of Brindavana Pravesha breaks over Manchale while its day is read (score.js b-day)
       const night = late ? 1 - dawn2 : dusk;
       let openT, hour = null, riseNow = rise;
       if (openRaw > .01) {
@@ -926,6 +930,7 @@ export function createRiverStage(ctx) {
       const dream = docNight && dw ? win(dw[0], dw[1], dw[2], dw[3]) : 0;
       opening.setDream(dream);
       opening.setTail(this.tailP || 0);
+      opening.setFore(this.travel || 0);
       flies.material.opacity = .5 * Math.max(night, dream * .9) * (1 + .9 * win(.12, .22, .40, .50) + 1.6 * dream);
 
       /* ------- the composition ------- */

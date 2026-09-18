@@ -81,8 +81,13 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
   /* ---- the courses of the stone: lifted into the air while it is not yet
      built (the day of Pravesha), each coming down in its window of p ---- */
   const LIFT = { plinth: 4.6, lotus: 5.3, lower: 6.0, body: 6.7, band: 7.8, attic: 8.5, cornice: 9.3, crown: 10.1, shikhara: 10.9 };
-  const UP = { shikhara: [.06, .11], crown: [.07, .12], cornice: [.08, .13], attic: [.09, .14], band: [.10, .15], body: [.11, .16], lower: [.12, .17], lotus: [.13, .18], plinth: [.14, .19] };
-  const DOWN = { plinth: [.53, .565], lotus: [.545, .58], lower: [.56, .595], body: [.575, .61], band: [.69, .72], attic: [.70, .73], cornice: [.71, .74], crown: [.72, .75], shikhara: [.73, .76] };
+  /* the order the courses go up (the top first) and come down (the foot
+     first): each course takes a window inside the cue's [a, b], staggered
+     (main.js praveshaCues, from the score) */
+  const UP_ORDER = ['shikhara', 'crown', 'cornice', 'attic', 'band', 'body', 'lower', 'lotus', 'plinth'];
+  const LOWER = ['plinth', 'lotus', 'lower', 'body'];
+  const UPPER = ['band', 'attic', 'cornice', 'crown', 'shikhara'];
+  const stagger = (list, k, a, b, gap, len) => { const j = list.indexOf(k); if (j < 0) return null; const s0 = a + j * gap * (b - a); return [s0, s0 + len * (b - a)]; };
   const malaMats = P.mala ? (P.mala.userData.mats || []) : [];
   for (const m of malaMats) m.transparent = true;
 
@@ -143,7 +148,7 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
 
   /* ---- the sacred layers, each coming down into its place ---- */
   const layers = [];
-  const layer = (obj, y, lift, a, b) => { obj.userData.y = y; obj.userData.lift = lift; obj.userData.win = [a, b]; obj.position.y = y + lift; obj.visible = false; root.add(obj); layers.push(obj); return obj; };
+  const layer = (obj, y, lift, cue) => { obj.userData.y = y; obj.userData.lift = lift; obj.userData.cue = cue; obj.position.y = y + lift; obj.visible = false; root.add(obj); layers.push(obj); return obj; };
   const M = brnd.materials;
   /* the kūrmāsana: the slab over the chamber, the tortoise form on it */
   {
@@ -153,12 +158,12 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
     const shell = sh(new THREE.Mesh(new THREE.SphereGeometry(.34, 24, 16), M.stoneDark)); shell.scale.set(1, .42, 1.25); shell.position.y = .05; tort.add(shell);
     const head = sh(new THREE.Mesh(new THREE.SphereGeometry(.095, 12, 10), M.stoneDark)); head.position.set(0, .08, .5); tort.add(head);
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const f = new THREE.Mesh(new THREE.SphereGeometry(.065, 8, 6), M.stoneDark); f.position.set(sx * .3, .02, sz * .26); tort.add(f); }
-    layer(k, -.214, 3.2, .33, .375);   // its top 6 mm proud of the pad, never on the pad's own plane (z-fighting, 19 Sept 2026)
+    layer(k, -.214, 3.2, 'kurma');   // its top 6 mm proud of the pad, never on the pad's own plane (z-fighting, 19 Sept 2026)
   }
   /* the rajata phalaka */
   /* the column of layers is 2.0 wide: inside the body course's solid core (2.36) and clear of its face
      panels at ±1.2, which a wider column sat in and fought through */
-  { const s = new THREE.Group(); box(2.0, .06, 2.0, new THREE.MeshStandardMaterial({ color: 0xd7d9dc, metalness: .92, roughness: .28 }), 0, .03, 0, s); layer(s, .008, 3.2, .395, .43); }
+  { const s = new THREE.Group(); box(2.0, .06, 2.0, new THREE.MeshStandardMaterial({ color: 0xd7d9dc, metalness: .92, roughness: .28 }), 0, .03, 0, s); layer(s, .008, 3.2, 'plate'); }
   /* the copper box: square, open until the śāligrāmas are in, then its lid */
   const copper = new THREE.MeshStandardMaterial({ color: 0x9c5a2c, metalness: .8, roughness: .32, emissive: 0x2a1206, emissiveIntensity: .55 });
   const BW = 1.6, BH = .55, BT = .08;
@@ -170,13 +175,13 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
     box(BT, BH, BW, copper, -(BW - BT) / 2, BH / 2, 0, v);
     box(BT, BH, BW, copper, (BW - BT) / 2, BH / 2, 0, v);
     box(BW + .08, .05, BW + .08, copper, 0, BH - .025, 0, v).userData.rim = true;   // the rolled rim
-    layer(v, .07, 3.4, .455, .495);
+    layer(v, .07, 3.4, 'vessel');
   }
   const lid = new THREE.Group();
   box(BW + .06, .06, BW + .06, copper, 0, .03, 0, lid);
   box(BW * .5, .05, BW * .5, copper, 0, .085, 0, lid);
   box(.14, .08, .14, copper, 0, .15, 0, lid);                                 // its knop
-  layer(lid, .07 + BH + .004, 2.6, .535, .565);
+  layer(lid, .07 + BH + .004, 2.6, 'lid');
   const shalTex = tex(shaligramaCanvas());
   const shalMat = new THREE.MeshStandardMaterial({ map: shalTex, roughness: .62, metalness: .08 });
   const baseGeo = new THREE.IcosahedronGeometry(.075, 2);
@@ -192,8 +197,8 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
     shalData.push({ x: (rnd() - .5) * 1.3, z: (rnd() - .5) * 1.3, y: BT + .07 + lay * .095 + rnd() * .03, s: .7 + rnd() * .5, rx: rnd() * 3, ry: rnd() * 3, d: (lay + rnd()) / 4 });
   }
   /* the sacred earth, the tene */
-  { const e = new THREE.Group(); box(2.0, .5, 2.0, new THREE.MeshStandardMaterial({ map: tex(stoneCanvas(256, [74, 46, 31], 16, 93)), roughness: 1 }), 0, .25, 0, e); layer(e, .686, 3.2, .60, .63); }
-  { const t = new THREE.Group(); box(2.0, .4, 2.0, new THREE.MeshStandardMaterial({ map: tex(grainCanvas()), roughness: .9 }), 0, .2, 0, t); layer(t, 1.192, 3.2, .625, .66); }
+  { const e = new THREE.Group(); box(2.0, .5, 2.0, new THREE.MeshStandardMaterial({ map: tex(stoneCanvas(256, [74, 46, 31], 16, 93)), roughness: 1 }), 0, .25, 0, e); layer(e, .686, 3.2, 'earth'); }
+  { const t = new THREE.Group(); box(2.0, .4, 2.0, new THREE.MeshStandardMaterial({ map: tex(grainCanvas()), roughness: .9 }), 0, .2, 0, t); layer(t, 1.192, 3.2, 'tene'); }
   /* the images above, in brass after the reference: each on a tiered
      lotus peetha under its prabhāvalī with the sun at its crown; Narasimha
      seated, Srinivasa standing, the discus and the conch in the upper hands */
@@ -248,7 +253,7 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
     const s = brassImage({ seated: false }); s.position.set(.46, .1, 0); s.scale.setScalar(.74); deities.add(s);
     const dLight = new THREE.PointLight(0xe8b060, 0, 4, 2); dLight.position.set(0, .8, 1.0); deities.add(dLight);
     deities.userData.light = dLight;
-    layer(deities, 1.598, 3.4, .675, .71);   // on the tene's top (1.192 + .4), a hair above it; inside the lower mouldings and the body's core, to 2.35
+    layer(deities, 1.598, 3.4, 'deities');   // on the tene's top (1.192 + .4), a hair above it; inside the lower mouldings and the body's core, to 2.35
   }
 
   /* ---- the section: a clipping plane on the world's materials, its
@@ -325,62 +330,69 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
   }
   setClip(0);
 
-  /* ---- the camera: the sacred group's own frame (sl), the hold from
-     main.js (frame00, approach coords). One path from Manchale on the day,
-     down into the chamber, up with the layers, back out to the hold. ---- */
+  /* ---- the camera: the sacred group's own frame (sl), placed in the
+     score's beats (main.js builds the site's one camera track from these,
+     score.js). One path from Manchale on the day, down into the chamber,
+     up with the layers, back out to the hold (frame00, passed in). Each
+     key: [beat, u in the beat, P, L, fov, side]; `side` keys stand the
+     subject right of the copy on a wide frame. Two keys in one reading
+     beat (arrive, settle) are a slow drift while its words are read. ---- */
   const KEYS = [
-    [0.00, [3.5, 2.8, 22.0], [0, 2.8, 1.0], 36],     // Manchale through the gateway, the day breaking (where the walk left the camera)
-    [0.11, [2.4, 2.4, 17.0], [0, 2.5, 1.0], 36],     // settling; the stone lifts away
-    [0.22, [.7, .15, 7.6], [0, -.05, 0], 40],        // down before the cut: the chamber
-    [0.31, [.35, .05, 6.0], [0, -.1, -.2], 38],      // Rayaru
-    [0.38, [.8, 1.6, 7.6], [0, 1.0, 0], 38],         // rising: the kūrmāsana over the chamber
-    [0.50, [1.2, 2.4, 8.6], [0, 1.6, 0], 38],        // the plate, the vessel
-    [0.60, [2.2, 2.6, 12.0], [0, 2.2, 0], 38],       // back: the black stone
-    [0.70, [1.6, 3.6, 10.5], [0, 3.4, 0], 38],       // the earth, the tene, the images
-    [0.78, [1.2, 3.0, 13.0], [0, 2.9, 0], 36],       // the whole of it, held
+    ['b-day',     0.00, [3.5, 2.8, 22.0], [0, 2.8, 1.0], 36, 0],   // Manchale through the gateway, the day breaking (where the walk left the camera: the tail's end)
+    ['b-day',     0.95, [2.2, 2.5, 17.2], [0, 2.6, 1.0], 36, 0],   // settling forward and a little left while the day is read; the stone lifts away
+    ['b-down',    0.50, [2.0, 1.45, 12.2], [0, .7, 0], 39, 1],     // in through the gateway's opening, descending
+    ['b-down',    1.00, [.7, .15, 7.6], [0, -.05, 0], 40, 1],      // down before the cut: the chamber
+    ['b-chamber', 0.92, [-.2, .02, 5.9], [0, -.1, -.2], 38, 1],    // Rayaru: a slow push in and a little round to the left while the chamber is read
+    ['b-kurma',   0.28, [.8, 1.6, 7.6], [0, 1.0, 0], 38, 1],       // rising: the kūrmāsana over the chamber
+    ['b-kurma',   0.95, [1.5, 1.9, 7.7], [0, 1.05, 0], 38, 1],     // read moving to the right and up: the slab seen across its face
+    ['b-plate',   0.35, [1.2, 2.4, 8.6], [0, 1.6, 0], 38, 1],      // the plate
+    ['b-plate',   0.94, [.5, 2.55, 8.9], [0, 1.65, 0], 38, 1],     // read drifting left and up
+    ['b-shals',   0.30, [.9, 2.5, 8.8], [0, 1.7, 0], 38, 1],       // the vessel
+    ['b-shals',   0.92, [1.7, 2.62, 9.3], [0, 1.75, 0], 38, 1],    // a small arc to the right while the stones go in
+    ['b-stone',   0.30, [2.2, 2.6, 12.0], [0, 2.2, 0], 38, 1],     // back: the black stone
+    ['b-stone',   0.94, [1.4, 2.95, 12.9], [0, 2.3, 0], 38, 1],    // read drawing back, left and up: its scale, the gateway's pillar at the frame's edge
+    ['b-grain',   0.35, [1.6, 3.6, 10.5], [0, 3.4, 0], 38, 1],     // the earth, the tene
+    ['b-grain',   0.94, [.7, 3.75, 10.2], [0, 3.45, 0], 38, 1],    // read drifting left along the course
+    ['b-deities', 0.55, [1.2, 3.0, 13.0], [0, 2.9, 0], 36, 1],     // the whole of it, from the gateway's line
+    ['b-deities', 0.98, [1.9, 3.3, 14.2], [0, 2.95, 0], 36, 1],    // read drawing back through the opening, rising
   ];
-  const cam = (p, hold, phone) => {
-    /* keys in the sacred frame → approach; the hold is approach already */
-    const K = KEYS.map(([u, P0, L0, f]) => {
-      let Pp = P0, Lp = L0;
-      if (phone) Pp = [P0[0] * 1.1, P0[1] + .3, L0[2] + (P0[2] - L0[2]) * 1.45];   // a portrait frame stands further back
-      else if (u > .15 && u < .9) Lp = [L0[0] - .9, L0[1], L0[2]];                    // the copy has the left of a wide frame: the subject stands right of it
-      return [u, sl(...Pp), sl(...Lp), f];
-    });
-    K.push([1.0, [hold.P[0], hold.P[1], hold.P[2]], [hold.L[0], hold.L[1], hold.L[2]], hold.fov0]);
-    let i = 0; while (i < K.length - 2 && p > K[i + 1][0]) i++;
-    const A = K[i], B = K[i + 1];
-    const v = smooth(remap(p, A[0], B[0]));
-    return {
-      P: [lerp(A[1][0], B[1][0], v), lerp(A[1][1], B[1][1], v), lerp(A[1][2], B[1][2], v)],
-      L: [lerp(A[2][0], B[2][0], v), lerp(A[2][1], B[2][1], v), lerp(A[2][2], B[2][2], v)],
-      fov: lerp(A[3], B[3], v),
-      hold: smooth(remap(p, .90, 1)),                  // how much of the opening's idle drift belongs to this frame
-    };
-  };
+  /* the keys resolved for this frame's aspect: [{ beat, u, P, L, fov }] in approach coordinates */
+  const keyShots = (phone) => KEYS.map(([beat, u, P0, L0, f, side]) => {
+    let Pp = P0, Lp = L0;
+    if (phone) Pp = [P0[0] * 1.1, P0[1] + .3, L0[2] + (P0[2] - L0[2]) * 1.45];   // a portrait frame stands further back
+    else if (side) Lp = [L0[0] - .9, L0[1], L0[2]];                                // the copy has the left of a wide frame: the subject stands right of it
+    return { beat, u, P: sl(...Pp), L: sl(...Lp), fov: f };
+  });
 
   const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(), _pv = new THREE.Vector3();
   let sweep = 0;
   const buried = [], _c = new THREE.Vector3();
   return {
     group: root,
-    cam, addClip, setClip, plane, boxFor,
-    update(time, p, night = 0) {
-      const on = p > 0;
+    keyShots, addClip, setClip, plane, boxFor,
+    /* t: global t; cues: every window in t (main.js praveshaCues, from the
+       score); on: the Pravesha is in view (from the chapter's own start) */
+    update(time, t, night = 0, cues = null, on = false) {
       section.visible = on; chamber.visible = on;
-      /* the courses: up out of their places as the day breaks, down again in order */
-      for (const k in LIFT) {
+      const C = cues;
+      if (!C) { for (const L of layers) L.visible = false; shals.visible = false; return; }
+      const W = (w) => smooth(remap(t, w[0], w[1]));
+      /* the courses: up out of their places as the day breaks (the top
+         first), down again in order (the foot first, then the crown) */
+      for (const k of UP_ORDER) {
         if (!P[k]) continue;
-        const up = smooth(remap(p, UP[k][0], UP[k][1])), down = smooth(remap(p, DOWN[k][0], DOWN[k][1]));
+        const wu = stagger(UP_ORDER, k, C.lift[0], C.lift[1], 1 / 12, 4 / 12);
+        const wd = stagger(LOWER, k, C.lower[0], C.lower[1], 1 / 5.5, .45) || stagger(UPPER, k, C.upper[0], C.upper[1], 1 / 7, .43);
+        const up = W(wu), down = wd ? W(wd) : 0;
         P[k].position.y = home[k].y + LIFT[k] * up * (1 - down);
       }
       /* the garland: gone while the stone is unbuilt, back with the complete form */
-      const mo = 1 - smooth(remap(p, .05, .10)) * (1 - smooth(remap(p, .74, .77)));
+      const mo = 1 - W([C.mala[0], C.mala[1]]) * (1 - W([C.mala[2], C.mala[3]]));
       if (P.mala) { P.mala.visible = mo > .01; for (const m of malaMats) m.opacity = mo; }
-      /* the cut opens before the descent and closes as the stone stands */
-      /* the bank closes again while the camera is still rising past the pad (the kūrmāsana is on by .375):
-         the platform's slabs come back below the frame, never across an open chamber */
-      const cut = smooth(remap(p, .10, .21)) * (1 - smooth(remap(p, .37, .43)));   // right after the kūrmāsana is on (.375): the top closes, then the ground
+      /* the cut opens before the descent and closes as the stone stands:
+         the bank closes again while the kūrmāsana is read, the platform's
+         slabs coming back below the frame, never across an open chamber */
+      const cut = W([C.cut[0], C.cut[1]]) * (1 - W([C.cut[2], C.cut[3]]));
       setClip(cut);
       /* things the world adds after it is built (tufts, loaded models) take the plane too: a sweep every second while the cut is open */
       if (cut > 0 && world && (++sweep % 60) === 1) {
@@ -409,25 +421,28 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
       for (const c of cards) { const u = c.material.uniforms.uFade; if (!u) continue; c.getWorldPosition(_w); const d = plane.distanceToPoint(_w); if (cut > 0 && d < 0) u.value *= Math.max(0, 1 + d / 1.5); }
       if (cut > 0) for (const c of instCards) { const u = c.material.uniforms.uFade; if (u) u.value *= 1 - cut; }
       /* the chamber's lamps: lit as the eyes find him, until the stone closes over */
-      const lit = smooth(remap(p, .20, .27)) * (1 - smooth(remap(p, .36, .40)));
+      const lit = W([C.lit[0], C.lit[1]]) * (1 - W([C.lit[2], C.lit[3]]));
       const fl = lampL.userData.flicker(time); lampR.userData.flicker(time + 5);
       lampL.userData.setOn(lit); lampR.userData.setOn(lit);
       lightL.intensity = 7 * (.88 + fl * .16) * lit; lightR.intensity = 5.5 * (.9 + Math.sin(time * 7) * .06) * lit;
       haloL.material.opacity = .16 * lit * (.9 + fl * .1); haloR.material.opacity = .14 * lit;
       rim.intensity = 3.2 * lit; bounce.intensity = 1.2 * lit;
-      /* the layers, each in its window */
+      /* the layers, each in its cue's window */
       for (const L of layers) {
-        const [a, b] = L.userData.win;
-        const k = smooth(remap(p, a, b));
-        L.visible = on && p > a - .02;
+        const w = C[L.userData.cue];
+        if (!w) { L.visible = false; continue; }
+        const k = W(w);
+        L.visible = on && t > w[0] - .002;
         L.position.y = L.userData.y + L.userData.lift * (1 - k);
       }
       /* the śāligrāmas go into the box one after another, from above, then the lid comes down over them */
-      shals.visible = on && p > .49 && p < .90;
+      const sw = C.shals;
+      shals.visible = on && t > sw[0] - .002 && t < C.mala[3];
       if (shals.visible) {
+        const L = sw[1] - sw[0];
         for (let i = 0; i < SH_N; i++) {
           const d = shalData[i];
-          const k = smooth(remap(p, .495 + d.d * .028, .512 + d.d * .028));
+          const k = smooth(remap(t, sw[0] + d.d * .55 * L, sw[0] + (.45 + d.d * .55) * L));
           _e.set(d.rx + (1 - k) * 2.2, d.ry + (1 - k) * 1.4, 0); _q.setFromEuler(_e);
           _s.setScalar(k > 0 ? d.s : .001);
           _m.compose(_pv.set(d.x, d.y + 2.4 * (1 - k), d.z), _q, _s);
@@ -435,7 +450,7 @@ export function createPravesha(ctx, { brnd, brndPos, sl, approachToWorld, world 
         }
         shals.instanceMatrix.needsUpdate = true;
       }
-      deities.userData.light.intensity = 2.4 * smooth(remap(p, .70, .73)) * (1 - smooth(remap(p, .74, .76)));
+      deities.userData.light.intensity = 2.4 * W([C.deityLight[0], C.deityLight[1]]) * (1 - W([C.deityLight[2], C.deityLight[3]]));
     },
   };
 }

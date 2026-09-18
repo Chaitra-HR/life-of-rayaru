@@ -53,9 +53,14 @@ scroll position → t → chapter index + local u → camera shot → damped cam
 `js/scroll.js` owns the narrative order. `js/main.js` owns the loop. Each chapter
 is one module in `js/world/` that knows nothing about the others.
 
-Since 20 Sept 2026 the page itself does not scroll: `t` comes from the
-story's own position `y`, moved stop by stop by gestures (scroll.js, THE
-DIRECTOR; §7). The rule stands: everything is still a pure function of `t`.
+Since 20 Sept 2026 (THE SCORE, §7) `t` is `y / max`, linear, where `y` is
+the page's scroll position through ONE exponential damp (scroll.js
+LAMBDA), and `max` is the sum of the score's beats (js/score.js). Every
+window on the site (copy, camera keys, light, water, volumes, the stone's
+layers, the footer) is derived from that one table by the timeline's
+layout, never measured from the DOM and never authored twice. The camera
+is ONE monotone-cubic track through every shot on the site (js/track.js).
+The rule stands: everything is a pure function of `t`.
 
 ---
 
@@ -446,6 +451,129 @@ and log anything over 60 ms.
 ---
 
 ## 7. State of play
+
+### 20 Sept 2026, late · THE WALK: the camera's vocabulary (the owner's twentieth brief, after Kage)
+
+The owner: the background world felt static, moved by zooming, changed
+composition abruptly, read as separate backgrounds; improve only the
+movement, from the first frame to the last, with mengto.github.io/kage as
+the cinematography reference (studied in its source: six waypoints whose
+x, y, z AND target all change together, Catmull-Rom on position and
+target, one damp λ 5.2, foreground cut-outs dissolving as the camera
+reaches them, a pointer parallax whose target counter-moves). Nothing
+else changed: copy, timing, heights, layouts, UI, colours, assets. Done
+(main.js, pravesha.js, hero.js, river.js only):
+
+- **`mv` per station** (main.js STATIONS): how the stand moves while the
+  beat is read, in the shot's own frame — `lat` (metres right), `up`,
+  `fwd` (negative: a pull-back), small `nx/ny/fov` — with the SUBJECT KEPT
+  where the layout put it (the target holds; the stand moves). The
+  differences slip one way then the other; the volumes are read moving
+  alongside the row; the name climbs; Hari Sarvottama and the road draw
+  back and rise; Manchale arrives at `comp 1.9` and settles to `comp 1.4`
+  (the composition uncovered by arriving, then drawn back from).
+- **`via` waypoints** (a list; each a point, an anchor, or `{ P, L }` with
+  the gaze authored), placed along the travel BY PATH LENGTH so the pace is
+  even: the lead's S along the near strip (toward the water, then in past
+  the corner grass, the gaze coming round to the gate); in through the
+  house's gate posts; out by the gate, along the bank south of the
+  bananas, down to the water and across to the flight's foot (the steps
+  passing on the right, the eye descending from the pad to the water);
+  to the flight's foot and up it for the name; out through the gateway's
+  OPENING onto the bay for Tattvavāda (the pillars crossing, the moon found
+  through it); the draw-back out through the gateway, low over the bay,
+  up onto the near bank a little left of and above the opening's frame,
+  the return read settling into that frame exactly (`return · nearly
+  home`, `end · the hold`).
+- **The opening**: the first frame a step back, left and higher, its gaze
+  above the stone; the hero copy is read settling forward and right, the
+  gaze coming down onto the stone.
+- **Pravesha KEYS**: settles that move — into the chamber and a little
+  round to the left; right and up across the kūrmāsana's face; left and
+  up at the plate; a small arc right while the stones go in; back, left
+  and up at the stone (the pillar at the frame's edge); left along the
+  tene; back through the opening, rising, at the images. The descent has
+  a key in the gateway's opening.
+- **Parallax**: the target counter-moves the stand (×.32 lateral, ×.18
+  vertical): the drift has depth.
+- **The mist ahead of the lens** (hero.js `setFore`, river.js `travel`,
+  main.js): the opening's three foreground mist sheets, faint (≤ .13),
+  only mid-way through a travel beat over the water (lead, the descent,
+  the flight, the tail, the draw-back); the air +.0022 density there.
+
+Verified in the pane at both sizes: no errors; ground clearance ≥ .45 m
+everywhere outside the open chamber; the walk keeps ≥ 1.1 m from every
+planted trunk; max travel 1.5 m per .04 vh, no spike over .5; every
+passage screenshot (gate posts, gateway opening, the flight, the bay)
+clean. Not verified: a real finger on a phone.
+
+
+### 20 Sept 2026, night · THE SCORE: scroll as the master timeline (the owner's nineteenth brief)
+
+The owner: the pacing was wrong across the whole site, not only the
+Brindavana. Scenes ran ahead of their copy, copy stayed after its visual
+beat, camera journeys finished before their explanation, sections felt
+pinned, reading moments felt dead. Benchmark: seijaku.mengto.here.now
+(studied in its source: `tTarget = scrollY / max`, one damp at λ 6,
+hermite camera keys spaced tight at each text stop and wide between, text
+windows as pure functions of t with short fades). The DIRECTOR (stops and
+gestures) was reverted by the owner before this brief; this pass replaces
+the paced/leashed scroll before it too. Done:
+
+- **js/score.js (new).** `SCORE`: every chapter as BEATS, each sized in
+  viewports (`vh`, and `m` for the phone) with its copy window as a
+  fraction of the beat. Reading beats are 1.5–2.7 vh for their copy;
+  travel beats (`mv-lead`, `way-02b`, `way-05`, `mv-tail`, `b-down`,
+  `b-out`, `r-hold`) are .8–1.7 vh with no copy. Desktop 76 vh, phone 69.
+  `layout(h, phone)` lays it out: y0/y1/t0/t1 per beat, `cA/cB/cC` (the
+  copy window in t), `tAt(id, u)`, `beatAt(t)`. `COPY_IN/OUT` .20 vh.
+- **js/track.js (new).** `makeTrack(keys)`: monotone cubic
+  (Fritsch–Carlson) over non-uniform keys, C1, never overshooting; two
+  equal keys are a hold.
+- **js/scroll.js.** `ScrollTimeline({ reduced, phone, sp00, sp09,
+  onLayout })`: `resize()` lays out the score, sizes the two spacers,
+  computes `marks` (docA, docB, heroCopy, leave, dawn2, chamber, out,
+  returnA) and calls `onLayout(lay, marks)`. `update()` is one damp
+  (`LAMBDA` 7.5; a 3 vh fling closes to 5 % in .5 s). `tAt(y) = y/max`.
+  `scrollToBeat(id)` lands a third into the copy window. Pace, leash,
+  turn, stops, gestures: gone. `CAPTIONS` name a `beat`, not a/b.
+- **js/movements.js.** `size(lay)` sets every section's, lead's, way's
+  and tail's height from the score (css `.sec { height: 0 }`, no
+  margins); `update(t, h)` lives every block from its beat's `cA/cB`.
+  Nothing is measured from the page any more (centerP/rangeP gone).
+- **js/main.js.** ONE camera: `buildCamera(lay)` makes keys in the
+  approach frame — the opening (a step back at the first frame, settled by
+  the hero copy's end, the leave-taking's step at the opening's end),
+  every station's ARRIVE (cA + .05) and SETTLE (cB − .05: the same
+  subject, the stand crept .16 of the way toward the next, ≤ 1.5 m, plus
+  a push toward the subject of .18 of its distance ≤ 1 m, ny + .03, fov
+  − .6), `via` waypoints in the travel, the Pravesha's `keyShots`, the
+  hold at `b-out` and at 1 — and `camAt(t)` reads the track plus the
+  idle sway (`swayAt`: on through the chapters, off in the stone, back
+  with `b-out`) and the footer tilt. Camera damp λ 16 (was 7.5: the y is
+  damped once already). `onLayout` derives the river's `winds`
+  (works, books as [visible a, b, open c→d, closed e→f], pb, dream),
+  `dayArc`, and `praveshaCues` (lift, cut, lit, mala, kurma, plate,
+  vessel, shals, lid, lower, earth, tene, deities, deityLight, upper) in
+  t from the beats. `?beats` builds the overlay (`#beats-hud`): chapter,
+  t, beat, u, and every window logged in that beat as a bar with the
+  cursor. Off without the flag.
+- **js/world/pravesha.js.** `KEYS` are `[beat, u, P, L, fov, side]`;
+  `keyShots(phone)` resolves them; `update(time, t, night, cues, on)`
+  reads every window from `cues` (the courses staggered inside `lift`,
+  `lower`, `upper`); `layer(obj, y, lift, cueName)`.
+- **river.js / audio.js** read `marks` (docA, docB, dawn2, chamber) for
+  the seams they used to hard-code.
+- index.html: `mv-lead`/`mv-tail` carry ids; `way-02b`, `way-05` divs.
+
+Verified in the pane (desktop and 375×812): no errors; every beat frames;
+the camera's velocity profile per .05 vh: travel .3–2 m, reading .01–.05
+m, launch as the copy fades; links land with copy up; reverse through the
+stone reconstructs; `npm run build` passes. Not verified: a real finger
+on a phone (the pane emulates); the owner should read the whole site once
+at reading speed and retime beats in score.js (the vh numbers are the
+whole dial: one line per beat).
+
 
 ### 20 Sept 2026, later · THE DIRECTOR: SCENE-GATED PROGRESSION (the owner's eighteenth brief)
 

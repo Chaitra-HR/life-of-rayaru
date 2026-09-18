@@ -27,6 +27,8 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
 <link rel="modulepreload" href="js/math.js">
 <link rel="modulepreload" href="js/util.js">
 <link rel="modulepreload" href="js/world/stone-maps.js">
+<link rel="modulepreload" href="js/score.js">
+<link rel="modulepreload" href="js/track.js">
 <link rel="modulepreload" href="js/scroll.js">
 <link rel="modulepreload" href="js/world/brindavana.js">
 <link rel="modulepreload" href="js/world/river.js">
@@ -54,7 +56,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
     <article id="movements" aria-label="The life, the works and the siddhānta">
 
       <!-- a breath after the opening before the first word -->
-      <div class="mv-lead" aria-hidden="true"></div>
+      <div class="mv-lead" id="mv-lead" aria-hidden="true"></div>
 
       <!-- THE CHAPTERS · one day on the river. The life is read on the bank
            of the opening's own world while its day goes by (river.js: the
@@ -91,7 +93,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
           <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Bhuvanagiri · the first lesson</span><span class="k kn" lang="kn">ಅಕ್ಷರಾಭ್ಯಾಸ</span></div>
           <h2 class="title" data-rv="words">His schooling began, as every child’s does, with the Praṇava.</h2>
           <div class="copy" data-rv="up">
-            <p class="lead">During Venkanna’s Aksharabhyasa, his father Thimmanna Bhatta wrote Omkara and explained that it represented the Supreme Lord. The young Venkatanatha looked at the syllable and asked how something so small could express Lord Narayana, whose auspicious attributes are infinite.</p>
+            <p class="lead">During Aksharabhyasa, his father Thimmanna Bhatta wrote Omkara and explained that it represented the Supreme Lord. The young Venkatanatha looked at the syllable and asked how something so small could express Lord Narayana, whose auspicious attributes are infinite.</p>
             <p class="body">Those gathered were astonished to hear such a question from a child.</p>
           </div>
         </div>
@@ -107,6 +109,8 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
         </div>
       </section>
 
+      <!-- out of the yard by the gate and down the bank: travel (score.js way-02b) -->
+      <div class="mv-way" id="way-02b" aria-hidden="true"></div>
       <section class="sec" id="mv-02b" aria-label="Kumbakonam">
         <div class="sec-in">
           <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Kumbakonam · the Matha</span><span class="k kn" lang="kn">ಕುಂಭಕೋಣ</span></div>
@@ -189,6 +193,8 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
       <!-- Tattvavāda: the five differences, told on the river. The moon is
            one; its light on the water is its reflection (Madhva's own image,
            bimba and pratibimba); the stone of the ghat is matter. -->
+      <!-- off the landing, through the gateway's opening onto the bay: travel (score.js way-05) -->
+      <div class="mv-way" id="way-05" aria-hidden="true"></div>
       <section class="sec mid" id="mv-05" aria-label="Tattvavāda">
         <div class="sec-in">
           <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">Tattvavāda · the siddhānta</span><span class="k kn" lang="kn">ತತ್ತ್ವವಾದ</span></div>
@@ -272,7 +278,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
 
       <!-- the tail: the camera walks through the gateway to the stone until
            it fills the frame; the sanctum resolves out of that dark -->
-      <div class="mv-tail" aria-hidden="true"></div>
+      <div class="mv-tail" id="mv-tail" aria-hidden="true"></div>
     </article>
 
     <div class="sp" id="sp09" aria-hidden="true"></div>
