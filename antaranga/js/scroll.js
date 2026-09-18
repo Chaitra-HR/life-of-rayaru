@@ -32,8 +32,22 @@ export const DOC_A = .070, DOC_B = .725;
    rest: more page per beat, so the layers are placed and the place comes
    back at a walking pace, never a state per wheel-tick */
 export const TAIL = 1.6;
-/* the story's top speed, in viewports of scroll per second (ScrollTimeline.update) */
+/* THE STORY LEADS, THE PAGE FOLLOWS (19 Sept 2026, ScrollTimeline.update).
+   The native scroll is only the INPUT: wheel, trackpad, touch, keys and the
+   browser's own momentum all land in window.scrollY, and nothing visible is
+   drawn from it. The story keeps its own position, `y` (px), which eases
+   toward the page's (damped) and may advance at most PACE viewports a
+   second, so a thrown wheel or a flung thumb still plays every beat, every
+   camera move and every transition at a walking pace. And the page is kept
+   on a LEASH: it may run at most LEASH viewports ahead of (or behind) the
+   story; beyond that it is drawn back to the leash's end, so one gesture
+   can never queue up the rest of the story (a phone's fling is two or
+   three viewports: honoured in full). And a scroll AGAINST the queued
+   direction turns the story round at once: the page is set a little way
+   from the story on the new side, and the queue is gone. Neither is done
+   while a finger is on the glass. */
 export const PACE = 1.6;
+export const LEASH = 2.5;
 
 export class ScrollTimeline {
   constructor({ pages = 52, reduced = false, doc = null, sp00 = null, sp09 = null } = {}) {
@@ -47,6 +61,13 @@ export class ScrollTimeline {
     this.jump = null;    // an in-flight scroll jump (see scrollToY)
     this.free = 0;       // seconds left in which a jump (a section link) may move t at any speed
     this.inited = false;
+    this.y = 0;          // the story's own scroll position, px (paced; everything visible is drawn from it)
+    this.rawY = 0;       // the page's
+    this.touching = false;
+    this._lastRaw = 0;   // the page's position last frame, to read the direction of the visitor's input
+    window.addEventListener('touchstart', () => { this.touching = true; }, { passive: true });
+    window.addEventListener('touchend', () => { this.touching = false; }, { passive: true });
+    window.addEventListener('touchcancel', () => { this.touching = false; }, { passive: true });
     this.h = 0;
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -118,28 +139,38 @@ export class ScrollTimeline {
       window.scrollTo(0, Math.round(j.from + (j.to - j.from) * e));
       if (u >= 1) this.jump = null;
     }
-    this.raw = this.tAt(window.scrollY);
+    const rawY = this.rawY = window.scrollY;
+    this.raw = this.tAt(rawY);
     /* the first frame stands where the page was opened (a reload mid-story), never a walk from the top */
-    if (!this.inited) { this.inited = true; this.t = this.raw; }
+    if (!this.inited) { this.inited = true; this.y = rawY; }
     const prev = this.t;
-    /* a damped glide: a flick of the thumb is absorbed, never a jump-cut.
-       Near-instant when reduced motion is preferred. */
+    /* a damped glide toward the page: a flick of the thumb is absorbed,
+       never a jump-cut. Near-instant when reduced motion is preferred. */
     const lambda = this.reduced ? 30 : 4.6;
-    let next = damp(this.t, this.raw, lambda, dt);
-    /* THE PACE (19 Sept 2026): the raw scroll never drives the story
-       directly. However hard the wheel is thrown or the thumb flicked, t
-       advances at most PACE viewports of scroll a second, so every beat, every
-       camera move and every transition plays out at a walking pace; the native
-       scroll runs on ahead and the world follows it there. A section link is
-       a cut and is exempt while it flies, and for a moment after. */
-    if (!this.reduced && this.free <= 0) {
-      const slope = Math.abs(this.tAt(this.yAt(this.t) + this.h) - this.t) || 1e-3;   // t per viewport, at this point of the story
-      const vmax = PACE * slope * dt;
-      next = Math.max(this.t - vmax, Math.min(this.t + vmax, next));
-    }
+    let ny = damp(this.y, rawY, lambda, dt);
+    /* the pace: at most PACE viewports a second, whatever the page did. A
+       section link is a cut and is exempt while it flies, and for a moment
+       after (free). */
+    const paced = !this.reduced && this.free <= 0;
+    if (paced) { const vmax = PACE * this.h * dt; ny = Math.max(this.y - vmax, Math.min(this.y + vmax, ny)); }
     this.free = Math.max(0, this.free - dt);
-    this.t = next;
-    if (Math.abs(this.t - this.raw) < 0.00004) this.t = this.raw;
+    this.y = Math.abs(ny - rawY) < .5 ? rawY : ny;
+    /* the leash: the page never runs further than LEASH viewports from the
+       story; when it has, it is drawn back to the leash's end (and the
+       browser's momentum with it). Never while a finger is on the glass. */
+    const dRaw = rawY - this._lastRaw;
+    this._lastRaw = rawY;
+    if (paced && !this.touching && !this.jump) {
+      const L = LEASH * this.h, d = rawY - this.y;
+      let to = -1;
+      if (d > L) to = this.y + L;
+      else if (d < -L) to = this.y - L;
+      /* the turn: input against the queue (the page still ahead, the visitor
+         scrolling back, or the reverse) collapses the queue to a step */
+      else if (Math.abs(dRaw) > 1 && Math.abs(d) > .3 * this.h && Math.sign(dRaw) !== Math.sign(d)) to = this.y + Math.sign(dRaw) * .3 * this.h;
+      if (to >= 0) { to = Math.round(to); window.scrollTo(0, to); this._lastRaw = to; }
+    }
+    this.t = this.tAt(this.y);
     this.vel = (this.t - prev) / Math.max(dt, 1e-4);
     return this.t;
   }

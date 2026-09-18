@@ -443,6 +443,50 @@ and log anything over 60 ms.
 
 ## 7. State of play
 
+### 20 Sept 2026 · THE STORY LEADS, THE PAGE FOLLOWS (the owner's seventeenth brief: the scroll)
+
+The owner: the site still reacted too directly to scroll speed; a fast
+scroll rushed the sequence. What the pace cap of the sixteenth brief had
+left: everything IN THE PAGE'S FLOW still tracked the raw scroll (the
+footer rose into the frame the moment a fling reached the bottom, over
+whatever scene was still playing; the camera's footer tilt and the
+`in-footer` state read window.scrollY), and a page flung far ahead could
+not be turned round (scrolling back a little left the story still
+advancing until the page had come back past it). Done (scroll.js,
+main.js, index.html, style.css):
+
+- **One paced position, in pixels** (`ScrollTimeline.y`). The native
+  scroll (wheel, trackpad, touch, keys, the browser's momentum) is only
+  the INPUT, read into `rawY`; the story keeps `y`, damped toward the
+  page (λ 4.6) and then clamped to PACE = 1.6 viewports a second; `t =
+  tAt(y)`. Everything visible reads `y` or `t`: the camera, the copy
+  (`movements.update(timeline.y)`), the ground, the rail, the footer's
+  tilt, `in-footer`. Nothing reads window.scrollY any more.
+- **The footer follows the story**: it is `position: fixed` and rises
+  over the story's last viewport by `--fp` (main.js, every frame, from
+  `y`); a spacer `#footer-space` (100svh) keeps the page's scroll run.
+  In the no-WebGL document it is static as before (`body.nowebgl`).
+- **The leash** (LEASH = 2.5 viewports): the page may run at most that
+  far ahead of (or behind) the story; beyond it, it is set back to the
+  leash's end, so one fling queues at most 2.5 viewports of story, which
+  the pace plays in ~1.6 s, and the next fling adds the next. A phone's
+  fling of two or three viewports is honoured in full. Never pulled while
+  a finger is on the glass (`touching`).
+- **The turn**: input against the queued direction (the page still
+  ahead, the visitor scrolling back, or the reverse) sets the page .3
+  viewports from the story on the new side, and the story turns at
+  once. Links (`scrollToY`) remain cuts: `free` exempts them from the
+  pace, the leash and the turn while they fly.
+- The review hooks (`ANTARANGA.step`, `snap`) set `y` as well as `t`.
+
+Verified in the pane at 375 × 812 and 1440 × 900: a fling to the end from
+t .10 plays 2.5 viewports of story at 1.6 vh/s and stops; a scroll of 60
+px back against a queue turns the story within 150 ms; the footer rises
+with the story (`--fp` 0 → 1 over the last viewport) and never before; a
+nav link still lands in ~2 s; `?nowebgl` shows the footer static at the
+foot; no console errors. Not verifiable here: a real finger's drag (the
+pane sends mouse events).
+
 ### 19 Sept 2026, night · THE LOADER, THE PACE, THE DRAW CALLS (the owner's sixteenth brief)
 
 The owner's brief: the loader finished its animation and then sat for ten

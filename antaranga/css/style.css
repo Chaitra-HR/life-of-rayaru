@@ -572,8 +572,14 @@ body.ui-light #menu-btn span { background: var(--earth); }
    the far bank, the light. The footer is two lines set on it, and a
    hairline planting along the lower edge in the loader's own hand. It is
    not another scene, and it does not compete with the Brindavana. */
+#footer-space { height: 100vh; height: 100svh; }
 #footer {
-  position: relative; z-index: 8;
+  /* fixed, and driven by the STORY's position (main.js sets --fp from the
+     paced scroll, scroll.js): it rises into the frame over the story's last
+     viewport. In the page's flow it rose with the raw scroll, so a fling
+     to the end showed the colophon over whatever scene was still playing. */
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 8;
+  transform: translate3d(0, calc((1 - var(--fp, 0)) * 100%), 0); will-change: transform;
   /* the last metres of the same journey. The footer sits in the page's own
      flow directly after the story's last scroll (no dead viewport, no second
      scroller): as it rises, the river stays under it and the night ground
@@ -589,10 +595,12 @@ body.ui-light #menu-btn span { background: var(--earth); }
      (t = 1) IS the frame the footer stands in. Shorter than a viewport the
      page could never reach t = 1; taller, and the visitor scrolls on past
      the story to find it. */
-  min-height: 100vh; min-height: 100svh; box-sizing: border-box;
+  height: 100vh; height: 100svh; box-sizing: border-box;
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 44vh 0 0;
 }
+body.nowebgl #footer { position: static; transform: none; height: auto; min-height: 0; }
+body.nowebgl #footer-space { display: none; }
 #footer .f-in { position: relative; z-index: 2; text-shadow: 0 1px 14px rgba(0,0,0,.7); }
 #footer .f-line {
   position: relative; z-index: 2;

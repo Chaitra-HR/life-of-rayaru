@@ -810,7 +810,7 @@ function runApp(renderer) {
       /* the beats read the DAMPED scroll (the same t the camera follows), so
          the words and the walk arrive together; a flick of the wheel never
          lands a passage a second before its place */
-      const mv = movements.update(timeline.yAt(t), timeline.h || 1, t >= T9A - .01);
+      const mv = movements.update(timeline.y, timeline.h || 1, t >= T9A - .01);
       const band = mv.band && stages[mv.band.key] ? mv.band : null;
 
       /* visibility */
@@ -834,7 +834,10 @@ function runApp(renderer) {
          shows against the sky. At the tail it rises over the last lamp and
          dissolves onto the sanctum's first frame. Driven by the raw scroll,
          because the chapters scroll raw. */
-      const sy = window.scrollY, vh = timeline.h || 1;
+      const sy = timeline.y, vh = timeline.h || 1;   // the story's position, never the page's (scroll.js)
+      /* the footer follows the story too (css #footer, --fp): it rises into
+         the frame over the story's last viewport, whatever the page did */
+      { const e = clamp01((sy - (timeline.max - vh)) / vh).toFixed(3); if (e !== dom.footerE) { dom.footerE = e; if (footerEl) footerEl.style.setProperty('--fp', e); } }
       /* no ground at the head: the dusk falls in view (river.js, its end
          synced to the first chapter by syncSeams) and the chapters are
          read on the night bank itself */
@@ -887,11 +890,11 @@ function runApp(renderer) {
         default: {
           /* past the end of t the footer scrolls in over the last frame: its progress tilts the camera to the lotus */
           const fh = footerEl ? Math.max(1, footerEl.offsetHeight) : 1;
-          const fp = clamp01((window.scrollY - timeline.max) / Math.max(1, fh - (timeline.h || 1)));
+          const fp = clamp01((timeline.y - timeline.max) / Math.max(1, fh - (timeline.h || 1)));
           if (stages.river) stages.river.footerP = fp;
           /* the footer is one viewport: its lines are in the frame once the
              last half-viewport of the story is scrolled (fp itself stays 0) */
-          body.classList.toggle('in-footer', window.scrollY > timeline.max - (timeline.h || 1) * .5);
+          body.classList.toggle('in-footer', timeline.y > timeline.max - (timeline.h || 1) * .5);
           shot = camPravesha(t, fp);
           break;
         }
@@ -1043,7 +1046,7 @@ function runApp(renderer) {
       /* review aid: pin the sunrise dial (0 pre-dawn … 1 morning), -1 to release */
       setRise(v) { riseOverride = v; },
       step(t) {
-        timeline.raw = t; timeline.t = t;
+        timeline.raw = t; timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true;
         window.scrollTo(0, timeline.yAt(t));
         camS.force = true;
         frame(true);
@@ -1102,7 +1105,7 @@ function runApp(renderer) {
       snap(t, settle = true, steps = 8) {
         window.scrollTo(0, timeline.yAt(t));
         timeline.raw = t;
-        if (settle) { timeline.t = t; camS.force = true; }
+        if (settle) { timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true; camS.force = true; }
         /* each synthetic frame advances the clock by 50 ms, so the damped
            atmosphere and lights actually settle instead of freezing at
            whatever the live page last showed */
