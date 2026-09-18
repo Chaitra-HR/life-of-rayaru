@@ -2,7 +2,7 @@
 // scroll position → section progress → global t → target camera → damped camera → render
 import * as THREE from 'three';
 import { clamp, clamp01, lerp, remap, smooth, damp, V3 } from './util.js';
-import { ScrollTimeline, Captions, CHAPTERS, veilAt, DOC_A, DOC_B } from './scroll.js';
+import { ScrollTimeline, Captions, CHAPTERS, CAPTIONS, veilAt, DOC_A, DOC_B } from './scroll.js';
 import { createMovements } from './movements.js';
 import { createAmbience } from './audio.js';
 import { BrindavanaPreloader } from './preloader.js';
@@ -639,9 +639,21 @@ function runApp(renderer) {
     /* 01–08 · the chapters: the page and its behaviour (js/movements.js).
        Built before the timeline, which measures it. */
     movements = createMovements({ reduced, scrollToY: (y) => timeline.scrollToY(y) });
+
     const timeline = new ScrollTimeline({
       pages: isMobile ? 48 : 52, reduced,
       doc: movements.el, sp00: document.getElementById('sp00'), sp09: document.getElementById('sp09'),
+    });
+    /* the story's stops (scroll.js, the director): the opening, every beat
+       of the chapters at its centre, every Brindavana caption at its
+       centre, the footer. Re-read by the timeline on every resize. */
+    timeline.setStops(() => {
+      const vh = timeline.h || 1;
+      const stops = [{ id: 'hero', y: 0 }];
+      for (const s of movements.el.querySelectorAll('.sec')) stops.push({ id: s.id, y: movements.centerY(s.id, vh) });
+      CAPTIONS.forEach((c, k) => stops.push({ id: 'cap' + k, y: timeline.yAt((c.a + c.b) / 2) }));
+      stops.push({ id: 'end', y: timeline.max });
+      return stops;
     });
     const captions = new Captions();
     /* the river's dusk ends (in t) where the night ground begins to rise at
@@ -1046,8 +1058,7 @@ function runApp(renderer) {
       /* review aid: pin the sunrise dial (0 pre-dawn … 1 morning), -1 to release */
       setRise(v) { riseOverride = v; },
       step(t) {
-        timeline.raw = t; timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true;
-        window.scrollTo(0, timeline.yAt(t));
+        timeline.raw = t; timeline.t = t; timeline.y = timeline.yAt(t); timeline.tween = null; timeline.i = timeline.nearestStop(timeline.y);
         camS.force = true;
         frame(true);
       },
@@ -1103,9 +1114,8 @@ function runApp(renderer) {
         return url;
       },
       snap(t, settle = true, steps = 8) {
-        window.scrollTo(0, timeline.yAt(t));
         timeline.raw = t;
-        if (settle) { timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true; camS.force = true; }
+        if (settle) { timeline.t = t; timeline.y = timeline.yAt(t); timeline.tween = null; timeline.i = timeline.nearestStop(timeline.y); camS.force = true; }
         /* each synthetic frame advances the clock by 50 ms, so the damped
            atmosphere and lights actually settle instead of freezing at
            whatever the live page last showed */

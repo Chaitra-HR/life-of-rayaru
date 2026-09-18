@@ -138,6 +138,14 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: auto; }
+/* THE PAGE DOES NOT SCROLL (20 Sept 2026, scroll.js the director): the
+   story is moved stop by stop by gestures; the sections below still lay
+   out its length, the body simply never moves. The no-WebGL document
+   scrolls as a document. */
+html, body { height: 100%; overflow: hidden; }
+body { position: fixed; inset: 0; width: 100%; touch-action: pinch-zoom; overscroll-behavior: none; }   /* a fixed body cannot scroll or rubber-band; the pinch stays for the visitor who needs to zoom */
+body.nowebgl { position: static; height: auto; overflow: auto; touch-action: auto; overscroll-behavior: auto; }
+html:has(body.nowebgl) { height: auto; overflow: auto; }
 body {
   background: var(--ground);
   color: var(--ink);

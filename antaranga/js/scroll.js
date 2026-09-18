@@ -32,22 +32,28 @@ export const DOC_A = .070, DOC_B = .725;
    rest: more page per beat, so the layers are placed and the place comes
    back at a walking pace, never a state per wheel-tick */
 export const TAIL = 1.6;
-/* THE STORY LEADS, THE PAGE FOLLOWS (19 Sept 2026, ScrollTimeline.update).
-   The native scroll is only the INPUT: wheel, trackpad, touch, keys and the
-   browser's own momentum all land in window.scrollY, and nothing visible is
-   drawn from it. The story keeps its own position, `y` (px), which eases
-   toward the page's (damped) and may advance at most PACE viewports a
-   second, so a thrown wheel or a flung thumb still plays every beat, every
-   camera move and every transition at a walking pace. And the page is kept
-   on a LEASH: it may run at most LEASH viewports ahead of (or behind) the
-   story; beyond that it is drawn back to the leash's end, so one gesture
-   can never queue up the rest of the story (a phone's fling is two or
-   three viewports: honoured in full). And a scroll AGAINST the queued
-   direction turns the story round at once: the page is set a little way
-   from the story on the new side, and the queue is gone. Neither is done
-   while a finger is on the glass. */
-export const PACE = 1.6;
-export const LEASH = 2.5;
+/* THE DIRECTOR (20 Sept 2026): a cinematic presentation controlled by
+   scroll, not a page. The document does NOT scroll (css: the body is fixed;
+   the sections' offsets still lay out the story's length). Wheel, trackpad,
+   touch and keys are read as GESTURES; each gesture moves the story from
+   the stop it is at to the next one (or the previous), in one eased
+   transition; the stop is then HELD: the beat's words stand still and can
+   be read, and no further input counts until the transition has ended and
+   the hold has run (SETTLE_MS). Everything that arrives meanwhile, a
+   trackpad's momentum above all, is absorbed. A new gesture is one that
+   begins after a quiet gap (QUIET_MS without wheel events) or a fresh push
+   (a delta well above the decaying tail of the last one), a finger's swipe
+   of SWIPE_PX, or a key. So one aggressive gesture moves one scene, and the
+   story goes:  gesture → transition → settle → read → gesture.
+   The stops are the story's beats (main.js setStops): the opening, every
+   chapter beat, every Brindavana caption, the footer. A section link goes
+   straight to the nearest stop. */
+export const SETTLE_MS = 900;    // the hold after arriving: the title's words have landed, the copy is read
+export const QUIET_MS = 280;     // wheel silence that ends a gesture (a trackpad's momentum never pauses this long)
+export const SPIKE = 2.2;        // a delta this far above the running average is a fresh push, even mid-momentum
+export const WHEEL_PX = 40;      // a gesture's minimum travel (px of wheel) before it counts
+export const SWIPE_PX = 50;      // a finger's minimum travel
+const easeInOut = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
 
 export class ScrollTimeline {
   constructor({ pages = 52, reduced = false, doc = null, sp00 = null, sp09 = null } = {}) {
@@ -55,31 +61,104 @@ export class ScrollTimeline {
     this.doc = doc; this.sp00 = sp00; this.sp09 = sp09;
     this.pages = pages;
     this.reduced = reduced;
-    this.t = 0;          // smoothed
-    this.raw = 0;        // instantaneous
+    this.t = 0;          // the story's progress
+    this.raw = 0;        // (the same: nothing is read from the page)
     this.vel = 0;
-    this.jump = null;    // an in-flight scroll jump (see scrollToY)
-    this.free = 0;       // seconds left in which a jump (a section link) may move t at any speed
-    this.inited = false;
-    this.y = 0;          // the story's own scroll position, px (paced; everything visible is drawn from it)
-    this.rawY = 0;       // the page's
-    this.touching = false;
-    this._lastRaw = 0;   // the page's position last frame, to read the direction of the visitor's input
-    window.addEventListener('touchstart', () => { this.touching = true; }, { passive: true });
-    window.addEventListener('touchend', () => { this.touching = false; }, { passive: true });
-    window.addEventListener('touchcancel', () => { this.touching = false; }, { passive: true });
     this.h = 0;
+    this.y = 0;          // the story's position, px
+    this.rawY = 0;
+    /* the director's state */
+    this.stops = [];     // [{ id, y }] in story order (setStops)
+    this.stopsFn = null;
+    this.i = 0;          // the stop the story is at, or going to
+    this.tween = null;   // the transition in flight { from, to, dur, el }
+    this.arrivedAt = -1e9;
+    this.lastWheelAt = -1e9; this.wheelHist = []; this.burstAcc = 0; this.burstFired = false;
+    this.touch = null;
     this.resize();
     window.addEventListener('resize', () => this.resize());
     /* the document's height moves as fonts and covers land: re-measure */
     if (doc && 'ResizeObserver' in window) new ResizeObserver(() => this.resize()).observe(doc);
-    // any real input hands control straight back to the visitor
-    const cancel = () => { this.jump = null; };
-    window.addEventListener('wheel', cancel, { passive: true });
-    window.addEventListener('touchstart', cancel, { passive: true });
+    /* ---- input, as gestures ---- */
+    window.addEventListener('wheel', (e) => this.onWheel(e), { passive: true });
+    window.addEventListener('touchstart', (e) => { const t = e.touches[0]; this.touch = t ? { y0: t.clientY, fired: false } : null; }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      const t = e.touches[0]; if (!t || !this.touch || this.touch.fired) return;
+      const dy = this.touch.y0 - t.clientY;                 // the finger up = the story on
+      if (Math.abs(dy) >= SWIPE_PX) { this.touch.fired = true; this.gesture(Math.sign(dy)); }
+    }, { passive: true });
+    window.addEventListener('touchend', () => { this.touch = null; }, { passive: true });
+    window.addEventListener('touchcancel', () => { this.touch = null; }, { passive: true });
     window.addEventListener('keydown', (e) => {
-      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key)) cancel();
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      const k = e.key;
+      if (k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && !e.shiftKey)) { e.preventDefault(); this.gesture(1); }
+      else if (k === 'ArrowUp' || k === 'PageUp' || (k === ' ' && e.shiftKey)) { e.preventDefault(); this.gesture(-1); }
+      else if (k === 'Home') { e.preventDefault(); this.goTo(0); }
+      else if (k === 'End') { e.preventDefault(); this.goTo(this.stops.length - 1); }
     });
+  }
+  /* ---- the stops: a function of the layout, re-read on every resize ---- */
+  setStops(fn) {
+    this.stopsFn = fn;
+    this.readStops();
+    if (!this.tween) this.y = this.stops.length ? this.stops[this.i].y : 0;
+  }
+  readStops() {
+    if (!this.stopsFn) return;
+    const id = this.stops[this.i] && this.stops[this.i].id;
+    const list = (this.stopsFn() || []).filter(s => s && Number.isFinite(s.y)).sort((a, b) => a.y - b.y);
+    this.stops = list;
+    const k = id ? list.findIndex(s => s.id === id) : -1;
+    this.i = k >= 0 ? k : Math.min(this.i, Math.max(0, list.length - 1));
+  }
+  nearestStop(y) {
+    let best = 0, bd = Infinity;
+    this.stops.forEach((s, k) => { const d = Math.abs(s.y - y); if (d < bd) { bd = d; best = k; } });
+    return best;
+  }
+  /* is the story ready for a new gesture: arrived, and held long enough to be read */
+  get armed() { return !this.tween && performance.now() - this.arrivedAt >= SETTLE_MS; }
+  /* a gesture: one step, if the story is ready for it; absorbed otherwise */
+  gesture(dir) {
+    if (!this.stops.length || !this.armed) return false;
+    const ni = Math.max(0, Math.min(this.stops.length - 1, this.i + (dir > 0 ? 1 : -1)));
+    if (ni === this.i) return false;
+    this.goTo(ni);
+    return true;
+  }
+  /* the transition to a stop: one eased glide whose length follows the
+     distance (a beat to the next in under a second; the long walks capped) */
+  goTo(ni, dur = null) {
+    if (!this.stops.length) return;
+    ni = Math.max(0, Math.min(this.stops.length - 1, ni));
+    const to = this.stops[ni].y, from = this.y;
+    this.i = ni;
+    if (this.reduced || Math.abs(to - from) < 2) { this.tween = null; this.y = to; this.arrivedAt = performance.now(); return; }
+    const distVh = Math.abs(to - from) / Math.max(1, this.h);
+    if (dur === null) dur = Math.max(.8, Math.min(4.5, distVh * .5));
+    this.tween = { from, to, dur, el: 0 };
+  }
+  onWheel(e) {
+    const now = performance.now();
+    let d = e.deltaY;
+    if (e.deltaMode === 1) d *= 16; else if (e.deltaMode === 2) d *= this.h || 800;
+    const a = Math.abs(d);
+    if (a < 4) return;
+    const gap = now - this.lastWheelAt; this.lastWheelAt = now;
+    const hist = this.wheelHist;
+    const avg = hist.length ? hist.reduce((x, y) => x + y, 0) / hist.length : 0;
+    hist.push(a); if (hist.length > 8) hist.shift();
+    /* a new gesture: after a quiet gap, or a fresh push over a decaying tail */
+    const fresh = gap > QUIET_MS || (hist.length >= 4 && a > avg * SPIKE && a > 30);
+    if (fresh) { this.burstAcc = 0; this.burstFired = false; }
+    this.burstAcc += d;
+    if (!this.burstFired && Math.abs(this.burstAcc) >= WHEEL_PX) {
+      this.burstFired = true;                                  // one step per gesture, fired or absorbed
+      this.gesture(Math.sign(this.burstAcc));
+    }
   }
   /* the LAYOUT viewport, which iOS keeps stable while the toolbar slides.
      innerHeight changes mid-scroll on phones — mapping t through it made the
@@ -104,6 +183,8 @@ export class ScrollTimeline {
       this.y0 = this.L00;                 // the document's top edge, in scroll px
       this.y1 = this.y0 + this.docH;      // its bottom edge
       this.max = this.y1 + this.L09;
+      this.readStops();
+      if (!this.tween && this.stops.length) this.y = this.stops[this.i].y;
     } else {
       this.max = base;
       this.spacer.style.height = `${this.pages * h}px`;
@@ -127,50 +208,16 @@ export class ScrollTimeline {
     // self-heal: viewport may have had no size when the page loaded
     // (hidden tab, collapsed pane) — recompute the scroll length live.
     if (Math.abs(this.vh() - this.h) > 1) this.resize();
-    /* advance an in-flight jump. This rides the render loop rather than the
-       browser's own smooth scrolling: `behavior: 'smooth'` is silently
-       ignored in several embedded and background contexts, which left every
-       section link and the opening CTA doing nothing at all. */
-    if (this.jump) {
-      const j = this.jump;
+    const prev = this.t;
+    if (this.tween) {
+      const j = this.tween;
       j.el = Math.min(j.dur, j.el + dt);
       const u = j.el / j.dur;
-      const e = u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-      window.scrollTo(0, Math.round(j.from + (j.to - j.from) * e));
-      if (u >= 1) this.jump = null;
+      this.y = j.from + (j.to - j.from) * easeInOut(u);
+      if (u >= 1) { this.y = j.to; this.tween = null; this.arrivedAt = performance.now(); }
     }
-    const rawY = this.rawY = window.scrollY;
-    this.raw = this.tAt(rawY);
-    /* the first frame stands where the page was opened (a reload mid-story), never a walk from the top */
-    if (!this.inited) { this.inited = true; this.y = rawY; }
-    const prev = this.t;
-    /* a damped glide toward the page: a flick of the thumb is absorbed,
-       never a jump-cut. Near-instant when reduced motion is preferred. */
-    const lambda = this.reduced ? 30 : 4.6;
-    let ny = damp(this.y, rawY, lambda, dt);
-    /* the pace: at most PACE viewports a second, whatever the page did. A
-       section link is a cut and is exempt while it flies, and for a moment
-       after (free). */
-    const paced = !this.reduced && this.free <= 0;
-    if (paced) { const vmax = PACE * this.h * dt; ny = Math.max(this.y - vmax, Math.min(this.y + vmax, ny)); }
-    this.free = Math.max(0, this.free - dt);
-    this.y = Math.abs(ny - rawY) < .5 ? rawY : ny;
-    /* the leash: the page never runs further than LEASH viewports from the
-       story; when it has, it is drawn back to the leash's end (and the
-       browser's momentum with it). Never while a finger is on the glass. */
-    const dRaw = rawY - this._lastRaw;
-    this._lastRaw = rawY;
-    if (paced && !this.touching && !this.jump) {
-      const L = LEASH * this.h, d = rawY - this.y;
-      let to = -1;
-      if (d > L) to = this.y + L;
-      else if (d < -L) to = this.y - L;
-      /* the turn: input against the queue (the page still ahead, the visitor
-         scrolling back, or the reverse) collapses the queue to a step */
-      else if (Math.abs(dRaw) > 1 && Math.abs(d) > .3 * this.h && Math.sign(dRaw) !== Math.sign(d)) to = this.y + Math.sign(dRaw) * .3 * this.h;
-      if (to >= 0) { to = Math.round(to); window.scrollTo(0, to); this._lastRaw = to; }
-    }
-    this.t = this.tAt(this.y);
+    this.rawY = this.y;
+    this.raw = this.t = this.tAt(this.y);
     this.vel = (this.t - prev) / Math.max(dt, 1e-4);
     return this.t;
   }
@@ -178,24 +225,12 @@ export class ScrollTimeline {
     for (let i = CHAPTERS.length - 1; i >= 0; i--) if (t >= CHAPTERS[i].a) return i;
     return 0;
   }
+  /* a link: straight to the nearest stop, a cut, never gated */
   scrollToY(to) {
-    to = Math.round(to);
-    const from = window.scrollY;
-    if (this.reduced || Math.abs(to - from) < 4) {
-      this.jump = null;
-      window.scrollTo(0, to);
-      return;
-    }
-    // longer jumps take a little longer, but never crawl
-    const dur = Math.min(1.5, .45 + Math.abs(to - from) / this.max * 2.2);
-    const j = this.jump = { from, to, dur, el: 0 };
-    this.free = dur + .9;   // a link is a cut: the pace cap stands aside while it flies, and while the damping lands
-    /* safety net: the render loop is paused whenever the document is hidden,
-       and a queued jump would then sit still — the visitor would see a dead
-       link. If nothing has advanced it shortly, just arrive. */
-    setTimeout(() => {
-      if (this.jump === j && j.el === 0) { this.jump = null; window.scrollTo(0, to); }
-    }, 320);
+    if (!this.stops.length) { this.y = to; return; }
+    const k = this.nearestStop(to);
+    const distVh = Math.abs(this.stops[k].y - this.y) / Math.max(1, this.h);
+    this.goTo(k, Math.max(.6, Math.min(1.6, .5 + distVh * .05)));
   }
   scrollToChapter(i) {
     this.scrollToY(this.yAt(CHAPTERS[i].a + 0.004));

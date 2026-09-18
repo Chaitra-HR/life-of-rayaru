@@ -171,6 +171,11 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
     const s = document.getElementById(id); if (!s) return 0;
     const g = rect(s); return docP(g.top + g.h / 2 - vh / 2);
   };
+  /* the stop of a beat, in scroll px: the frame's centre on the section's centre (the director, scroll.js) */
+  const centerY = (id, vh = document.documentElement.clientHeight || window.innerHeight) => {
+    const s = document.getElementById(id); if (!s) return 0;
+    const g = rect(s); return g.top + g.h / 2 - vh / 2;
+  };
   const rangeP = (id, vh = document.documentElement.clientHeight || window.innerHeight) => {
     const s = document.getElementById(id); if (!s) return [0, 0];
     const g = rect(s); return [docP(g.top - vh), docP(g.top + g.h)];
@@ -235,5 +240,5 @@ export function createMovements({ reduced = false, standalone = false, scrollToY
     tick();
   }
 
-  return { el, measure, topOf, firstTop, lastBottom, centerP, rangeP, update, setNav, setLive() {} };
+  return { el, measure, topOf, firstTop, lastBottom, centerP, centerY, rangeP, update, setNav, setLive() {} };
 }

@@ -53,6 +53,10 @@ scroll position → t → chapter index + local u → camera shot → damped cam
 `js/scroll.js` owns the narrative order. `js/main.js` owns the loop. Each chapter
 is one module in `js/world/` that knows nothing about the others.
 
+Since 20 Sept 2026 the page itself does not scroll: `t` comes from the
+story's own position `y`, moved stop by stop by gestures (scroll.js, THE
+DIRECTOR; §7). The rule stands: everything is still a pure function of `t`.
+
 ---
 
 ## 3. Where things live
@@ -443,7 +447,57 @@ and log anything over 60 ms.
 
 ## 7. State of play
 
-### 20 Sept 2026 · THE STORY LEADS, THE PAGE FOLLOWS (the owner's seventeenth brief: the scroll)
+### 20 Sept 2026, later · THE DIRECTOR: SCENE-GATED PROGRESSION (the owner's eighteenth brief)
+
+The owner: even paced, continued wheel or trackpad momentum kept the
+story moving and the text could not be read; wanted scene-level
+progression (gesture → transition → settle → read → next gesture), no
+momentum carrying into the next scene, no skipping, no trapping. Done
+(scroll.js rewritten as THE DIRECTOR; main.js, movements.js, style.css):
+
+- **The page does not scroll.** `html, body { overflow: hidden }` and the
+  body is `position: fixed` (`touch-action: pinch-zoom`, so the pinch
+  stays). The sections and spacers still lay out the story's length, so
+  every `tAt`/`yAt` mapping, every station and every beat window is what
+  it was; `window.scrollY` stays 0 and nothing reads it. The no-WebGL
+  document scrolls as a document (`body.nowebgl`).
+- **Stops.** main.js `timeline.setStops(fn)`: the opening (y 0), every
+  chapter beat at its centre (`movements.centerY`, the same point the
+  camera's station lands on), every Brindavana caption at the centre of
+  its window (scroll.js CAPTIONS), the footer (`timeline.max`). 33 in
+  all. Re-read on every resize; the current stop is kept by id.
+- **Gestures.** A wheel gesture is a burst: it begins after QUIET_MS
+  (280 ms) without wheel events, or at a fresh push (a delta above SPIKE
+  = 2.2 × the running average of the last eight, over 30 px), and fires
+  once its travel passes WHEEL_PX (40). A trackpad's momentum never
+  pauses that long and only decays, so it is one burst, already fired:
+  absorbed. A touch gesture is a swipe of SWIPE_PX (50) during the
+  drag, once per touch. Keys: arrows, PageUp/Down, Space (Shift back),
+  Home, End.
+- **Progression.** `gesture(dir)` moves one stop, only when the story is
+  `armed`: no transition in flight and SETTLE_MS (900) past the arrival
+  (the title's words have landed, the copy stands). Otherwise absorbed.
+  The transition (`goTo`) is one eased glide (cubic in-out) whose length
+  follows the distance: .5 s per viewport, .8 s at least, 4.5 s at most
+  (the walk from the composition to the house, the walk into the
+  stone). A section link (`scrollToY`) goes straight to the nearest
+  stop, ungated, .6–1.6 s. The review hooks (`step`, `snap`) set `y`,
+  clear the tween and take the nearest stop.
+- The pace cap, the leash and the turn of the seventeenth brief are
+  gone with the raw scroll they governed.
+
+Verified in the pane (fresh tabs, no console errors) at 375 × 812 and
+1440 × 900: one wheel gesture → one stop (the lead walk in 2.3–2.5 s);
+eight more wheel ticks and forty decaying momentum events during and
+after the transition → absorbed, the story settled on the beat with its
+copy whole; a deliberate gesture after the hold → the next beat;
+ArrowUp back; a synthetic swipe forward; the Brindavana link straight
+to its first caption in 1.6 s; `?nowebgl` scrolling natively. Not
+verifiable here: a real trackpad's momentum curve and a real finger.
+Dials: SETTLE_MS, QUIET_MS, SPIKE, WHEEL_PX, SWIPE_PX at the top of
+scroll.js; the transition lengths in `goTo`.
+
+### 20 Sept 2026 · THE STORY LEADS, THE PAGE FOLLOWS (the owner's seventeenth brief: the scroll; superseded the same day by the director, above)
 
 The owner: the site still reacted too directly to scroll speed; a fast
 scroll rushed the sequence. What the pace cap of the sixteenth brief had
