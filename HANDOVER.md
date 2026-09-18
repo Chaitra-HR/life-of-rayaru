@@ -443,6 +443,69 @@ and log anything over 60 ms.
 
 ## 7. State of play
 
+### 19 Sept 2026, night · THE LOADER, THE PACE, THE DRAW CALLS (the owner's sixteenth brief)
+
+The owner's brief: the loader finished its animation and then sat for ten
+seconds; the site lagged; a hard scroll rushed through whole scenes. Not
+allowed: longer animations, artificial delays. Measured first (the pane,
+a Mac, so device speed is not the phone's): on a first visit the world was
+READY at 1.6 s and the sheet lifted at 9.5 s; the CPU cost of a frame was
+~1 ms while the picture was 807 visible meshes and 449 draw calls in the
+opening at a wide frame (256 at a phone's), which is what a phone's driver
+pays for. Done:
+
+- **The loader follows the load** (preloader-draw.js). The hand's cap is
+  the real progress (main.js `setProgress`: modules, fonts, the world
+  built, the stone maps, the first render); a floor clock (5 s to the 90 %
+  hold, was 3.1 s) keeps it moving through the stretch where the main
+  thread is blocked building and can report nothing. The moment the world
+  is ready the remaining strokes land at up to 160 %/s with no breaths,
+  the working marks withdraw (.16 s + .32 s) and the sheet lifts after a
+  .2 s beat (was a 3 s pose) over .85 s (was 1.15 s; css). `readyGuard`
+  4 s. First visit in the pane: ready 1.9 s, gone 4.9 s (was 9.5 s);
+  repeat visit: ready 1.5 s, gone 3.9 s (was 6.1 s). The critical path is
+  the world build itself (`performance.mark('antaranga:…')` and
+  `river:…` marks record it: `performance.getEntriesByType('mark')`);
+  the models, the covers and the score were already lazy.
+- **The pace** (scroll.js `PACE` = 1.6 viewports of scroll a second).
+  The raw scroll never drives the story: `ScrollTimeline.update` damps as
+  before and then clamps the advance of t to PACE × (t per viewport at
+  this point of the story) × dt, so a thrown wheel or a flicked thumb
+  still plays every beat, camera move and transition at a walking pace
+  while the native scroll runs on ahead and the world follows. A section
+  link is a cut: `scrollToY` sets `free` for its flight plus .9 s and the
+  cap stands aside. The first frame stands where the page was opened.
+  Verified: a jump from t .30 to the end advanced at 1.59 vh/s on the wide
+  frame, 1.61 on the phone frame.
+- **Draw calls** (util.js `mergeStatic`): a built thing's meshes that
+  share a material (and shadow flags, render order, depth material,
+  attribute set) are baked into ONE mesh under their group, in the
+  group's frame, so the group still moves or hides as a whole; anything
+  with userData on itself or an ancestor below the group, any shader
+  material, instanced or skinned mesh or sprite is left alone. Applied
+  to: each tree (trunk, flare and limbs one bark mesh), each palm (trunk
+  and foot; the fronds one leaf mesh, their sway is per vertex; the
+  nuts), each course of the Brindavana (per `parts` group, so Pravesha's
+  lifting survives), the landing and terrace `S` in hero.js (the two big
+  courses under the pad kept apart: Pravesha buries them by their
+  BoxGeometry), the house (`threshold.group`; its lamps carry userData).
+  Phone frame, draw calls: opening 256 → 171, works 135 → 124, the
+  chamber 170 → 156. Meshes in the scene 872 → 565. Nothing looks
+  different (checked: the opening, the house, the landing, the chamber).
+- **The mirror on alternate frames** (river.js `reflect`): the planar
+  reflection re-rendered the whole world every frame on desktop; it is
+  drawn every other frame unless the camera has moved more than half a
+  metre (a cut), which is not seen through the ripples.
+- **Phone memory**: the ruins' nine 1024² maps are held at 512² on a
+  phone (ruins.js `shrink`); the covers load their 640 px printing there
+  (stations.js) instead of 1080 px.
+
+Verified in the pane at 375 × 812 and 1323 wide: no console errors (a
+"missing )" error seen mid-pass was a stale buffer from an interim broken
+line, gone in a fresh tab); the loader timeline; the pace; the four
+scenes; the mobile flow. Not measurable here: a real phone's frame time
+(the pane's GPU is a Mac's).
+
 ### 19 Sept 2026, late · THE SCORE WITH THE PAGE; THE TREE PUSHED (the owner's fourteenth brief)
 
 The score still took a moment to arrive on a phone; the owner asked for

@@ -32,6 +32,8 @@ export const DOC_A = .070, DOC_B = .725;
    rest: more page per beat, so the layers are placed and the place comes
    back at a walking pace, never a state per wheel-tick */
 export const TAIL = 1.6;
+/* the story's top speed, in viewports of scroll per second (ScrollTimeline.update) */
+export const PACE = 1.6;
 
 export class ScrollTimeline {
   constructor({ pages = 52, reduced = false, doc = null, sp00 = null, sp09 = null } = {}) {
@@ -43,6 +45,8 @@ export class ScrollTimeline {
     this.raw = 0;        // instantaneous
     this.vel = 0;
     this.jump = null;    // an in-flight scroll jump (see scrollToY)
+    this.free = 0;       // seconds left in which a jump (a section link) may move t at any speed
+    this.inited = false;
     this.h = 0;
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -115,11 +119,26 @@ export class ScrollTimeline {
       if (u >= 1) this.jump = null;
     }
     this.raw = this.tAt(window.scrollY);
+    /* the first frame stands where the page was opened (a reload mid-story), never a walk from the top */
+    if (!this.inited) { this.inited = true; this.t = this.raw; }
     const prev = this.t;
     /* a damped glide: a flick of the thumb is absorbed, never a jump-cut.
        Near-instant when reduced motion is preferred. */
     const lambda = this.reduced ? 30 : 4.6;
-    this.t = damp(this.t, this.raw, lambda, dt);
+    let next = damp(this.t, this.raw, lambda, dt);
+    /* THE PACE (19 Sept 2026): the raw scroll never drives the story
+       directly. However hard the wheel is thrown or the thumb flicked, t
+       advances at most PACE viewports of scroll a second, so every beat, every
+       camera move and every transition plays out at a walking pace; the native
+       scroll runs on ahead and the world follows it there. A section link is
+       a cut and is exempt while it flies, and for a moment after. */
+    if (!this.reduced && this.free <= 0) {
+      const slope = Math.abs(this.tAt(this.yAt(this.t) + this.h) - this.t) || 1e-3;   // t per viewport, at this point of the story
+      const vmax = PACE * slope * dt;
+      next = Math.max(this.t - vmax, Math.min(this.t + vmax, next));
+    }
+    this.free = Math.max(0, this.free - dt);
+    this.t = next;
     if (Math.abs(this.t - this.raw) < 0.00004) this.t = this.raw;
     this.vel = (this.t - prev) / Math.max(dt, 1e-4);
     return this.t;
@@ -139,6 +158,7 @@ export class ScrollTimeline {
     // longer jumps take a little longer, but never crawl
     const dur = Math.min(1.5, .45 + Math.abs(to - from) / this.max * 2.2);
     const j = this.jump = { from, to, dur, el: 0 };
+    this.free = dur + .9;   // a link is a cut: the pace cap stands aside while it flies, and while the damping lands
     /* safety net: the render loop is paused whenever the document is hidden,
        and a queued jump would then sit still — the visitor would see a dead
        link. If nothing has advanced it shortly, just arrive. */

@@ -5,7 +5,7 @@
 // a cornice flaring outward beneath a crown of pointed leaf merlons; and the
 // tulasi-mani garland — two strands of large pale beads draped down the front.
 import * as THREE from 'three';
-import { stoneCanvas, rosetteCanvas, latticeCanvas, dentilCanvas, nichePanelCanvas, tex } from '../util.js';
+import { stoneCanvas, rosetteCanvas, latticeCanvas, dentilCanvas, nichePanelCanvas, tex, mergeStatic } from '../util.js';
 
 let _shared = null;
 function sharedMaterials() {
@@ -319,5 +319,8 @@ export function buildBrindavana({ withMala = false } = {}) {
     parts.crown.scale.setScalar(1 + u * .12);
   }
 
+  /* each course as one mesh per material (the courses lift and come down as
+     groups in Brindavana Pravesha, so the merge is per part, never across) */
+  for (const g of Object.values(parts)) mergeStatic(g);
   return { group: root, parts, explode, height: totalH, materials: M };
 }

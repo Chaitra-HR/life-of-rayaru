@@ -40,16 +40,20 @@ export function createDrafting(ctx, data, opts = {}) {
   const strokes = data.strokes.map(s => ({ ...s, path: new Path2D(s.d), doneAt: -1 }));
   let W = 0, H = 0, dpr = 1;
 
-  /* the pace: the hand draws on its own clock up to HOLD, and the last of the
-     carved detail waits for the world to be ready. So the drawing is always
-     moving and still finishes the instant the site can be entered. */
-  const DRAFT_S = swift ? 1.1 : 3.1;
+  /* the pace (19 Sept 2026): the hand follows the REAL load. Its cap is the
+     progress the page reports (modules, fonts, the world built, the stone
+     maps, the first render); a slow floor clock keeps it moving through the
+     stretches where the main thread is blocked building and can report
+     nothing, up to HOLD, where the carved detail waits for the world. The
+     moment the world is ready the remaining strokes land at speed, the
+     working marks withdraw, and the sheet lifts: no pose, no dead time. */
+  const DRAFT_S = swift ? 1.1 : 5.0;
   const HOLD = 90;
   let target = 0, shown = 0, v = 0, t0 = -1, last = -1, pauseUntil = 0;
   const breaths = swift ? [] : [{ at: 26, hold: 140 }, { at: 60, hold: 170 }, { at: 84, hold: 120 }];
   let lastGrow = 0, waiting = false, finishing = -1, settledAt = -1, clearedAt = -1, heldAt = -1;
-  /* how long the finished Brindavana stands alone; brief on a reload */
-  const HOLD_MS = swift ? 1200 : 3000;
+  /* a beat, not a pose: the finished Brindavana is seen for a moment before the sheet lifts */
+  const HOLD_MS = swift ? 120 : 200;
   let state = 'draw';
   /* frame pacing while the hand moves, for ?hud and review */
   const stats = { frames: 0, slow: 0, maxGap: 0 };
@@ -83,10 +87,12 @@ export function createDrafting(ctx, data, opts = {}) {
         const clock = Math.min(HOLD, (elapsed / DRAFT_S) * HOLD);
         const cap = target >= 100 ? 100 : Math.max(Math.min(target, 100), clock);
         const gap = Math.max(0, cap - shown);
-        const want = gap > 0 ? Math.min(Math.max(gap * 2.4, 6), swift ? 90 : 42) : 0;
-        v += (want - v) * (1 - Math.exp(-7 * dt));
+        /* once the world is ready the hand no longer dawdles: the rest of the drawing lands in well under a second */
+        const ready = target >= 100;
+        const want = gap > 0 ? Math.min(Math.max(gap * (ready ? 4 : 2.4), 6), ready ? 160 : swift ? 90 : 42) : 0;
+        v += (want - v) * (1 - Math.exp(-(ready ? 12 : 7) * dt));
         shown = Math.min(cap, shown + v * dt);
-        for (const b of breaths) {
+        if (!ready) for (const b of breaths) {
           if (!b.done && shown >= b.at) { b.done = true; v *= .15; pauseUntil = tNow + b.hold; break; }
         }
       }
@@ -98,10 +104,9 @@ export function createDrafting(ctx, data, opts = {}) {
       const k = (tNow - finishing) / 1000;
       shown = 100 + clamp01(k / .3) * 14;
       if (k > .34 && settledAt < 0) { settledAt = tNow; post({ type: 'drawn' }); }
-      if (settledAt > 0 && tNow - settledAt > (swift ? 150 : 260) && clearedAt < 0) clearedAt = tNow;
-      /* the construction has gone: only the Brindavana stands on the sheet,
-         and it is given a moment of its own before the world arrives */
-      if (clearedAt > 0 && tNow - clearedAt > 700 && heldAt < 0) { heldAt = tNow; post({ type: 'held', ms: HOLD_MS }); }
+      if (settledAt > 0 && tNow - settledAt > (swift ? 100 : 160) && clearedAt < 0) clearedAt = tNow;
+      /* the construction has gone: only the Brindavana stands on the sheet, for a beat */
+      if (clearedAt > 0 && tNow - clearedAt > 320 && heldAt < 0) { heldAt = tNow; post({ type: 'held', ms: HOLD_MS }); }
       if (heldAt > 0 && tNow - heldAt > HOLD_MS) { state = 'done'; post({ type: 'cleared', stats, ms: Math.round(tNow - t0) }); }
     }
     paint(tNow);

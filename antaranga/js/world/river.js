@@ -464,11 +464,12 @@ export function createRiverStage(ctx) {
   ghat.rotation.y = APPROACH_ROT;   // turned with the opening's approach axis
   legacy.add(ghat);   // the hero builds its own platform; this is the return chapters' ghat
 
-  const brnd = buildBrindavana({ withMala: true });
+  const mark = (n) => { try { performance.mark('river:' + n); } catch (e) {} };
+  const brnd = buildBrindavana({ withMala: true }); mark('brindavana');
   brnd.group.position.copy(BRND_POS);
   g.add(brnd.group);
   /* Brindavana Pravesha, in this world: the chamber under the pad, the layers, the cut (pravesha.js) */
-  const pravesha = createPravesha(ctx, { brnd, brndPos: BRND_POS, sl, approachToWorld, world: g });
+  const pravesha = createPravesha(ctx, { brnd, brndPos: BRND_POS, sl, approachToWorld, world: g }); mark('pravesha');
 
   /* reflections come from the planar reflector sampled by the water */
   const reflector = makeReflector(ctx);
@@ -683,7 +684,7 @@ export function createRiverStage(ctx) {
   g.add(morning);
 
   /* the opening composition lives in opening.js */
-  const opening = createOpening(ctx, { brndPos: BRND_POS, brnd, fogColor: fogCol });
+  const opening = createOpening(ctx, { brndPos: BRND_POS, brnd, fogColor: fogCol }); mark('opening');
   g.add(opening.group);
 
   /* (the night's foreground wall of kage's device, foreground.js, stood far
@@ -768,7 +769,7 @@ export function createRiverStage(ctx) {
 
   /* ---- the stations: what stands on the ghat and the river while the
      chapters are read (stations.js); shown by the chapters' progress ---- */
-  const stations = createStations(ctx, { brndPos: BRND_POS, fogColor: fogCol });
+  const stations = createStations(ctx, { brndPos: BRND_POS, fogColor: fogCol }); mark('stations');
   g.add(stations.group);
 
   /* the cut goes through everything of this world but the stone and what is built into it */
@@ -798,6 +799,15 @@ export function createRiverStage(ctx) {
     /* t: global scroll; time: seconds; renderer+scene for the reflection pass */
     /* call after the camera is posed for the frame, before the main render */
     reflect(renderer, scene, cam) {
+      /* the mirror is drawn on alternate frames (19 Sept 2026): a second
+         full render of the world every frame was the desktop's largest
+         single cost, and a reflection one frame old is not seen through the
+         ripples; a real move of the camera (a cut) redraws it at once */
+      this._rf = (this._rf || 0) + 1;
+      const cp = cam.position, lp = this._rfPos || (this._rfPos = cp.clone().addScalar(1e3));
+      const moved = cp.distanceToSquared(lp) > .25;
+      if (!moved && (this._rf & 1)) return;
+      lp.copy(cp);
       const wu = water.material.uniforms;
       if (!g.visible || cam.position.y < .05) { wu.uHasRefl.value = 0; return; }
       /* the mirror pass re-renders the whole world: the single most

@@ -5,7 +5,7 @@
 // Environment systems live in their own modules (clouds, birds, vegetation).
 // THE BRINDAVANA IS A LOCKED ASSET — only its staging is touched here.
 import * as THREE from 'three';
-import { mulberry, fbm, flame, glowSprite, smooth } from '../util.js';
+import { mulberry, fbm, flame, glowSprite, smooth, mergeStatic } from '../util.js';
 import { stoneMaterial, boxUV, shadowed, loadArch, grassCutout, grassSheet } from './opening.js';
 import { createClouds } from './clouds.js';
 import { createBirds } from './birds.js';
@@ -366,6 +366,10 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     deepa(-3.8, 1.10, 1.9, 1.45),
     deepa(3.8, 1.10, 1.9, 1.45),
   ];
+  /* the landing, the steps, the terrace: one mesh per material. The two big
+     courses under the pad stay their own meshes: Brindavana Pravesha buries
+     them by name of their geometry while the chamber is open (pravesha.js). */
+  mergeStatic(S, { keep: (o) => o.isMesh && o.geometry.type === 'BoxGeometry' && (o.geometry.boundingSphere || o.geometry.computeBoundingSphere(), o.geometry.boundingSphere.radius > 5) });
 
   /* ---- the ruins bundle: real weathered rocks along the platform edges,
           the waterline and the soil transition; grass tufts on the bank ---- */
@@ -496,6 +500,7 @@ export function createOpening(ctx, { brndPos, brnd, fogColor }) {
     threshold.group.position.set(TX, pad + .04, TZ);
     threshold.group.rotation.y = -1.06;                       // its front toward (12, 40): the walk's approach
     H.add(threshold.group);
+    mergeStatic(threshold.group);   // the house's two hundred boxes and beams become a handful of meshes; its lamps (userData) stay their own
   }
 
   /* ---- vegetation: palms and banana plants frame the right edge; reeds

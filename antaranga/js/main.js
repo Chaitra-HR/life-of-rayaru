@@ -226,6 +226,8 @@ function runApp(renderer) {
     /* the drawing is a function of THIS progress: modules landed (index.html,
        0 → .55), fonts, then the two opening stages, then the first render.
        It completes only when the first scene is renderable. */
+    const mark = (n) => { try { performance.mark('antaranga:' + n); } catch (e) {} };   // the load's own timeline (performance.getEntriesByType('mark'))
+    mark('boot');
     setProgress(.58);
     // fonts must be live before any canvas-drawn typography
     try {
@@ -240,6 +242,7 @@ function runApp(renderer) {
         new Promise(r => setTimeout(r, 900)),   // they began fetching at page load
       ]);
     } catch (e) { /* fall back to system fonts */ }
+    mark('fonts');
     setProgress(.62);
 
     /* Build and prewarm one stage at a time, handing the thread back between
@@ -304,9 +307,11 @@ function runApp(renderer) {
       const [key, make] = first[i];
       stages[key] = make(ctx);
       scene.add(stages[key].group);
+      mark('built:' + key);
       setProgress(.62 + (i + .5) / first.length * .32);       // .62 → .94
       await yieldToPaint();
       warm(key);
+      mark('warmed:' + key);
       setProgress(.62 + (i + 1) / first.length * .32);
       await yieldToPaint();
     }
@@ -315,13 +320,16 @@ function runApp(renderer) {
        no main-thread time — which is the whole point: the drawing keeps its
        frames instead of freezing through six seconds of texture arithmetic. */
     await stoneMapsReady();
+    mark('stone-maps');
     setProgress(.96);
     await yieldToPaint();
 
     renderer.render(scene, camera);
+    mark('first-render');
     setProgress(.97);
 
     start(stages);
+    mark('start');
     setProgress(1);
 
     /* behind the live site: the rest of the world, in scroll order. It waits

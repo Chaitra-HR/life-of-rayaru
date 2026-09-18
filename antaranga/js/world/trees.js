@@ -20,6 +20,7 @@
 // curved trunk and hinged fronds. Muted olive, the six's Earth Green side.
 import * as THREE from 'three';
 import { mulberry } from '../math.js';
+import { mergeStatic } from '../util.js';
 
 /* ------------------------------------------------------------------ textures */
 const _tex = new Map();
@@ -360,6 +361,7 @@ export function makeTree({ seed = 1, height = 9, spread = 6, kind = 'broad', car
   G.add(crown);
   G.userData.crown = crown; G.userData.top = crownC.y + crownR;
   if (!shadows) G.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = false; });
+  mergeStatic(G);   // the trunk, its flare and every limb: one bark mesh (the crown is one already)
   return G;
 }
 
@@ -462,6 +464,7 @@ export function makePalm({ seed = 1, height = 9, lean = 1.2, fronds = 14, tint =
     n.castShadow = shadows; C.add(n);
   }
   G.userData.crown = C; G.userData.top = height + 1;
+  mergeStatic(G);   // the trunk and its foot one bark mesh; the fronds one leaf mesh (their sway is per vertex); the nuts one
   return G;
 }
 

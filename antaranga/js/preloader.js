@@ -16,7 +16,7 @@
 import { createDrafting } from './preloader-draw.js';
 
 export const PRELOADER_TIMING = {
-  exit: 1.15,       // the sheet lifts away into the first scene
+  exit: .85,        // the sheet lifts away into the first scene (css #preloader transition)
 };
 
 /* the drawing in progress-space: construction, then outline, then detail */
@@ -227,7 +227,7 @@ export class BrindavanaPreloader {
     this.send({ type: 'target', p: next });
     /* the world is ready: whatever happens to the drawing, the visitor is
        never kept behind the sheet for long */
-    if (next >= 1 && !this.readyGuard) this.readyGuard = setTimeout(() => this.exit(), 12000);
+    if (next >= 1 && !this.readyGuard) this.readyGuard = setTimeout(() => this.exit(), 4000);
   }
 
   async exit() {

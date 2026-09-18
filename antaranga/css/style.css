@@ -887,7 +887,7 @@ body.nowebgl #movements .sec-in, body.nowebgl #movements .fin .sec-in { position
   color: var(--paper-ink);
   display: flex; align-items: center; justify-content: center;
   /* the exit is a page lifted off the world: transform only */
-  transition: transform 1.15s cubic-bezier(.76, 0, .24, 1), visibility 0s linear 1.15s;
+  transition: transform .85s cubic-bezier(.76, 0, .24, 1), visibility 0s linear .85s;
   will-change: transform;
 }
 /* paper tooth: the same turbulence as the site grain, warm and faint */
@@ -905,7 +905,7 @@ body.nowebgl #movements .sec-in, body.nowebgl #movements .fin .sec-in { position
 #preloader .pre-in {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; gap: clamp(22px, 3.4vh, 36px);
-  transition: transform 1.15s cubic-bezier(.76, 0, .24, 1), opacity .7s ease;
+  transition: transform .85s cubic-bezier(.76, 0, .24, 1), opacity .55s ease;
 }
 /* the drawing travels a little slower than the sheet: depth as it goes */
 #preloader.done .pre-in { transform: translate3d(0, 42vh, 0); opacity: 0; }
@@ -919,7 +919,7 @@ body.nowebgl #movements .sec-in, body.nowebgl #movements .fin .sec-in { position
 /* the hold: only the finished Brindavana on the sheet, drawing a slow breath
    closer while the world waits beneath (transform only) */
 #preloader .pre-mark { transform: scale(1); transition: transform 1s cubic-bezier(.33, 0, .2, 1); }
-#preloader.held .pre-mark { transform: scale(1.035); transition-duration: var(--hold, 3000ms); }
+#preloader.held .pre-mark { transform: scale(1.035); transition-duration: var(--hold, 200ms); }
 @media (prefers-reduced-motion: reduce) { #preloader.held .pre-mark { transform: none; } }
 
 /* the caption, set like the palette reference: small, wide, rust */

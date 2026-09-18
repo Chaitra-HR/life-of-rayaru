@@ -7,6 +7,57 @@ import * as THREE from 'three';
    keeps working unchanged. */
 export * from './math.js';
 import { clamp, lerp, smooth, remap, mulberry, noise2, fbm } from './math.js';
+import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
+
+/* ---- mergeStatic (19 Sept 2026): fewer draw calls for the same picture ----
+   A built thing (a house of two hundred boxes, a gateway, a tree's limbs) is
+   many small meshes sharing a few materials, and on a phone every mesh is a
+   draw call the driver pays for. This bakes each mesh's transform into its
+   geometry and joins every mesh that shares a material (and shadow flags,
+   render order, depth material, attribute set) into ONE mesh under `group`,
+   in the group's own frame, so the group can still be moved, hidden or
+   lifted as a whole. Anything that might be moved or changed on its own is
+   left alone: a mesh or an ancestor (below `group`) carrying userData, a
+   shader material (per-mesh uniforms), an instanced or skinned mesh, a
+   sprite, anything `keep(object)` claims. Materials are shared, never
+   copied, so a material driven by the hour keeps driving the merged mesh.
+   Returns { merged, removed } for the record. */
+const _mInv = new THREE.Matrix4(), _mRel = new THREE.Matrix4();
+export function mergeStatic(group, { keep = () => false, minCount = 2 } = {}) {
+  group.updateWorldMatrix(true, true);
+  _mInv.copy(group.matrixWorld).invert();
+  const marked = (o) => { let p = o; while (p && p !== group) { if ((p.userData && Object.keys(p.userData).length) || keep(p)) return true; p = p.parent; } return false; };
+  const buckets = new Map();
+  group.traverse(o => {
+    if (o === group || !o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.visible) return;
+    const m = o.material;
+    if (!m || Array.isArray(m) || m.isShaderMaterial || m.isSpriteMaterial) return;
+    if (o.morphTargetInfluences || marked(o)) return;
+    const g = o.geometry;
+    if (!g || !g.attributes.position) return;
+    const key = [m.uuid, g.index ? 'i' : 'n', Object.keys(g.attributes).sort().join(','), o.castShadow, o.receiveShadow, o.renderOrder, o.customDepthMaterial ? o.customDepthMaterial.uuid : '', o.layers.mask].join('|');
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(o);
+  });
+  let merged = 0, removed = 0;
+  for (const list of buckets.values()) {
+    if (list.length < minCount) continue;
+    const geos = list.map(o => { _mRel.multiplyMatrices(_mInv, o.matrixWorld); return o.geometry.clone().applyMatrix4(_mRel); });
+    const mg = mergeGeometries(geos, false);
+    for (const g of geos) g.dispose();
+    if (!mg) continue;
+    mg.computeBoundingSphere();
+    const first = list[0];
+    const mesh = new THREE.Mesh(mg, first.material);
+    mesh.castShadow = first.castShadow; mesh.receiveShadow = first.receiveShadow; mesh.renderOrder = first.renderOrder;
+    mesh.layers.mask = first.layers.mask;
+    if (first.customDepthMaterial) mesh.customDepthMaterial = first.customDepthMaterial;
+    group.add(mesh);
+    for (const o of list) { if (o.parent) o.parent.remove(o); removed++; }
+    merged++;
+  }
+  return { merged, removed };
+}
 
 /* ---------------- canvas helpers ---------------- */
 export function canvas(w, h) {

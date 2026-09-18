@@ -6,9 +6,20 @@ import * as THREE from 'three';
 
 const BASE = './models/ruins/';
 
+/* on a phone the nine 1024² maps of a few boulders are held at 512²: the
+   same pictures at a quarter of the memory (19 Sept 2026) */
+const SMALL = (typeof window !== 'undefined') && window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+function shrink(t, max = 512) {
+  const im = t.image; if (!im || !(im.width > max)) return t;
+  const c = document.createElement('canvas'); c.width = c.height = max;
+  c.getContext('2d').drawImage(im, 0, 0, max, max);
+  t.image = c; t.needsUpdate = true;
+  return t;
+}
 async function loadTex(loader, file, srgb) {
   if (!file) return null;
   const t = await loader.loadAsync(BASE + file);
+  if (SMALL) shrink(t);
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   t.flipY = false;                                  // glTF convention: uv origin top-left
   t.wrapS = t.wrapT = THREE.RepeatWrapping;

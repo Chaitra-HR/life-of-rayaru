@@ -97,7 +97,7 @@ export function createStations(ctx, { brndPos, fogColor }) {
     const hinge = new THREE.Group(); hinge.position.set(-W / 2, T - TC, 0); bk.add(hinge);
     const cover = sh(new THREE.Mesh(new THREE.BoxGeometry(W, TC, D), [cloth, cloth, coverMat, endpaper, cloth, cloth]));
     cover.position.set(W / 2, TC / 2, 0); hinge.add(cover);
-    loader.load(v.cover, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.center.set(.5, .5); t.rotation = 0; /* the cover's head away from the reader, who stands at the flight (checked on the phone frame) */ coverMat.map = t; coverMat.color.setHex(0xffffff); coverMat.needsUpdate = true; }, undefined, () => {});
+    loader.load(ctx.isMobile ? v.cover.replace('-1080', '-640') : v.cover, /* the phone reads the 640 px printing of the same cover */ (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.center.set(.5, .5); t.rotation = 0; /* the cover's head away from the reader, who stands at the flight (checked on the phone frame) */ coverMat.map = t; coverMat.color.setHex(0xffffff); coverMat.needsUpdate = true; }, undefined, () => {});
     // a loose row across the landing, each volume turned a little its own way
     const P = [[-2.55, 9.15, .16], [-1.30, 9.95, -.08], [-.05, 9.05, .10], [1.25, 9.9, -.14], [2.55, 9.2, .06]][i];
     at(bk, sl(P[0], .78, P[1]), SACRED_ROT + P[2]);
