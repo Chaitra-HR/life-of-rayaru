@@ -452,6 +452,191 @@ and log anything over 60 ms.
 
 ## 7. State of play
 
+### 22 Sept 2026, later · FIRST LOAD, THE NAV, THE SOUND, THE FOOTER (the owner's twenty-fifth brief)
+
+The owner: heavy lag on first load; the phone's music icon too large and
+play/pause unreliable; the works headline to change; the desktop nav not
+clickable and a strange wrapper behind it; the footer to match the top
+navigation. Found and done:
+
+- **The first-load stall** was the reveals: `makeReveal` on all 31 copy
+  blocks at `start()` (SplitText + a timeline each, ~21 ms a block, ~650
+  ms in one frame the moment the loader released). Now LAZY: movements.js
+  `lives` and Captions.update build ONE reveal a frame, the nearest first,
+  when its beat is within a beat and a half; `linesAtStart` 0. The
+  surface's shaders and targets are compiled during boot (`surface.warm`)
+  so the first cursor movement has no hitch. Load marks on this machine:
+  river built 2.5 s, stone maps 7.4 s (the workers), start 7.7 s: the
+  loader's length is the stone maps, not a stall.
+- **The nav**: hit-tested (`elementFromPoint` at the LIFE button's centre)
+  at the hero, a chapter and a Brindavana beat: the button is on top
+  every time, and a click lands the scroll. Nothing sits over `#ui` (z 6).
+  The "wrapper behind the navbar" was `#hero::before`, the copy's shade,
+  whose top (−60 %) reached up behind the wordmark and the nav; it now
+  starts at −30 % (−14 % on phones), under the header. The wordmark (top
+  and footer) is a link to the opening.
+- **Sound**: the phone's icon 15 px in its 44 px button; if `play()` is
+  refused, the gestures are re-armed so the very next tap anywhere starts
+  it (before, a refused first tap left the control reading ON and the
+  next tap turned it OFF: three taps). The pane cannot play (it reports
+  the tab hidden); the toggle's state flips correctly on every click.
+- **The headline**: "His words became a way into deeper thought."
+- **The footer**: the same wordmark markup as the top (the mark, the name,
+  the small line) and the same four links in the same order and face
+  (LIFE · WORKS · TATTVAVĀDA · BRINDAVANA), the old footer glyph and its
+  four other labels retired.
+
+
+### 22 Sept 2026 · LOCAL ONLY, AND THE PHONE'S PINK (the owner's twenty-fourth brief)
+
+The owner: the skin still read as the whole scene inside a warped
+wrapper; keep the interaction LOCAL to the cursor's and finger's path and
+nothing else; and on the phone the opening's sky was blue, the pinkish
+finish missing. Done:
+
+- **surface.js**: the scroll's breath and the seam pushes are GONE (they
+  lit the whole field: that was the wrapper). The field is touched only
+  by a wake along the cursor's or finger's segment; damp .95 and k .26 so
+  the wave dies within a few tenths of the frame and the field is flat in
+  about a second; the edges never move. main.js: `SEAMS`, `seamAt`,
+  `setStir`, `push` removed. At rest the frame is the straight render.
+- **The phone's sky** (river.js skyFrag `uSpread`): the hero gradient is
+  mapped by elevation and the wide hold sees only the lowest ~.3 of the
+  dome; a portrait phone looks higher, so most of its frame was the
+  zenith's blue. `uSpread` (1 wide, 1.3 tablet, 1.9 portrait, from the
+  camera's aspect) divides the elevation in the morning branch only: the
+  SAME colours in the same order fill the portrait frame in the wide
+  frame's proportion. Nothing else on the phone differs.
+- The hero's `::before` shade is the original (a blue-black radial;
+  §4's ONE DARK rule would make it `--night`, but the owner asked for the
+  original look and it was left).
+
+
+### 21 Sept 2026, night · THE SKIN ABOVE THE ARTWORK (the owner's twenty-third brief)
+
+The owner: the surface pass had altered colours, distorted the artwork
+and changed the tone; restore the exact previous look and LOCK the scene
+design (no recolour, warp, blur, relight, resize); then make the fluid
+response clearly perceptible, as a responsive transparent surface ABOVE
+the artwork; and the sound control as a speaker symbol. Done:
+
+- **The artwork renders straight to the canvas again**, exactly as
+  before any surface work (no target, no pass over it: identical by
+  construction). surface.js keeps its wave field but draws it as a
+  TRANSPARENT LAYER over the frame (`autoClear` off for one quad): light
+  (Bone `#e3d8c1`) where the field's slope faces the light, shade
+  (`--night`) where it faces away, a soft body where it stands high;
+  alpha from the same, nothing where the field is flat. uLight 42 / 36
+  phone, uBody 4.5, uAlpha .62 / .58, the shade side at .18 of that; a wake's depth speed × .7.
+- **fluid-text.js, the `#fluid-text` SVG filter and `body.fluid` are
+  gone**: the type is never displaced. The hero's `--scrim` driver is
+  gone: `#hero::before` leaves with the copy as it did before.
+- **The speaker** (audio.js `setLabel`, css `.snd-ico`): one inline SVG
+  on both sound buttons, its two waves while on, a stroke through it
+  while off; the "SOUND · ON/OFF" text and the bars are retired.
+
+
+### 21 Sept 2026, later · THE SURFACE: one skin under the whole site (the owner's twenty-second brief)
+
+The owner: the ripple must not be a transition effect but the site's
+fundamental behaviour, from Scene 1 to the footer's end, reacting to the
+cursor (a wake, not a circle), to touch and swipe, to scroll, with the
+words on the same skin; and an abrupt sky/background change INSIDE
+Scene 1 to fix (not a Scene 2 seam). Done:
+
+- **The Scene 1 cut, found and fixed.** Measured through the opening's
+  release (`docA`): the hour, the sky's dials and the fog are all
+  continuous. The cut was `#hero::before`, the wide indigo pocket behind
+  the hero copy, which left WITH the copy over .2 vh and read as the sky
+  changing. It now takes `--scrim` (main.js), 1 → 0 from a tenth of the
+  hero beat to the end of the leave beat: the sky under it changes with
+  the scroll, never at a point, and reverses the same way.
+- **surface.js (new; ripple.js retired).** A height field (wave equation,
+  RG half-float ping-pong at a sixth of the frame, two steps a frame,
+  k .30, damp .972, the edges held) disturbed by: `wake(x0,y0,x1,y1,
+  speed)` — a soft depression along the segment the cursor or finger just
+  crossed (main.js `move` on mousemove / touchmove); `setStir(vh/s)` — the
+  scroll's broad slow breath; `push(k, cx, cy)` — a seam's wide, soft push,
+  fed by the GROWTH of the seam's strength (main.js `SEAMS`, the footer
+  seam removed: the world grows calm there). The pass bends the scene by
+  the field's gradient (uAmp .46 / .34 phone) with a breath of light on
+  the slope (uLight 1.35 / 1.0; at 1.15/3.0 a fast cursor warped the gateway), tone-maps and encodes (three r160 leaves
+  a target linear). `energy` (this frame's input, settling at λ 1.8) is
+  read by the words. After ~2.5 s with nothing put in, the field is flat
+  and the scene renders straight (no cost at rest). Needs WebGL2; off
+  under reduced motion.
+- **fluid-text.js (new) + index.html `#fluid-text`.** One SVG filter
+  (fractal noise .0045/.0075, two octaves → feDisplacementMap) that every
+  copy layer takes (`body.fluid`: `.sec-in`, `.cap`, `#hero`, `#word`)
+  while the surface carries energy; its scale is the energy (fast attack,
+  slow settle), ≤ 7 px (5 on phones); at rest the class is off and the
+  type is exactly itself. No seed drift (it jumps the pattern).
+- **text.js**: the reading's lines come into clarity (blur 5 → 0 px with
+  their rise), the statement's lines 3 → 0 through their mask.
+
+Verified in the pane: no errors; the field runs (a wake at ×4 amplitude
+bends the horizon along its path, the settle leaves it flat); `--scrim`
+1 → .95 → .83 → .70 → .47 → .11 → 0 across the opening; `body.fluid` and
+the filter's scale follow the energy; build passes. Not verified: a real
+cursor's feel (the pane sends no pointer); the owner should move the
+cursor across the hero and the river and judge uAmp/uLight/MAX.
+
+
+### 21 Sept 2026 · ONE JOURNEY, ON GSAP (the owner's twenty-first brief, after emotion-agency.com/about)
+
+The owner: the scroll felt resistant, mobile needed several swipes a
+scene, the footer never fully showed on phones, the type was static and
+generic, Scene 1 → the house felt abrupt; wanted one continuous journey,
+GSAP for scroll and motion, a ripple language at the seams, editorial
+text, the same system on desktop and phone. Reference read in its
+source: Lenis (lerp ~.1) + GSAP + a three canvas with a displacement
+through its images. Done:
+
+- **GSAP 3.15 vendored** (`antaranga/vendor/gsap/`: gsap-core, CSSPlugin,
+  index, Observer, ScrollTrigger, SplitText; the standard no-charge
+  licence; `npm i -D gsap` for the source). Preloaded in index.html.
+- **scroll.js on ScrollTrigger.** ONE trigger over the page (start 0, end
+  `max` px) scrubs a proxy `t` with `SCRUB` .55 (GSAP's expo catch-up:
+  answered at once, never a step, never a delay); `t` is the story, `y =
+  t · max`. The home-made damp is gone. `hold(t)` for the review hooks;
+  `ScrollTrigger.refresh()` on every layout. Reduced motion: `scrub:
+  true`. main.js's loop rides `gsap.ticker`.
+- **text.js (new).** `makeReveal(block)`: SplitText lines (masked for a
+  statement), one paused GSAP timeline per block scrubbed by the beat's
+  copy progress (`set(p)` from movements.js `lives` and Captions): the
+  label slides in first, the statement's lines rise through their mask
+  one after another, the reading comes up line by line a breath later;
+  leaving, the statement lifts back through its mask and the reading
+  dissolves upward (IN .30, OUT .84). Built once after every split
+  (`ready`), rebuilt by `autoSplit` on a change of measure, whole
+  elements cleared of any earlier tween. The word-mask splitting and the
+  `[data-rv]` / `.word` CSS transitions are retired. The hero keeps its
+  load entrance.
+- **ripple.js (new).** One fullscreen pass (half-float MSAA target, made
+  on first use; the pass tone-maps and encodes since three r160 leaves a
+  target linear and untoned): a soft ring travelling out from a point with
+  a slow breath under it and a breath of light on the crest, ≤ 1.6 % of
+  the frame, ×.75 on phones. main.js `SEAMS`: the opening letting go;
+  arriving at the house; the dream; out of the yard to the water; out
+  through the gateway; into the stone; the descent; the draw-back; the
+  last step into the footer. `amt = k · (4u(1−u))^.8`, `phase = u`: with
+  the hand, forward and back. Off between seams (a straight render).
+- **The footer in the flow** (`position: relative; min-height: 100svh`;
+  `#footer-space` gone from the page): the page's bottom is the footer's
+  bottom on every screen; `footerP` from its own rect; `in-footer` at
+  half. The last step into it carries the last, faintest ripple.
+- **Phones**: every beat's `m` × .86 (a swipe is seen to move the story);
+  the copy's glide 34 px over its window (was 22). The leave-taking's
+  gaze begins to turn toward the house.
+
+Verified in the pane: no errors; 189 split lines; the lines of a beat's
+lead arrive one after another at u .22 and are whole at .5; leaving at
+.96 and returning to .5 restores them (the timeline is scrubbed); the
+ripple engages (amt .79 mid-lead, target allocated) and is off at a
+reading beat; the footer reaches its bottom at t = 1 with the composition
+under it; `npm run build` passes.
+
+
 ### 20 Sept 2026, late · THE WALK: the camera's vocabulary (the owner's twentieth brief, after Kage)
 
 The owner: the background world felt static, moved by zooming, changed

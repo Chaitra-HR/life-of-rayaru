@@ -182,7 +182,7 @@ body {
 /* a quiet indigo atmosphere behind the copy — readable over the sunrise.
    It ends just under the copy: the risen sun stands clear of it below. */
 #hero::before {
-  content: ''; position: absolute; z-index: -1; left: -42%; top: -60%; right: -46%; bottom: -52%;
+  content: ''; position: absolute; z-index: -1; left: -42%; top: -30%; right: -46%; bottom: -52%;   /* its top stays under the header: never a shade behind the wordmark and the nav */
   /* the copy crosses the horizon band, which is the brightest thing in the
      frame. The scrim has to CARRY it, not tint it — so it is strong at the
      centre and very wide, which is what keeps it from reading as a panel. */
@@ -326,7 +326,7 @@ body.predawn #ui { opacity: 0; }
     font-size: var(--size-body-sm); line-height: var(--leading-body);
     max-width: 34ch; color: var(--ink);
   }
-  #hero::before { left: -20%; right: -20%; top: -40%; bottom: -30%; }
+  #hero::before { left: -20%; right: -20%; top: -14%; bottom: -30%; }
 
   /* the word keeps its edge-to-edge measure but sits fully inside the frame:
      the desktop bleed crop read as broken next to the (former) black gap */
@@ -492,11 +492,12 @@ body.ui-light .cap * { text-shadow: none; }
   position: absolute; top: 34px; left: var(--gutter); display: flex; align-items: center; gap: 12px;
   color: var(--ink); opacity: .92; transition: opacity 1.2s;
   pointer-events: auto;   /* its text is copyable like the rest of the site */
+  cursor: pointer;        /* and it is the way back to the opening (main.js) */
 }
-#wordmark .mark { width: 30px; height: 30px; color: var(--gopi); flex: none; }
-#wordmark .wm-text { display: flex; flex-direction: column; gap: 1px; font-family: var(--font-micro); }
-#wordmark .wm-text b { font-family: var(--font-display); font-weight: var(--weight-display); font-size: 1.02rem; letter-spacing: .012em; line-height: 1.25; }
-#wordmark .wm-text small { font-weight: var(--weight-bold); font-size: .6rem; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-faint); line-height: 1.5; }
+#wordmark .mark, #footer .f-mark .mark { width: 30px; height: 30px; color: var(--gopi); flex: none; }
+#wordmark .wm-text, #footer .f-mark .wm-text { display: flex; flex-direction: column; gap: 1px; font-family: var(--font-micro); }
+#wordmark .wm-text b, #footer .f-mark .wm-text b { font-family: var(--font-display); font-weight: var(--weight-display); font-size: 1.02rem; letter-spacing: .012em; line-height: 1.25; }
+#wordmark .wm-text small, #footer .f-mark .wm-text small { font-weight: var(--weight-bold); font-size: .6rem; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-faint); line-height: 1.5; }
 
 /* top navigation */
 #topnav {
@@ -557,8 +558,11 @@ body.ui-light #menu-btn span { background: var(--earth); }
   #sound-btn-m .snd-x { position: absolute; width: 20px; height: 1.5px; background: currentColor; transform: rotate(-45deg); }
   body.ui-light #sound-btn-m { color: var(--gold); }
 }
-/* the playing indicator: three bars, moving only while this tab sounds */
+/* the sound control is a speaker: with its waves while on, struck through while off (js/audio.js) */
 #sound-btn { display: inline-flex; align-items: center; gap: 8px; }
+.snd-ico { display: block; width: 18px; height: 18px; color: currentColor; }
+#sound-btn-m .snd-ico { width: 15px; height: 15px; }   /* discreet; the button itself stays 44 px to tap */
+/* the playing indicator: three bars, moving only while this tab sounds */
 #sound-btn .snd-eq, #sound-btn-m .snd-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
 #sound-btn .snd-eq i, #sound-btn-m .snd-eq i { display: block; width: 2px; height: 100%; background: currentColor; transform-origin: 50% 100%; transform: scaleY(.3); }
 #sound-btn.playing .snd-eq i, #sound-btn-m.playing .snd-eq i { animation: snd-eq 1.1s ease-in-out infinite; }
@@ -572,14 +576,14 @@ body.ui-light #menu-btn span { background: var(--earth); }
    the far bank, the light. The footer is two lines set on it, and a
    hairline planting along the lower edge in the loader's own hand. It is
    not another scene, and it does not compete with the Brindavana. */
-#footer-space { height: 100vh; height: 100svh; }
 #footer {
-  /* fixed, and driven by the STORY's position (main.js sets --fp from the
-     paced scroll, scroll.js): it rises into the frame over the story's last
-     viewport. In the page's flow it rose with the raw scroll, so a fling
-     to the end showed the colophon over whatever scene was still playing. */
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 8;
-  transform: translate3d(0, calc((1 - var(--fp, 0)) * 100%), 0); will-change: transform;
+  /* IN THE FLOW (21 Sept 2026): the last scene of the journey, after the
+     story's last viewport, reached by scrolling like everything else, so
+     the page's own bottom is the footer's own bottom on every screen
+     (fixed, it could never grow past one viewport and was cut on phones).
+     The river holds under it (the canvas is fixed behind), the camera
+     settling to the lotus as it comes up (main.js footerP, from its rect). */
+  position: relative; z-index: 8;
   /* the last metres of the same journey. The footer sits in the page's own
      flow directly after the story's last scroll (no dead viewport, no second
      scroller): as it rises, the river stays under it and the night ground
@@ -595,22 +599,22 @@ body.ui-light #menu-btn span { background: var(--earth); }
      (t = 1) IS the frame the footer stands in. Shorter than a viewport the
      page could never reach t = 1; taller, and the visitor scrolls on past
      the story to find it. */
-  height: 100vh; height: 100svh; box-sizing: border-box;
+  min-height: 100vh; min-height: 100svh; box-sizing: border-box;
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 44vh 0 0;
 }
 body.nowebgl #footer { position: static; transform: none; height: auto; min-height: 0; }
-body.nowebgl #footer-space { display: none; }
 #footer .f-in { position: relative; z-index: 2; text-shadow: 0 1px 14px rgba(0,0,0,.7); }
 #footer .f-line {
   position: relative; z-index: 2;
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px 40px;
   margin: 0 var(--gutter); padding: 22px 0; border-top: 1px solid var(--line-soft);
 }
-#footer .f-mark { display: flex; align-items: center; gap: 12px; color: var(--ink); font-family: var(--font-display); font-size: 1.02rem; font-weight: var(--weight-display); letter-spacing: .012em; }
-#footer .f-mark svg { width: 28px; height: 28px; color: var(--gopi); flex: none; }
-#footer .f-links { display: flex; flex-wrap: wrap; gap: 8px 26px; }
-#footer .f-links button, #footer .f-links a { font: inherit; font-family: var(--font-micro); font-size: var(--size-label); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-faint); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; transition: color .35s; }
+/* the footer's mark IS the top's wordmark (index.html), at the same size */
+#footer .f-mark { display: flex; align-items: center; gap: 12px; color: var(--ink); opacity: .92; }
+#footer .f-links { display: flex; flex-wrap: wrap; gap: 8px 30px; }
+/* the footer's links are the top's (#topnav button): the same face, size, tracking and ink */
+#footer .f-links button, #footer .f-links a { font: inherit; font-family: var(--font-micro); font-size: var(--size-anno); font-weight: var(--weight-bold); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-dim); background: none; border: 0; padding: 8px 0; cursor: pointer; text-decoration: none; transition: color .4s; }
 #footer .f-links button:hover, #footer .f-links a:hover, #footer .f-links button:focus-visible, #footer .f-links a:focus-visible { color: var(--ink); }
 /* the colophon: origin left, the salutation held in the middle, the note right */
 #footer .f-base {
@@ -787,12 +791,11 @@ body.nowebgl .t-giant {
 /* ---- arrivals: the block's own fade is scroll-linked (movements.js); inside
    it the eyebrow and the copy breathe up a little after the title, whose
    words rise one by one, whenever the beat arrives (.sec.on) ---- */
-#movements [data-rv="up"] { opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity .7s var(--ease-out), transform .9s var(--ease-out); }
-#movements .sec.on [data-rv="up"] { opacity: 1; transform: none; transition-delay: .18s; }
-#movements .sec.on .eyebrow[data-rv="up"] { transition-delay: .04s; }
-#movements .wm { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .26em; margin-bottom: -.26em; }
-#movements .word { display: inline-block; opacity: 0; transform: translate3d(0, 120%, 0); will-change: transform, opacity; transition: transform .1s, opacity .1s; }
-#movements .sec.on .word { opacity: 1; transform: none; transition: transform .82s var(--ease-out), opacity .5s var(--ease-out); transition-delay: var(--wd, 0ms); }
+/* (21 Sept 2026: the words' reveals are GSAP timelines scrubbed by the
+   scroll, js/text.js: lines through a mask for a statement, a quiet rise
+   for the reading, a slide for the label. No CSS transition plays here.) */
+.ln { will-change: transform, opacity; }
+
 
 /* ---- the rail: one mark per chapter at the right edge, while the chapters are read ---- */
 #rail { position: absolute; right: var(--pad); top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; opacity: 0; transition: opacity .8s; pointer-events: none; }

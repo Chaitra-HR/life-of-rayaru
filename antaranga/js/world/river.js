@@ -166,6 +166,7 @@ const skyFrag = /* glsl */`
 uniform float uMode;
 uniform float uDawn;
 uniform float uRise;
+uniform float uSpread;   // the hero gradient's reach up the dome: 1 on a wide frame; a portrait frame, which looks higher, spreads the SAME tones over a taller band so the pink and the lavender fill it as they fill the wide one
 uniform float uDay;
 uniform float uNight;
 uniform float uTime;
@@ -207,10 +208,11 @@ void main(){
        on overlapping curves, no visible banding. */
     vec3 mZen = vec3(0.055, 0.052, 0.175), mMid = vec3(0.165, 0.135, 0.285);
     vec3 mRose = vec3(0.400, 0.235, 0.290), mHor = vec3(0.760, 0.450, 0.235);
-    float k = clamp(1.0 - h, 0.0, 1.0);
-    vec3 morning = mix(mZen, mMid, 1.0 - smoothstep(0.16, 0.50, h));
-    morning = mix(morning, mRose, 1.0 - smoothstep(0.030, 0.135, h));
-    morning = mix(morning, mHor, 1.0 - smoothstep(0.004, 0.050, h));
+    float hs = h / uSpread;   // the same gradient, in the frame's own proportion (see uSpread)
+    float k = clamp(1.0 - hs, 0.0, 1.0);
+    vec3 morning = mix(mZen, mMid, 1.0 - smoothstep(0.16, 0.50, hs));
+    morning = mix(morning, mRose, 1.0 - smoothstep(0.030, 0.135, hs));
+    morning = mix(morning, mHor, 1.0 - smoothstep(0.004, 0.050, hs));
     float pocket = exp(-pow((az - SUN_AZ) * 1.5, 2.0)) * pow(k, 5.0);
     morning = mix(morning, vec3(0.95, 0.66, 0.38), pocket * 0.44);
     morning += vec3(0.44, 0.19, 0.05) * exp(-pow((az - SUN_AZ) * 2.2, 2.0)) * pow(k, 13.0);
@@ -370,7 +372,7 @@ export function createRiverStage(ctx) {
   /* sky dome */
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(210, 24, 16),
-    new THREE.ShaderMaterial({ vertexShader: skyVert, fragmentShader: skyFrag, side: THREE.BackSide, uniforms: { uMode: { value: 0 }, uDawn: { value: 0 }, uRise: { value: 0 }, uDay: { value: 0 }, uNight: { value: 0 }, uTime: { value: 0 }, uLinear: { value: 0 } }, depthWrite: false })
+    new THREE.ShaderMaterial({ vertexShader: skyVert, fragmentShader: skyFrag, side: THREE.BackSide, uniforms: { uMode: { value: 0 }, uDawn: { value: 0 }, uRise: { value: 0 }, uSpread: { value: 1 }, uDay: { value: 0 }, uNight: { value: 0 }, uTime: { value: 0 }, uLinear: { value: 0 } }, depthWrite: false })
   );
   g.add(sky);
 
@@ -898,6 +900,10 @@ export function createRiverStage(ctx) {
       sky.material.uniforms.uMode.value = dreamSky * .55;
       sky.material.uniforms.uDawn.value = openT;
       sky.material.uniforms.uRise.value = riseNow;
+      /* the frame's proportion: a portrait phone looks higher up the dome
+         than the wide hold, so the hero's gradient reaches higher with it
+         (the same colours, the same order, the same balance in the frame) */
+      { const ar = cam && cam.aspect ? cam.aspect : 1.6; sky.material.uniforms.uSpread.value = ar < .8 ? 1.9 : ar < 1.3 ? 1.3 : 1; }
       sky.material.uniforms.uDay.value = hour ? hour.day : 0;
       sky.material.uniforms.uNight.value = night;
       /* the leave-taking: the last of chapter 00 fills with morning light

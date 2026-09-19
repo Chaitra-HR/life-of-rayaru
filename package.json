@@ -12,6 +12,7 @@
     "preview": "serve dist"
   },
   "devDependencies": {
+    "gsap": "^3.15.0",
     "serve": "^14.2.6"
   }
 }

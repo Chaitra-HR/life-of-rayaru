@@ -17,9 +17,10 @@
 // enter, drifts while they are read, and leaves as they go. A beat with no
 // copy is travel: the camera and the world move, nothing is read.
 //
-// Sizes are the desktop's; `m` is the phone's where it differs (a phone
-// flicks two or three viewports at a time and its viewport is shorter, so
-// its beats are a little shorter, never a scaled copy of the desktop).
+// Sizes are the desktop's; `m` is the phone's (a phone flicks two or three
+// viewports at a time and its viewport is shorter, so every swipe must be
+// seen to move the story: its beats are shorter, ~.75 of the desktop's,
+// the same words read in the same order).
 // The physical lengths are AUTHORED, per beat, for the amount of copy, the
 // size of the reveal, and the distance the camera has to go. They are not
 // a constant.
@@ -28,82 +29,82 @@ export const SCORE = [
     /* the landscape answers the first scroll: the camera settles forward a
        step while the heading is read, the sun still coming up; then the
        words go and the camera walks on into the morning */
-    { id: 'hero',    vh: 2.2, m: 2.0, copy: [0, .66] },
-    { id: 'leave',   vh: 1.4, m: 1.2 },
+    { id: 'hero',    vh: 2.2, m: 1.72, copy: [0, .66] },
+    { id: 'leave',   vh: 1.4, m: 1.03 },
   ]},
   { id: 'c01', num: '01', name: 'Venkatanatha', beats: [
     /* the walk from the composition along the bank to the house's gate,
        the first words arriving as the camera does */
-    { id: 'mv-lead', vh: 1.1, m: 1.0 },
-    { id: 'mv-01',   vh: 2.3, m: 2.1, copy: [.06, .90] },
-    { id: 'mv-02',   vh: 2.4, m: 2.2, copy: [.08, .92] },
+    { id: 'mv-lead', vh: 1.1, m: 0.86 },
+    { id: 'mv-01',   vh: 2.3, m: 1.81, copy: [.06, .90] },
+    { id: 'mv-02',   vh: 2.4, m: 1.89, copy: [.08, .92] },
   ]},
   { id: 'c02', num: '02', name: 'Gṛhastha', beats: [
-    { id: 'mv-02m',  vh: 2.1, m: 1.9, copy: [.08, .92] },
+    { id: 'mv-02m',  vh: 2.1, m: 1.63, copy: [.08, .92] },
   ]},
   { id: 'c03', num: '03', name: 'Kumbakonam', beats: [
     /* out of the yard by the gate and down the bank to the Matha: travel */
-    { id: 'way-02b', vh: .9,  m: .8 },
-    { id: 'mv-02b',  vh: 1.9, m: 1.8, copy: [.10, .92] },
+    { id: 'way-02b', vh: .9,  m: 0.69 },
+    { id: 'mv-02b',  vh: 1.9, m: 1.55, copy: [.10, .92] },
     /* the dream: the light rises behind the stone in the middle of the reading */
-    { id: 'mv-02d',  vh: 2.3, m: 2.1, copy: [.08, .92] },
+    { id: 'mv-02d',  vh: 2.3, m: 1.81, copy: [.08, .92] },
   ]},
   { id: 'c04', num: '04', name: 'Raghavendra', beats: [
     /* the name: dusk falls into it, the two deepas are lit */
-    { id: 'mv-03',   vh: 2.7, m: 2.4, copy: [.08, .92] },
+    { id: 'mv-03',   vh: 2.7, m: 2.06, copy: [.08, .92] },
   ]},
   { id: 'c05', num: '05', name: 'The Works', beats: [
-    { id: 'mv-04',   vh: 2.1, m: 1.9, copy: [.10, .90] },
+    { id: 'mv-04',   vh: 2.1, m: 1.63, copy: [.10, .90] },
     /* one volume each: the walk lands on it, the cover lifts as the first
        sentence is read, closes as the words go */
-    { id: 'mv-04a',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-04b',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-04c',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-04d',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-04e',  vh: 1.6, m: 1.5, copy: [.14, .90] },
+    { id: 'mv-04a',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-04b',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-04c',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-04d',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-04e',  vh: 1.6, m: 1.29, copy: [.14, .90] },
   ]},
   { id: 'c06', num: '06', name: 'Tattvavāda', beats: [
     /* off the landing, out through the gateway's opening onto the bay */
-    { id: 'way-05',  vh: .8,  m: .7 },
-    { id: 'mv-05',   vh: 2.7, m: 2.4, copy: [.10, .92] },
+    { id: 'way-05',  vh: .8,  m: 0.6 },
+    { id: 'mv-05',   vh: 2.7, m: 2.06, copy: [.10, .92] },
     /* the five differences: one each, the gaze turning between them */
-    { id: 'mv-05a',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-05b',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-05c',  vh: 1.5, m: 1.4, copy: [.14, .90] },
-    { id: 'mv-05d',  vh: 1.6, m: 1.5, copy: [.14, .90] },
-    { id: 'mv-05e',  vh: 1.5, m: 1.4, copy: [.14, .90] },
-    { id: 'mv-05f',  vh: 2.1, m: 1.9, copy: [.10, .90] },
+    { id: 'mv-05a',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-05b',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-05c',  vh: 1.5, m: 1.2, copy: [.14, .90] },
+    { id: 'mv-05d',  vh: 1.6, m: 1.29, copy: [.14, .90] },
+    { id: 'mv-05e',  vh: 1.5, m: 1.2, copy: [.14, .90] },
+    { id: 'mv-05f',  vh: 2.1, m: 1.63, copy: [.10, .90] },
   ]},
   { id: 'c07', num: '07', name: 'The Journey', beats: [
-    { id: 'mv-06',   vh: 2.3, m: 2.1, copy: [.10, .90] },
+    { id: 'mv-06',   vh: 2.3, m: 1.81, copy: [.10, .90] },
   ]},
   { id: 'c08', num: '08', name: 'Manchale', beats: [
     /* the arrival: the composition reached by arriving at it, then held while it is read */
-    { id: 'mv-07',   vh: 2.5, m: 2.3, copy: [.14, .90] },
+    { id: 'mv-07',   vh: 2.5, m: 1.98, copy: [.14, .90] },
     /* through the gateway to the stone, the lamps' warmth growing, the air closing */
-    { id: 'mv-tail', vh: 1.5, m: 1.3 },
+    { id: 'mv-tail', vh: 1.5, m: 1.12 },
   ]},
   { id: 'c09', num: '09', name: 'Brindavana', beats: [
     /* the day breaks over Manchale; the stone that stands there today lifts
        away while the day of Pravesha is read (it is not yet built) */
-    { id: 'b-day',     vh: 2.3, m: 2.1, copy: [.06, .86] },
+    { id: 'b-day',     vh: 2.3, m: 1.81, copy: [.06, .86] },
     /* the bank is cut open and the camera goes down to the chamber: travel */
-    { id: 'b-down',    vh: 1.5, m: 1.3 },
-    { id: 'b-chamber', vh: 2.7, m: 2.4, copy: [.08, .92] },
-    { id: 'b-kurma',   vh: 2.1, m: 1.9, copy: [.10, .92] },
-    { id: 'b-plate',   vh: 1.8, m: 1.7, copy: [.10, .92] },
-    { id: 'b-shals',   vh: 2.5, m: 2.3, copy: [.08, .92] },
-    { id: 'b-stone',   vh: 2.7, m: 2.4, copy: [.08, .92] },
-    { id: 'b-grain',   vh: 1.8, m: 1.7, copy: [.10, .92] },
-    { id: 'b-deities', vh: 2.3, m: 2.1, copy: [.08, .90] },
+    { id: 'b-down',    vh: 1.5, m: 1.12 },
+    { id: 'b-chamber', vh: 2.7, m: 2.06, copy: [.08, .92] },
+    { id: 'b-kurma',   vh: 2.1, m: 1.63, copy: [.10, .92] },
+    { id: 'b-plate',   vh: 1.8, m: 1.46, copy: [.10, .92] },
+    { id: 'b-shals',   vh: 2.5, m: 1.98, copy: [.08, .92] },
+    { id: 'b-stone',   vh: 2.7, m: 2.06, copy: [.08, .92] },
+    { id: 'b-grain',   vh: 1.8, m: 1.46, copy: [.10, .92] },
+    { id: 'b-deities', vh: 2.3, m: 1.81, copy: [.08, .90] },
     /* the camera draws back out of it all to the opening's own hold: travel */
-    { id: 'b-out',     vh: 1.7, m: 1.5 },
+    { id: 'b-out',     vh: 1.7, m: 1.29 },
   ]},
   { id: 'c10', num: '00', name: 'Return', beats: [
-    { id: 'r-year',    vh: 2.4, m: 2.2, copy: [.10, .90] },
-    { id: 'r-today',   vh: 2.4, m: 2.2, copy: [.10, .90] },
+    { id: 'r-year',    vh: 2.4, m: 1.89, copy: [.10, .90] },
+    { id: 'r-today',   vh: 2.4, m: 1.89, copy: [.10, .90] },
     /* the last words gone, the place held; the footer follows in the same scroll */
-    { id: 'r-hold',    vh: .8,  m: .7 },
+    { id: 'r-hold',    vh: .8,  m: 0.6 },
   ]},
 ];
 

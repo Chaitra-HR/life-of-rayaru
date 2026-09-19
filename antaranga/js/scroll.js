@@ -3,23 +3,30 @@
 // and t derives from THE SCORE (score.js), the one authored timeline.
 // Scroll is choreography, not navigation: copy travels with the scroll,
 // beats overlap, and the movements are felt, never announced.
-import { clamp01, damp, remap, smooth } from './util.js';
+import { clamp01, remap, smooth } from './util.js';
 import { SCORE, layout, COPY_IN, COPY_OUT } from './score.js';
+import { gsap } from '../vendor/gsap/index.js';
+import { ScrollTrigger } from '../vendor/gsap/ScrollTrigger.js';
+import { makeReveal } from './text.js';
+
+gsap.registerPlugin(ScrollTrigger);
 
 /* the chapters, for routing: filled from the score's layout (a, b in t) */
 export const CHAPTERS = SCORE.map(c => ({ id: c.id, num: c.num, name: c.name, a: 0, b: 1 }));
 
-/* THE SCROLL IS THE MASTER TIMELINE (20 Sept 2026).
+/* THE SCROLL IS THE MASTER TIMELINE (20 Sept 2026; on GSAP from the 21st).
    The page scrolls at its natural speed: wheel, trackpad, touch, keys and
-   the browser's own momentum all land in window.scrollY. The story keeps
-   one position, `y`, that follows the page through ONE exponential damp
-   (LAMBDA): enough to take the step out of a wheel notch, never enough to
-   be felt as a delay. Nothing else stands between the visitor's hand and
-   the world: no pace cap, no leash, no gate. t = y / max, linear, so the
-   score's viewports are the scroll's viewports and every window in the
-   score is exactly where the score says. When the visitor stops, the
-   story stops within a few frames; only the ambient motion goes on. */
-export const LAMBDA = 7.5;
+   the browser's own momentum all land in window.scrollY. ONE ScrollTrigger
+   over the whole page maps that to the story's t (0 at the top, 1 at the
+   score's end), SCRUBBED: GSAP eases t toward the page over SCRUB seconds
+   (an expo ease, so a notch of the wheel is answered at once and the
+   mechanical step of raw scroll is gone, never a delay). Nothing else
+   stands between the visitor's hand and the world: no pace cap, no leash,
+   no gate, no second smoothing. t is linear in the scroll, so the score's
+   viewports are the scroll's viewports and every window in the score is
+   exactly where the score says. When the visitor stops, the story stops
+   within a few frames; only the ambient motion goes on. */
+export const SCRUB = .55;
 
 export class ScrollTimeline {
   constructor({ reduced = false, phone = false, sp00 = null, sp09 = null, onLayout = null } = {}) {
@@ -39,6 +46,12 @@ export class ScrollTimeline {
     this.lay = null;
     this.resize();
     window.addEventListener('resize', () => this.resize());
+    /* the one ScrollTrigger: the page's scroll → t, scrubbed */
+    this.proxy = { t: 0 };
+    this.tween = gsap.to(this.proxy, {
+      t: 1, ease: 'none',
+      scrollTrigger: { trigger: document.body, start: 0, end: () => `${Math.round(this.max)}px`, scrub: reduced ? true : SCRUB, invalidateOnRefresh: true },
+    });
     // any real input hands control straight back to the visitor
     const cancel = () => { this.jump = null; };
     window.addEventListener('wheel', cancel, { passive: true });
@@ -76,6 +89,7 @@ export class ScrollTimeline {
       returnA: lay.byId['r-year'].t0,
     };
     if (this.onLayout) this.onLayout(lay, this.marks);
+    if (this.tween) ScrollTrigger.refresh();
   }
   /* scroll px → global t, and back: linear, the score's own viewports */
   tAt(y) { return clamp01(y / Math.max(1, this.max)); }
@@ -98,16 +112,18 @@ export class ScrollTimeline {
     }
     const rawY = this.rawY = window.scrollY;
     this.raw = this.tAt(rawY);
-    /* the first frame stands where the page was opened (a reload mid-story), never a walk from the top */
-    if (!this.inited) { this.inited = true; this.y = rawY; }
     const prev = this.t;
-    /* ONE damp toward the page. Near-instant when reduced motion is preferred. */
-    const ny = damp(this.y, rawY, this.reduced ? 30 : LAMBDA, dt);
-    this.y = Math.abs(ny - rawY) < .5 ? rawY : ny;
-    this.t = this.tAt(this.y);
+    /* the first frame stands where the page was opened (a reload mid-story), never a walk from the top */
+    if (!this.inited) { this.inited = true; this.proxy.t = this.raw; if (this.tween) this.tween.progress(this.raw); }
+    /* the story's position is the scrubbed t (GSAP), and nothing else */
+    if (this._hold !== undefined) { this.t = this._hold; this._hold = undefined; }
+    else this.t = clamp01(this.proxy.t);
+    this.y = this.t * this.max;
     this.vel = (this.t - prev) / Math.max(dt, 1e-4);
     return this.t;
   }
+  /* a review aid (ANTARANGA.step): the next update takes this t as read */
+  hold(t) { this._hold = t; this.proxy.t = t; if (this.tween) this.tween.progress(t); }
   chapterAt(t = this.t) {
     for (let i = CHAPTERS.length - 1; i >= 0; i--) if (t >= CHAPTERS[i].a) return i;
     return 0;
@@ -239,13 +255,25 @@ export class Captions {
       el.className = `cap ${c.pos || 'pos-column'}`;
       el.innerHTML = `<div class="cap-in">${c.html}</div>`;
       host.appendChild(el);
-      return { ...c, el, inner: el.firstElementChild, o: -1, p: -1 };
+      return { ...c, el, inner: el.firstElementChild, o: -1, p: -1, reveal: null };
     });
   }
+  /* the words' own reveals (text.js): built lazily, one a frame, as each
+     beat comes within reach (never all at once on the first frame) */
+  build(reduced) { this.reduced = reduced; }
   /* lay: the score's layout (timeline.lay); the fades are viewports of t */
   update(t, reduced, lay) {
     if (!lay) return;
     const fi = COPY_IN * lay.h / lay.max, fo = COPY_OUT * lay.h / lay.max;
+    let need = null, nd = Infinity;
+    for (const c of this.items) {
+      if (c.reveal) continue;
+      const b = lay.byId[c.beat]; if (!b || !b.copy) continue;
+      const span = b.t1 - b.t0;
+      if (t < b.t0 - 1.6 * span || t > b.t1 + span) continue;
+      const d = Math.abs(t - b.cC); if (d < nd) { nd = d; need = c; }
+    }
+    if (need) need.reveal = makeReveal(need.inner, { reduced: this.reduced });
     for (const c of this.items) {
       const b = lay.byId[c.beat];
       if (!b || !b.copy) continue;
@@ -254,6 +282,7 @@ export class Captions {
       const oOut = 1 - smooth(remap(t, z - fo, z));
       const o = oIn * oOut;
       const p = clamp01((t - a) / Math.max(1e-9, z - a));
+      if (c.reveal && (o > 0 || c.o > 0)) c.reveal.set(p);
       if (Math.abs(o - c.o) > .003 || (o === 0 && c.o !== 0) || (o > 0 && Math.abs(p - c.p) > .004)) {
         c.o = o; c.p = p;
         c.el.style.opacity = o.toFixed(3);

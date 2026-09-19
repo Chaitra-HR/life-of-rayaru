@@ -20,6 +20,7 @@
 // with the story's t and the score's layout.
 import { clamp01, remap, smooth, lerp } from './util.js';
 import { COPY_IN, COPY_OUT } from './score.js';
+import { makeReveal } from './text.js';
 
 export function createMovements({ reduced = false, standalone = false, scrollToBeat = null } = {}) {
   const el = document.getElementById('movements');
@@ -30,18 +31,9 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
   const rail = document.getElementById('rail');
   const navBtns = [...document.querySelectorAll('#topnav button[data-sec]')];
 
-  /* ---- headings arrive a word at a time: each word in its own mask ---- */
-  for (const h of el.querySelectorAll('[data-rv="words"]')) {
-    const words = h.textContent.trim().split(/\s+/);
-    h.textContent = '';
-    words.forEach((w, i) => {
-      const m = document.createElement('span'); m.className = 'wm';
-      const s = document.createElement('span'); s.className = 'word'; s.textContent = w; s.style.setProperty('--wd', `${i * 55}ms`);
-      m.appendChild(s); h.appendChild(m);
-      if (i < words.length - 1) h.appendChild(document.createTextNode(' '));
-    });
-  }
-
+  /* ---- the words' own reveals (text.js): one scrubbed timeline per
+     block, built once the fonts are in (build), driven by the beat's copy
+     progress each frame ---- */
   /* without the world (no WebGL, the flowing document) every block is
      simply there */
   if (standalone) el.querySelectorAll('.sec').forEach(s => s.classList.add('on'));
@@ -55,10 +47,16 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
     pale: s.classList.contains('pale'),
     mid: s.classList.contains('mid'),      // one of the two centred beats (style.css .sec.mid)
     rx: { left: 0, top: 0, w: 0, h: 0 },
-    o: -1, oS: '', tf: '', on: false, pe: '', p: 0,
+    o: -1, oS: '', tf: '', on: false, pe: '', p: 0, reveal: null,
   }));
-  function measure() {
+  /* the reveals are built LAZILY, one block a frame, as its beat comes
+     within reach (a beat and a half ahead): thirty-one splits at once was
+     a stall of half a second on the first frame after the loader */
+  function build() { /* nothing up front */ }
+  function buildOne(b) { if (standalone || b.reveal) return; b.reveal = makeReveal(b.inner, { reduced }); measure(b); }
+  function measure(only = null) {
     for (const b of beats) {
+      if (only && b !== only) continue;
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       for (const c of b.inner.children) {
         const g = c.getBoundingClientRect();
@@ -91,6 +89,16 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
      the window, which the score sizes for its reading. */
   function lives(t) {
     const fi = COPY_IN * lay.h / lay.max, fo = COPY_OUT * lay.h / lay.max;
+    /* one reveal built a frame, the nearest first, when its beat is within reach */
+    let need = null, nd = Infinity;
+    for (const b of beats) {
+      if (b.reveal) continue;
+      const B = lay.byId[b.id]; if (!B || !B.copy) continue;
+      const span = B.t1 - B.t0;
+      if (t < B.t0 - 1.6 * span || t > B.t1 + span) continue;
+      const d = Math.abs(t - B.cC); if (d < nd) { nd = d; need = b; }
+    }
+    if (need) buildOne(need);
     for (const b of beats) {
       const B = lay.byId[b.id];
       if (!B || !B.copy) continue;
@@ -100,6 +108,7 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
       const o = oIn * oOut;
       const p = clamp01((t - a0) / Math.max(1e-9, a1 - a0));
       b.p = p;
+      if (b.reveal && (o > 0 || b.o > 0)) b.reveal.set(p);
       const oS = o.toFixed(3);
       if (oS !== b.oS) {
         b.oS = oS; b.o = o;
@@ -118,7 +127,7 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
       /* written as a custom property: the stylesheet composes it with the
          block's own placement (the name is centred by a translate of its
          own), so no inline transform ever overrides the layout */
-      const dy = reduced ? 0 : (0.5 - p) * 22 + (1 - oIn) * 24 - (1 - oOut) * 12;
+      const dy = reduced ? 0 : (0.5 - p) * 34 + (1 - oIn) * 20 - (1 - oOut) * 10;
       const tf = `${dy.toFixed(1)}px`;
       if (tf !== b.tf) { b.tf = tf; b.inner.style.setProperty('--dy', tf); }
       /* the words of the title rise as the beat arrives (css .sec.on); they
@@ -215,5 +224,5 @@ export function createMovements({ reduced = false, standalone = false, scrollToB
     return { i, n: sections.length };
   }
 
-  return { el, size, measure, update, setNav, setLive() {}, beats };
+  return { el, size, measure, build, update, setNav, setLive() {}, beats };
 }

@@ -77,10 +77,10 @@ export function createAmbience({ button = null } = {}) {
     for (const b of buttons) {
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', on ? 'Sound on. Turn off (M)' : 'Sound off. Turn on (M)');
-      const eq = '<span class="snd-eq" aria-hidden="true"><i></i><i></i><i></i></span>';
-      b.innerHTML = b.dataset.compact != null
-        ? eq + (on ? '' : '<span class="snd-x" aria-hidden="true"></span>')
-        : (on ? 'SOUND · ON' + eq : 'SOUND · OFF');
+      /* one symbol, on both buttons: a speaker, its two waves while on, a stroke through it while off */
+      const waves = '<path d="M12.6 6.4a4.2 4.2 0 0 1 0 5.2"/><path d="M14.9 4.1a7.4 7.4 0 0 1 0 9.8"/>';
+      const off = '<path d="M12.2 6.6l4.6 4.8M16.8 6.6l-4.6 4.8"/>';
+      b.innerHTML = '<svg class="snd-ico" viewBox="0 0 20 18" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h2.6L9.4 3v12L5.1 11.5H2.5z"/>' + (on ? waves : off) + '</g></svg>';
     }
   };
   /* the bars move only while this tab is actually making sound */
@@ -110,7 +110,7 @@ export function createAmbience({ button = null } = {}) {
       const pc = document.hidden ? ctx.suspend() : ctx.resume();
       const pm = (media && !document.hidden) ? media.play() : null;
       try { await pc; } catch (e) {}
-      if (pm) { try { await pm; } catch (e) { /* the browser wants a gesture; the next one starts it */ } }
+      if (pm) { try { await pm; } catch (e) { /* the browser wants a gesture: the next one, anywhere, starts it (arm), so the visitor never taps the control twice */ if (on) arm(); } }
     } else {
       /* off is immediate in effect: the master is cut at once, and the engine
          is paused outright a moment later (the fade is shorter than the

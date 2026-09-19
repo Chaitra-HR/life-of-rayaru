@@ -5,6 +5,8 @@ import { clamp, clamp01, lerp, remap, smooth, damp, V3 } from './util.js';
 import { ScrollTimeline, Captions, CHAPTERS, veilAt } from './scroll.js';
 import { makeTrack } from './track.js';
 import { COPY_OUT } from './score.js';
+import { Surface } from './surface.js';
+import { gsap } from '../vendor/gsap/index.js';
 import { createMovements } from './movements.js';
 import { createAmbience } from './audio.js';
 import { BrindavanaPreloader } from './preloader.js';
@@ -567,7 +569,7 @@ function runApp(renderer) {
        approach, not a zoom */
     add(hero.t0, [F.P[0] - .8, F.P[1] + .22, F.P[2] + 1.6], [F.L[0], F.L[1] + .6, F.L[2]], F.fov0 + 1.5, 1, 'hero · first frame');
     add(hero.cB, F.P, F.L, F.fov0, 1, 'hero · settled');
-    { const c = compShot(1.1); add(leave.t1, [c.P[0] + .4, c.P[1], c.P[2]], c.L, c.fov, 1, 'leave · the step into the light'); }
+    { const c = compShot(1.1); add(leave.t1, [c.P[0] + .4, c.P[1], c.P[2]], [c.L[0] + 2.4, c.L[1] - .2, c.L[2] + 2.5], c.fov, 1, 'leave · the step into the light, the gaze beginning to turn toward the house'); }
     /* the stations: arrive and settle */
     const resolved = STATIONS.map(st => {
       const B = lay.byId[st.id]; if (!B || !B.copy) return null;
@@ -788,6 +790,10 @@ function runApp(renderer) {
       onLayout,
     });
     const captions = new Captions();
+    /* the words' reveals (text.js): every block split into lines and given
+       its scrubbed timeline, now that the fonts are in */
+    movements.build();
+    captions.build(reduced);
     /* ?beats — the site-wide scroll overlay: the chapter, the beat and
        its progress, and every window authored in it (copy, camera keys,
        light, objects, layers), so a visual that runs ahead of its words
@@ -818,6 +824,30 @@ function runApp(renderer) {
     const body = document.body;
     const aaradhaneLink = document.getElementById('aaradhane-link');
     const footerEl = document.getElementById('footer');
+    /* THE SURFACE (surface.js): a transparent skin over the frame that the
+       cursor or a finger disturbs, locally, and that settles again. Nothing
+       else touches it (not the scroll, not a seam): the artwork under it
+       is never touched and the frame's edges never move. */
+    const surface = new Surface(renderer, { mobile: isMobile, reduced });
+    surface.warm(scene, camera);
+    /* the cursor's wake and a finger's: from where it was to where it is,
+       with its speed (frame widths a second) */
+    const pt = { x: -1, y: -1, t: 0 };
+    const move = (x, y) => {
+      const W = window.innerWidth || 1, H = window.innerHeight || 1, now = performance.now() / 1000;
+      if (pt.x >= 0) {
+        const dx = (x - pt.x) / W, dy = (y - pt.y) / H, dtE = Math.max(.006, now - pt.t);
+        surface.wake(pt.x / W, 1 - pt.y / H, x / W, 1 - y / H, Math.hypot(dx, dy) / dtE);
+      }
+      pt.x = x; pt.y = y; pt.t = now;
+    };
+    if (!reduced) {
+      if (!isMobile) window.addEventListener('mousemove', e => move(e.clientX, e.clientY), { passive: true });
+      window.addEventListener('touchstart', e => { const c = e.touches[0]; if (c) { pt.x = c.clientX; pt.y = c.clientY; pt.t = performance.now() / 1000; } }, { passive: true });
+      window.addEventListener('touchmove', e => { const c = e.touches[0]; if (c) move(c.clientX, c.clientY); }, { passive: true });
+      window.addEventListener('touchend', () => { pt.x = -1; pt.y = -1; }, { passive: true });
+      window.addEventListener('mouseleave', () => { pt.x = -1; pt.y = -1; });
+    }
 
     /* a lost context must not strand the visitor on a frozen frame */
     canvas.addEventListener('webglcontextlost', (e) => {
@@ -844,6 +874,8 @@ function runApp(renderer) {
       menuBtn.addEventListener('click', () => setNav(!body.classList.contains('nav-open')));
       window.addEventListener('keydown', e => { if (e.key === 'Escape') setNav(false); });
     }
+    /* the wordmark, top and bottom, is the way back to the opening */
+    document.querySelectorAll('#wordmark, #footer .f-mark').forEach(w => w.addEventListener('click', () => { timeline.scrollToY(0); setNav(false); }));
     document.querySelectorAll('[data-ch]').forEach(b =>
       b.addEventListener('click', () => { timeline.scrollToChapter(+b.dataset.ch); setNav(false); }));
     /* the chapters are addressed by element (movements.js); close the phone menu after any link */
@@ -970,9 +1002,6 @@ function runApp(renderer) {
       if (rise > .02) { body.classList.remove('predawn'); body.classList.add('hero-in'); }
       body.classList.toggle('past-hero', t > .004);
       setLinearMode(STYLED.linear && openNow > .35);
-      /* the footer follows the story too (css #footer, --fp): it rises into
-         the frame over the story's last viewport, whatever the page did */
-      { const e = clamp01((sy - (timeline.max - vh)) / vh).toFixed(3); if (e !== dom.footerE) { dom.footerE = e; if (footerEl) footerEl.style.setProperty('--fp', e); } }
       /* no ground at either seam: the dusk falls in view at the chapters'
          head, and at the tail the camera walks to the stone and the day
          breaks over it (river.js) */
@@ -1002,12 +1031,13 @@ function runApp(renderer) {
       /* the camera: the one track, and past the end of the story the
          footer scrolls in over the last frame, its progress tilting the
          camera to the lotus */
-      const fh = footerEl ? Math.max(1, footerEl.offsetHeight) : 1;
-      const fp = clamp01((timeline.y - timeline.max) / Math.max(1, fh - vh));
+      /* the footer is in the flow (css #footer): how far its top has risen
+         into the frame is the camera's settle to the lotus and the ground
+         coming up under the last lines */
+      const fr = footerEl ? footerEl.getBoundingClientRect() : null;
+      const fp = fr ? clamp01((vh - fr.top) / vh) : 0;
       if (stages.river) stages.river.footerP = fp;
-      /* the footer is one viewport: its lines are in the frame once the
-         last half-viewport of the story is scrolled (fp itself stays 0) */
-      body.classList.toggle('in-footer', timeline.y > timeline.max - vh * .5);
+      body.classList.toggle('in-footer', fp > .5);
       let shot = camAt(t, fp, M, lay), offsetY = 0;
       if (ci === 0 && window.__camOverride) { const o = window.__camOverride; shot = { pos: A2W(...o.pos), look: A2W(...o.look), fov: o.fov || shot.fov }; }
       hudBeatsTick(t);
@@ -1145,13 +1175,18 @@ function runApp(renderer) {
           const hr = stages.river ? stages.river.hour : null, nt = hr ? hr.night : 0, dy = hr ? hr.day : 0;
           getGrade().render(scene, camera, { time: now, fade: 1, bloom: .11 + .10 * nt, threshold: 1.6 - .6 * nt, knee: .3, day: dy, night: nt, fog: fogCol });
         }
-        else { renderer.setRenderTarget(null); renderer.render(scene, camera); }
+        else {
+          /* the scene, exactly as it is; the skin over it only where a hand has touched it */
+          surface.render(scene, camera, now, dt);
+        }
       }
 
-      if (!manual) { rafAlive = performance.now(); requestAnimationFrame(frame); }
+      if (!manual) rafAlive = performance.now();
     }
     let rafAlive = performance.now();
-    requestAnimationFrame(frame);
+    /* the loop rides GSAP's ticker, after the ScrollTrigger's own scrub has
+       moved t for this frame (scroll.js) */
+    gsap.ticker.add(() => frame(false));
     // watchdog: some embedded webviews suspend rAF even while visible
     setInterval(() => {
       if (document.hidden) return;
@@ -1160,12 +1195,12 @@ function runApp(renderer) {
 
     /* debug/authoring hook: jump to a scroll position, settle, return a frame */
     window.ANTARANGA = {
-      renderer, scene, camera, timeline, stages, ambience, get grade() { return getGrade(); },
+      renderer, scene, camera, timeline, stages, ambience, surface, get grade() { return getGrade(); },
       /* review aid: pin the sunrise dial (0 pre-dawn … 1 morning), -1 to release */
       setRise(v) { riseOverride = v; },
       step(t) {
-        timeline.raw = t; timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true;
         window.scrollTo(0, timeline.yAt(t));
+        timeline.inited = true; timeline.hold(t);
         camS.force = true;
         frame(true);
       },
@@ -1222,8 +1257,7 @@ function runApp(renderer) {
       },
       snap(t, settle = true, steps = 8) {
         window.scrollTo(0, timeline.yAt(t));
-        timeline.raw = t;
-        if (settle) { timeline.t = t; timeline.y = timeline.yAt(t); timeline.inited = true; camS.force = true; }
+        if (settle) { timeline.inited = true; timeline.hold(t); camS.force = true; }
         /* each synthetic frame advances the clock by 50 ms, so the damped
            atmosphere and lights actually settle instead of freezing at
            whatever the live page last showed */

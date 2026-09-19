@@ -29,6 +29,14 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
 <link rel="modulepreload" href="js/world/stone-maps.js">
 <link rel="modulepreload" href="js/score.js">
 <link rel="modulepreload" href="js/track.js">
+<link rel="modulepreload" href="vendor/gsap/gsap-core.js">
+<link rel="modulepreload" href="vendor/gsap/CSSPlugin.js">
+<link rel="modulepreload" href="vendor/gsap/index.js">
+<link rel="modulepreload" href="vendor/gsap/Observer.js">
+<link rel="modulepreload" href="vendor/gsap/ScrollTrigger.js">
+<link rel="modulepreload" href="vendor/gsap/SplitText.js">
+<link rel="modulepreload" href="js/text.js">
+<link rel="modulepreload" href="js/surface.js">
 <link rel="modulepreload" href="js/scroll.js">
 <link rel="modulepreload" href="js/world/brindavana.js">
 <link rel="modulepreload" href="js/world/river.js">
@@ -147,7 +155,7 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
       <section class="sec" id="mv-04" aria-label="The works">
         <div class="sec-in">
           <div class="eyebrow" data-rv="up"><i class="dot"></i><span class="k">The writing years</span><span class="k kn" lang="kn">ಪರಿಮಳಾಚಾರ್ಯ</span></div>
-          <h2 class="title" data-rv="words">Around 45 works, written with remarkable clarity.</h2>
+          <h2 class="title" data-rv="words">His words became a way into deeper thought.</h2>
           <div class="copy" data-rv="up">
             <p class="lead">Rayaru wrote extensively on the works of Madhvacharya, Jayatirtha and the wider Tattvavāda tradition, clarifying difficult passages and carrying their arguments forward.</p>
             <p class="body">Here are five of those granthas, as they are known today.</p>
@@ -282,8 +290,6 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
     </article>
 
     <div class="sp" id="sp09" aria-hidden="true"></div>
-    <!-- the footer's own run of scroll: the footer itself is fixed and rises with the story (css #footer, main.js --fp) -->
-    <div class="sp" id="footer-space" aria-hidden="true"></div>
   </div>
 
   <!-- the night ground: rises over the river as the last light goes at the
@@ -364,12 +370,18 @@ window.__errs=[];window.addEventListener('error',e=>window.__errs.push((e.messag
          the footer is in the page's own flow, one scroll from first to last -->
     <div class="f-in">
       <div class="f-line">
-        <div class="f-mark"><svg viewBox="0 0 34 34" aria-hidden="true" focusable="false"><g stroke="currentColor" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 29.4V15C4.5 9.5 8.8 5 14 4 15.2 3.75 16.3 3 17 1.8 17.7 3 18.8 3.75 20 4 25.2 5 29.5 9.5 29.5 15V29.4"/><path d="M2.5 29.4H31.5"/><path d="M4 32H30"/><path d="M9 28.8V26.2H11V17.6H9.6V13.4H24.4V17.6H23V26.2H25V28.8Z"/><path d="M14.8 26.2V21.6C14.8 20.2 15.8 19.4 17 19.4 18.2 19.4 19.2 20.2 19.2 21.6V26.2"/><path d="M17 13.4V11.2"/><circle cx="17" cy="10.15" r="1.05"/></g><g fill="currentColor" stroke="none"><circle cx="1.4" cy="32" r=".95"/><circle cx="32.6" cy="32" r=".95"/></g></svg><span>Rayara Antaranga</span></div>
+        <!-- the same mark and the same four links as the top of the site (#wordmark, #topnav): one navigation, its beginning and its end -->
+        <div class="f-mark wordmark">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <path fill="currentColor" fill-rule="evenodd" d="M16 .9a1.1 1.1 0 1 1 0 2.2a1.1 1.1 0 1 1 0-2.2Z M8.5 9.0Q8.6 8.0 10 6.4Q11.4 8.0 11.5 9.0Z M11.5 9.0Q11.6 7.0 13 5.4Q14.4 7.0 14.5 9.0Z M14.5 9.0Q14.6 5.8 16 4.2Q17.4 5.8 17.5 9.0Z M17.5 9.0Q17.6 7.0 19 5.4Q20.4 7.0 20.5 9.0Z M20.5 9.0Q20.6 8.0 22 6.4Q23.4 8.0 23.5 9.0Z M7 9.8H25V11.4H7Z M8.4 12.2H23.6V20.4H8.4Z M13.8 20.4V16.4A2.2 2.2 0 0 1 18.2 16.4V20.4Z M10.2 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M19.8 15.8a1 1 0 1 1 2 0a1 1 0 1 1-2 0Z M6.6 21.4H25.4V23.4H6.6Z M4.8 24.4H27.2V26.6H4.8Z M3 27.6H29V30.2H3Z"/>
+      </svg>
+          <span class="wm-text"><b>Rayara Antaranga</b><small>JIVANA &middot; KRITI &middot; SIDDHANTA</small></span>
+        </div>
         <nav class="f-links" aria-label="Footer">
-          <button type="button" data-sec="mv-01">The life</button>
-          <button type="button" data-sec="mv-04">The granthas</button>
-          <button type="button" data-sec="mv-05">Tattvavāda</button>
-          <button type="button" data-ch="9">The Brindavana</button>
+          <button type="button" data-sec="mv-01">LIFE</button>
+          <button type="button" data-sec="mv-04">WORKS</button>
+          <button type="button" data-sec="mv-05">TATTVAVĀDA</button>
+          <button type="button" data-ch="9">BRINDAVANA</button>
         </nav>
       </div>
       <div class="f-base">
